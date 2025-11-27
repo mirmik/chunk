@@ -232,3 +232,326 @@ TEST_CASE("YAML: legacy replace-text still works")
     auto L = read_lines(f);
     CHECK(L[1] == "X");
 }
+
+
+// ============================================================================
+// 8. Новый YAML-формат: create_file + delete_file
+// ============================================================================
+TEST_CASE("YAML patch: create_file and delete_file")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_create_delete";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path to_delete = tmp / "old.txt";
+    {
+        std::ofstream out(to_delete);
+        out << "OLD1\n"
+               "OLD2\n";
+    }
+
+    fs::path to_create = tmp / "new.txt";
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "description: create and delete\n";
+        out << "operations:\n";
+        out << "  - path: " << to_create.string() << "\n";
+        out << "    op: create_file\n";
+        out << "    payload: |\n";
+        out << "      one\n";
+        out << "      two\n";
+        out << "  - path: " << to_delete.string() << "\n";
+        out << "    op: delete_file\n";
+    }
+
+    CHECK(run_apply(patch) == 0);
+
+    // файл создан
+    CHECK(fs::exists(to_create));
+    auto L = read_lines(to_create);
+    REQUIRE(L.size() == 2);
+    CHECK(L[0] == "one");
+    CHECK(L[1] == "two");
+
+    // файл удалён
+    CHECK(!fs::exists(to_delete));
+}
+
+// ============================================================================
+// 9. Новый YAML-формат: простая replace_text
+// ============================================================================
+TEST_CASE("YAML patch: replace_text simple")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_replace";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "a.txt";
+    {
+        std::ofstream out(f);
+        out << "alpha\n"
+               "beta\n"
+               "gamma\n";
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n";
+        out << "  - path: " << f.string() << "\n";
+        out << "    op: replace_text\n";
+        out << "    marker: |\n";
+        out << "      beta\n";
+        out << "    payload: |\n";
+        out << "      XXX\n";
+        out << "      YYY\n";
+    }
+
+    CHECK(run_apply(patch) == 0);
+
+    auto L = read_lines(f);
+    REQUIRE(L.size() == 4);
+    CHECK(L[0] == "alpha");
+    CHECK(L[1] == "XXX");
+    CHECK(L[2] == "YYY");
+    CHECK(L[3] == "gamma");
+}
+
+// ============================================================================
+// 10. indent: from-marker для insert_after_text
+// ============================================================================
+TEST_CASE("YAML patch: indent from-marker for insert_after_text")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_indent_after";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "code.cpp";
+    {
+        std::ofstream out(f);
+        out << "void foo() {\n"
+               "    int x = 1;\n"
+               "    int y = 2;\n"
+               "}\n";
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n";
+        out << "  - path: " << f.string() << "\n";
+        out << "    op: insert_after_text\n";
+        out << "    marker: |\n";
+        out << "      int y = 2;\n";
+        out << "    payload: |\n";
+        out << "      int z = 3;\n";
+        out << "    options:\n";
+        out << "      indent: from-marker\n";
+    }
+
+    CHECK(run_apply(patch) == 0);
+
+    auto L = read_lines(f);
+    REQUIRE(L.size() == 5);
+    CHECK(L[0] == "void foo() {");
+    CHECK(L[1] == "    int x = 1;");
+    CHECK(L[2] == "    int y = 2;");
+    CHECK(L[3] == "    int z = 3;");
+}
+
+// ============================================================================
+// 11. indent: from-marker для replace_text
+// ============================================================================
+TEST_CASE("YAML patch: indent from-marker for replace_text")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_indent_replace";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "code2.cpp";
+    {
+        std::ofstream out(f);
+        out << "if (cond) {\n"
+               "    do_something();\n"
+               "}\n";
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n";
+        out << "  - path: " << f.string() << "\n";
+        out << "    op: replace_text\n";
+        out << "    marker: |\n";
+        out << "      do_something();\n";
+        out << "    payload: |\n";
+        out << "      do_one();\n";
+        out << "      do_two();\n";
+        out << "    options:\n";
+        out << "      indent: from-marker\n";
+    }
+
+    CHECK(run_apply(patch) == 0);
+
+    auto L = read_lines(f);
+    REQUIRE(L.size() == 4);
+    CHECK(L[0] == "if (cond) {");
+    CHECK(L[1] == "    do_one();");
+    CHECK(L[2] == "    do_two();");
+}
+
+// ============================================================================
+// 12. BEFORE/AFTER в новом YAML-формате (дизамбиг маркера)
+// ============================================================================
+TEST_CASE("YAML patch: BEFORE and AFTER select correct marker")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_before_after";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "b.txt";
+    {
+        std::ofstream out(f);
+        out << "foo\n"
+               "target\n"
+               "bar\n"
+               "\n"
+               "XXX\n"
+               "target\n"
+               "YYY\n";
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n";
+        out << "  - path: " << f.string() << "\n";
+        out << "    op: replace_text\n";
+        out << "    before: |\n";
+        out << "      XXX\n";
+        out << "    marker: |\n";
+        out << "      target\n";
+        out << "    payload: |\n";
+        out << "      SECOND\n";
+    }
+
+    CHECK(run_apply(patch) == 0);
+
+    auto L = read_lines(f);
+    REQUIRE(L.size() == 7);
+    // первая "target" должна остаться, вторая замениться
+    CHECK(L[1] == "target");
+    CHECK(L[5] == "SECOND");
+}
+
+// ============================================================================
+// 13. delete_text в новом YAML-формате
+// ============================================================================
+TEST_CASE("YAML patch: delete_text removes block")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_delete_text";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "del.txt";
+    {
+        std::ofstream out(f);
+        out << "aaa\n"
+               "bbb\n"
+               "ccc\n"
+               "ddd\n";
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n";
+        out << "  - path: " << f.string() << "\n";
+        out << "    op: delete_text\n";
+        out << "    marker: |\n";
+        out << "      bbb\n";
+        out << "      ccc\n";
+    }
+
+    CHECK(run_apply(patch) == 0);
+
+    auto L = read_lines(f);
+    REQUIRE(L.size() == 2);
+    CHECK(L[0] == "aaa");
+    CHECK(L[1] == "ddd");
+}
+
+// ============================================================================
+// 14. Ошибка: text-команда без marker
+// ============================================================================
+TEST_CASE("YAML patch: missing marker for text op fails and keeps file intact")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_missing_marker";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "file.txt";
+    {
+        std::ofstream out(f);
+        out << "foo\n"
+               "bar\n";
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n";
+        out << "  - path: " << f.string() << "\n";
+        out << "    op: replace_text\n";
+        // marker отсутствует
+        out << "    payload: |\n";
+        out << "      X\n";
+    }
+
+    CHECK(run_apply(patch) != 0);
+
+    auto L = read_lines(f);
+    REQUIRE(L.size() == 2);
+    CHECK(L[0] == "foo");
+    CHECK(L[1] == "bar");
+}
+
+// ============================================================================
+// 15. Ошибка: неизвестный режим indent
+// ============================================================================
+TEST_CASE("YAML patch: unknown indent mode causes failure and rollback")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_bad_indent";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "ind.txt";
+    {
+        std::ofstream out(f);
+        out << "foo\n"
+               "bar\n";
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n";
+        out << "  - path: " << f.string() << "\n";
+        out << "    op: insert_after_text\n";
+        out << "    marker: |\n";
+        out << "      bar\n";
+        out << "    payload: |\n";
+        out << "      BAZ\n";
+        out << "    options:\n";
+        out << "      indent: weird-mode\n";
+    }
+
+    CHECK(run_apply(patch) != 0);
+
+    auto L = read_lines(f);
+    REQUIRE(L.size() == 2);
+    CHECK(L[0] == "foo");
+    CHECK(L[1] == "bar");
+}
