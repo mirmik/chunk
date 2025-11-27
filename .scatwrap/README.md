@@ -10,7 +10,7 @@
 <br>
 `chunk`&nbsp;is&nbsp;a&nbsp;small&nbsp;CLI&nbsp;(command-line&nbsp;interface)&nbsp;tool&nbsp;that&nbsp;applies&nbsp;**structured&nbsp;patches**&nbsp;to&nbsp;a&nbsp;source&nbsp;tree.<br>
 <br>
-Patches&nbsp;are&nbsp;written&nbsp;in&nbsp;the&nbsp;**chunk&nbsp;v2**&nbsp;YAML&nbsp;(YAML&nbsp;Ain't&nbsp;Markup&nbsp;Language)&nbsp;format,&nbsp;described&nbsp;in&nbsp;[`CHUNK.md`](CHUNK.md).&nbsp;&nbsp;<br>
+Patches&nbsp;are&nbsp;written&nbsp;in&nbsp;the&nbsp;**chunk&nbsp;v2**&nbsp;YAML&nbsp;(YAML&nbsp;Ain't&nbsp;Markup&nbsp;Language)&nbsp;format,&nbsp;described&nbsp;in&nbsp;[`docs/CHUNK.md`](CHUNK.md).&nbsp;&nbsp;<br>
 All&nbsp;operations&nbsp;are&nbsp;applied&nbsp;**transactionally**:&nbsp;on&nbsp;any&nbsp;error,&nbsp;changes&nbsp;are&nbsp;rolled&nbsp;back.<br>
 <br>
 ---<br>
@@ -23,7 +23,7 @@ All&nbsp;operations&nbsp;are&nbsp;applied&nbsp;**transactionally**:&nbsp;on&nbsp
 -&nbsp;C++&nbsp;and&nbsp;Python&nbsp;symbol-level&nbsp;operations&nbsp;(replace&nbsp;class&nbsp;or&nbsp;method)&nbsp;&nbsp;<br>
 -&nbsp;Transactional&nbsp;apply&nbsp;with&nbsp;automatic&nbsp;backup&nbsp;and&nbsp;rollback&nbsp;&nbsp;<br>
 <br>
-See&nbsp;[`CHUNK.md`](CHUNK.md)&nbsp;or&nbsp;run:<br>
+See&nbsp;[`docs/CHUNK.md`](CHUNK.md)&nbsp;or&nbsp;run:<br>
 <br>
 ```bash<br>
 chunk&nbsp;--help<br>
