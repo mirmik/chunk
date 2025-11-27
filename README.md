@@ -2,29 +2,27 @@
 
 `chunk` is a small CLI (command-line interface) tool that applies **structured patches** to a source tree.
 
-Patches are written in the **chunk v2** YAML (YAML Ain't Markup Language) format, described in [`docs/CHUNK.md`](CHUNK.md).  
+Patches are written in the **chunk v2** YAML (YAML Ain't Markup Language) format, described in [`docs/CHUNK.md`](CHUNK.md).
 All operations are applied **transactionally**: on any error, changes are rolled back.
 
 ---
-
 ## Features
 
-- Applies patches in chunk v2 YAML format  
-- File operations: create and delete files  
-- Text operations using robust markers (tolerant to whitespace changes)  
-- C++ and Python symbol-level operations (replace class or method)  
-- Transactional apply with automatic backup and rollback  
+- Applies patches in chunk v2 YAML format
+- File operations: create and delete files
+- Text operations using robust markers (tolerant to whitespace changes)
+- C++ and Python symbol-level operations (replace class or method)
+- Transactional apply with automatic backup and rollback
 
 See [`docs/CHUNK.md`](CHUNK.md) or run:
 
 ```bash
 chunk --help
-````
+```
 
 for format details and examples.
 
 ---
-
 ## Usage
 
 Basic usage:
@@ -33,13 +31,34 @@ Basic usage:
 chunk path/to/patch.yml
 ```
 
+You can also read a patch from standard input:
+
+```bash
+generate_patch | chunk --stdin
+wl-paste | chunk --stdin
+```
+
+Or from the system clipboard:
+
+```bash
+chunk --paste
+```
+
+On Linux and macOS, `chunk` will try (in this order): `wl-paste`,
+`xclip -selection clipboard -o`, `xsel -b`, `pbpaste`.
+
+On Windows it uses:
+
+```powershell
+powershell -command Get-Clipboard
+```
+
 Notes:
 
 * Paths in the patch are relative to the current working directory.
 * If a marker, class, or method cannot be found (or is ambiguous), the patch is aborted and all affected files are restored.
 
 ---
-
 ## Install Linux
 
 Requirements:
@@ -65,7 +84,6 @@ By default the binary is installed into `${CMAKE_INSTALL_PREFIX}/bin`
 ---
 
 ## Install Windows
-
 ### Visual Studio
 
 Requirements:

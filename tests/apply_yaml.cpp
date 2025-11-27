@@ -32,6 +32,63 @@ static int run_apply(const fs::path &patch)
     return apply_chunk_main((int)argv.size(), argv.data());
 }
 
+    static int run_apply_stdin(const std::string &patch_text)
+    {
+        // Подменяем std::cin на буфер с нашим патчем
+        std::streambuf *old_buf = std::cin.rdbuf();
+        std::istringstream iss(patch_text);
+        std::cin.rdbuf(iss.rdbuf());
+
+        std::string a0 = "apply";
+        std::string a1 = "--stdin";
+
+        std::vector<std::string> store = {a0, a1};
+        std::vector<char *> argv;
+        for (auto &s : store)
+            argv.push_back(s.data());
+
+        int rc = apply_chunk_main((int)argv.size(), argv.data());
+
+        // Восстанавливаем std::cin
+        std::cin.rdbuf(old_buf);
+        return rc;
+    }
+
+    TEST_CASE("YAML stdin: apply_chunk_main with --stdin reads from std::cin")
+    {
+        fs::path tmp = fs::temp_directory_path() / "yaml_stdin_patch";
+        fs::remove_all(tmp);
+        fs::create_directories(tmp);
+
+        fs::path f = tmp / "stdin.txt";
+        {
+            std::ofstream out(f);
+            out << "alpha\n"
+                   "beta\n"
+                   "gamma\n";
+        }
+
+        std::ostringstream patch;
+        patch << "operations:\n";
+        patch << "  - path: " << f.string() << "\n";
+        patch << "    op: replace_text\n";
+        patch << "    marker: |\n";
+        patch << "      beta\n";
+        patch << "    payload: |\n";
+        patch << "      XXX\n";
+        patch << "      YYY\n";
+
+        CHECK(run_apply_stdin(patch.str()) == 0);
+
+        auto L = read_lines(f);
+        REQUIRE(L.size() == 4);
+        CHECK(L[0] == "alpha");
+        CHECK(L[1] == "XXX");
+        CHECK(L[2] == "YYY");
+        CHECK(L[3] == "gamma");
+    }
+
+
 // ============================================================================
 // 1. MARKER: без BEFORE/AFTER — работает как старый режим
 // ============================================================================
