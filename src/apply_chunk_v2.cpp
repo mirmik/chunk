@@ -1085,7 +1085,7 @@ int apply_chunk_main(int argc, char **argv)
 {
     if (argc < 2)
     {
-        std::cerr << "usage: apply_patch <patchfile>\n";
+        std::cerr << "Usage: chunk <patchfile>\n";
         return 1;
     }
 

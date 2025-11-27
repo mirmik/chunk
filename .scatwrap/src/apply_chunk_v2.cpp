@@ -1093,7 +1093,7 @@ int&nbsp;apply_chunk_main(int&nbsp;argc,&nbsp;char&nbsp;**argv)<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::cerr&nbsp;&lt;&lt;&nbsp;&quot;usage:&nbsp;apply_patch&nbsp;&lt;patchfile&gt;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::cerr&nbsp;&lt;&lt;&nbsp;&quot;Usage:&nbsp;chunk&nbsp;&lt;patchfile&gt;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;1;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;}<br>
 <br>
