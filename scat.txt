@@ -1,0 +1,19 @@
+src/*
+tests/*
+!tests/doctest/**
+CMakeLists.txt
+scat.txt
+README.md
+
+[TREE]
+**
+!CMakeFiles/**
+!.github/**
+!.git/**
+
+
+[MAPFORMAT]
+------------------------------
+Актуальная версия репозитория:
+{RAWMAP}
+------------------------------

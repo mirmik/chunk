@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>scat.txt</title>
+</head>
+<body>
+<!-- BEGIN SCAT CODE -->
+src/*<br>
+tests/*<br>
+!tests/doctest/**<br>
+CMakeLists.txt<br>
+scat.txt<br>
+README.md<br>
+<br>
+[TREE]<br>
+**<br>
+!CMakeFiles/**<br>
+!.github/**<br>
+!.git/**<br>
+<br>
+<br>
+[MAPFORMAT]<br>
+------------------------------<br>
+Актуальная&nbsp;версия&nbsp;репозитория:<br>
+{RAWMAP}<br>
+------------------------------<br>
+<!-- END SCAT CODE -->
+</body>
+</html>
