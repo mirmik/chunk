@@ -29,7 +29,7 @@ struct Section
     std::string arg1; // доп. аргументы команды (например, имя класса)
     std::string arg2; // второй аргумент (например, имя метода)
 
-    bool indent_from_marker = false;
+    bool indent_from_marker = true;
 };
 
 

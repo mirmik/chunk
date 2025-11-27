@@ -37,7 +37,7 @@ struct&nbsp;Section<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;arg1;&nbsp;//&nbsp;доп.&nbsp;аргументы&nbsp;команды&nbsp;(например,&nbsp;имя&nbsp;класса)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;arg2;&nbsp;//&nbsp;второй&nbsp;аргумент&nbsp;(например,&nbsp;имя&nbsp;метода)<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;indent_from_marker&nbsp;=&nbsp;false;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;indent_from_marker&nbsp;=&nbsp;true;<br>
 };<br>
 <br>
 <br>

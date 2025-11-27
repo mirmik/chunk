@@ -1114,10 +1114,18 @@ namespace nos
                 {
                     nos::trent arr;
                     arr.as_list();
-
                     while (index < lines.size())
                     {
                         const auto &ln = lines[index];
+
+                        // Пустые строки и строки, состоящие только из пробелов/комментариев,
+                        // внутри последовательности пропускаем.
+                        if (ln.trimmed.empty())
+                        {
+                            ++index;
+                            continue;
+                        }
+
                         if (!is_sequence_line(index, indent))
                             break;
 
@@ -1231,15 +1239,21 @@ namespace nos
                 {
                     nos::trent obj;
                     obj.as_dict();
-
                     while (index < lines.size())
                     {
                         const auto &ln = lines[index];
+
+                        // Пустые строки и строки-комментарии внутри mapping пропускаем.
+                        if (ln.trimmed.empty())
+                        {
+                            ++index;
+                            continue;
+                        }
+
                         if (ln.indent != indent || !is_mapping_line(index, indent))
                             break;
 
                         size_t colon = find_unescaped_colon(ln.no_comment);
-
                         std::string key = trim(ln.no_comment.substr(0, colon));
                         size_t value_pos = ln.no_comment.find_first_not_of(
                             " \t", colon + 1);

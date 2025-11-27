@@ -1,0 +1,10 @@
+description: "Change greeting in helloworld.cpp"
+
+operations:
+  - path: helloworld.cpp
+    op: replace_text
+    comment: "Меняем Hello, world! на Hello, YAML!"
+    marker: |-
+      std::cout << "Hello, world!" << std::endl;
+    payload: |-
+      std::cout << "Hello, YAML!" << std::endl;

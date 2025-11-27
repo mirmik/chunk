@@ -252,3 +252,45 @@ TEST_CASE("YAML parser honors empty block scalar when indent inferred")
     auto dict = nos::yaml::parse(src).as_dict();
     CHECK(dict.at("k").as_string() == "line\n");
 }
+
+TEST_CASE("YAML parser allows blank lines between mapping entries")
+{
+    const char *src =
+        "a: 1\n"
+        "\n"
+        "b: 2\n";
+
+    auto dict = nos::yaml::parse(src).as_dict();
+    REQUIRE(dict.size() == 2);
+    CHECK(dict.at("a").as_numer() == doctest::Approx(1));
+    CHECK(dict.at("b").as_numer() == doctest::Approx(2));
+}
+
+TEST_CASE("YAML parser allows comments and blank lines between mapping entries")
+{
+    const char *src =
+        "first: one\n"
+        "# comment between keys\n"
+        "   \n"
+        "second: two\n";
+
+    auto dict = nos::yaml::parse(src).as_dict();
+    REQUIRE(dict.size() == 2);
+    CHECK(dict.at("first").as_string() == "one");
+    CHECK(dict.at("second").as_string() == "two");
+}
+
+TEST_CASE("YAML parser allows blank lines inside sequences")
+{
+    const char *src =
+        "list:\n"
+        "  - 1\n"
+        "  \n"
+        "  - 2\n";
+
+    auto dict = nos::yaml::parse(src).as_dict();
+    auto &list = dict.at("list").as_list();
+    REQUIRE(list.size() == 2);
+    CHECK(list[0].as_numer() == doctest::Approx(1));
+    CHECK(list[1].as_numer() == doctest::Approx(2));
+}
