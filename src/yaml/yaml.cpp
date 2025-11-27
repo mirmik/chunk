@@ -597,14 +597,15 @@ namespace nos
                     {
                         const auto &cur = lines[idx];
                         if (cur.indent < content_indent &&
+                            !cur.trimmed.empty())
+                            break;
+                        if (cur.indent < content_indent &&
                             cur.trimmed.empty())
                         {
                             collected.emplace_back(std::string());
                             ++idx;
                             continue;
                         }
-                        if (cur.indent < content_indent)
-                            break;
 
                         size_t offset =
                             offset_for_indent(cur.raw, content_indent);
@@ -615,7 +616,7 @@ namespace nos
                     }
                     index = idx;
 
-                    if (chomping == '-')
+                    if (chomping != '+')
                     {
                         while (!collected.empty() && collected.back().empty())
                             collected.pop_back();
@@ -1094,6 +1095,15 @@ namespace nos
                             current_index);
                     }
 
+                    if (!ln.trimmed.empty() &&
+                        (ln.trimmed[0] == '[' || ln.trimmed[0] == '{'))
+                    {
+                        size_t pos =
+                            ln.no_comment.find_first_not_of(" \t");
+                        return parse_flow_collection(
+                            ln, pos == std::string::npos ? 0 : pos, current_index);
+                    }
+
                     return parse_scalar_text(ln.trimmed,
                                              ln.number,
                                              compute_column(ln.no_comment,
@@ -1304,7 +1314,16 @@ namespace nos
                     skip_empty_lines();
                     if (index >= lines.size())
                         return nos::trent();
-                    return parse_block(lines[index].indent);
+                    nos::trent res = parse_block(lines[index].indent);
+                    skip_empty_lines();
+                    if (index < lines.size())
+                    {
+                        throw nos::yaml::parse_error(
+                            lines[index].number,
+                            1,
+                            "unexpected trailing content");
+                    }
+                    return res;
                 }
             };
 

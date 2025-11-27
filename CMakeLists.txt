@@ -22,12 +22,21 @@ if (HAS_LIBSTDCXXFS)
 endif()
 
 add_executable(chunk_tests
-    tests/main.cpp
+    tests/apply.cpp          
+    tests/apply_yaml.cpp  
+    tests/main.cpp     
+    tests/symbols_py.cpp
+    tests/apply_symbols.cpp  
+    tests/symbols.cpp  
     tests/yaml_parser.cpp
     src/yaml/yaml.cpp
     src/yaml/trent.cpp
     src/yaml/trent_path.cpp
     src/yaml/string_ext.cpp
+    src/symbols.cpp
+    src/symbols_py.cpp
+    src/apply_chunk_v2.cpp
+    src/chunk_help.cpp
 )
 target_include_directories(chunk_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
