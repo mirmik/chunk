@@ -560,58 +560,13 @@ TEST_CASE("YAML patch: unknown indent mode causes failure and rollback")
 // ============================================================================
 // 16. Маркер игнорирует пустые строки в файле при сравнении
 // ============================================================================
-TEST_CASE("YAML patch: marker matches across empty lines in file")
+TEST_CASE("YAML patch: insert_after_text skips blank lines in marker matching")
 {
-    fs::path tmp = fs::temp_directory_path() / "yaml_patch_marker_empty_lines";
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_blank_insert_after";
     fs::remove_all(tmp);
     fs::create_directories(tmp);
 
     fs::path f = tmp / "file.txt";
-    {
-        std::ofstream out(f);
-        out << "AAA\n"
-            << "\n"      // лишняя пустая строка
-            << "BBB\n"
-            << "CCC\n";
-    }
-
-    fs::path patch = tmp / "patch.yml";
-    {
-        std::ofstream out(patch);
-        out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
-        out << "    op: replace_text\n";
-        out << "    marker: |\n";
-        out << "      AAA\n";
-        out << "      BBB\n";
-        out << "    payload: |\n";
-        out << "      XXX\n";
-        out << "      YYY\n";
-    }
-
-    CHECK(run_apply(patch) == 0);
-
-    auto L = read_lines(f);
-    // Конкретное поведение сейчас такое:
-    //   AAA + пустая строка заменяются на XXX/YYY,
-    //   строка BBB остаётся (мы игнорируем пустую при сравнении, но длину блока берём из маркера).
-    REQUIRE(L.size() == 4);
-    CHECK(L[0] == "XXX");
-    CHECK(L[1] == "YYY");
-    CHECK(L[2] == "BBB");
-    CHECK(L[3] == "CCC");
-}
-
-// ============================================================================
-// 17. insert_after_text: маркер матчится через пустую строку
-// ============================================================================
-TEST_CASE("YAML patch: insert_after_text marker across empty line")
-{
-    fs::path tmp = fs::temp_directory_path() / "yaml_patch_insert_after_empty";
-    fs::remove_all(tmp);
-    fs::create_directories(tmp);
-
-    fs::path f = tmp / "code.txt";
     {
         std::ofstream out(f);
         out << "begin\n"
@@ -637,14 +592,53 @@ TEST_CASE("YAML patch: insert_after_text marker across empty line")
     CHECK(run_apply(patch) == 0);
 
     auto L = read_lines(f);
-    // Текущее поведение: маркер "A\nB\n" матчится на "A\n\nB\n",
-    // а вставка происходит в позицию pos + marker.size() (как и раньше).
-    // То есть X вставится ПЕРЕД B, потому что pos == индекс строки "A".
     REQUIRE(L.size() == 6);
     CHECK(L[0] == "begin");
     CHECK(L[1] == "A");
-    CHECK(L[2].empty());       // пустая
-    CHECK(L[3] == "X");        // вставка сюда
-    CHECK(L[4] == "B");
+    CHECK(L[2] == "");      // пустая строка осталась на месте
+    CHECK(L[3] == "B");
+    CHECK(L[4] == "X");     // X после B, как и хотим
     CHECK(L[5] == "end");
+}
+
+
+// ============================================================================
+// 17. insert_after_text: маркер матчится через пустую строку
+// ============================================================================
+TEST_CASE("YAML patch: replace_text removes whole block including blank lines")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_blank_replace";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "file.txt";
+    {
+        std::ofstream out(f);
+        out << "begin\n"
+            << "A\n"
+            << "\n"
+            << "B\n"
+            << "end\n";
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n";
+        out << "  - path: " << f.string() << "\n";
+        out << "    op: replace_text\n";
+        out << "    marker: |\n";
+        out << "      A\n";
+        out << "      B\n";
+        out << "    payload: |\n";
+        out << "      X\n";
+    }
+
+    CHECK(run_apply(patch) == 0);
+
+    auto L = read_lines(f);
+    REQUIRE(L.size() == 3);
+    CHECK(L[0] == "begin");
+    CHECK(L[1] == "X");     // весь блок A / пустая / B заменён X
+    CHECK(L[2] == "end");
 }

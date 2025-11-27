@@ -431,24 +431,29 @@ static int find_subsequence(const std::vector<std::string> &haystack,
 
 // Строгий выбор позиции маркера с учётом BEFORE/AFTER.
 // Никакого fuzzy, только точное позиционное совпадение.
+// Строгий выбор позиции маркера с учетом BEFORE/AFTER.
+// Теперь работаем с MarkerMatch (begin/end), а не только с начальным индексом.
 static int find_best_marker_match(const std::vector<std::string> &lines,
                                   const Section *s,
-                                  const std::vector<int> &candidates)
+                                  const std::vector<MarkerMatch> &candidates)
 {
     if (candidates.empty())
         return -1;
 
-    // Нет дополнительного контекста — ведём себя как раньше.
+    // Нет дополнительного контекста — ведём себя как раньше: берём первый матч.
     if (s->before.empty() && s->after.empty())
-        return candidates.front();
+        return 0; // индекс в векторе candidates
 
     auto trim_eq = [&](const std::string &a, const std::string &b)
     { return trim(a) == trim(b); };
 
     std::vector<int> strict;
 
-    for (int pos : candidates)
+    for (int ci = 0; ci < static_cast<int>(candidates.size()); ++ci)
     {
+        const MarkerMatch &mm = candidates[ci];
+        int pos = mm.begin;
+        int end = mm.end;
         bool ok = true;
 
         // BEFORE: строки сразу над маркером
@@ -481,10 +486,10 @@ static int find_best_marker_match(const std::vector<std::string> &lines,
         // AFTER: строки сразу под маркером
         if (ok && !s->after.empty())
         {
-            int start = pos + static_cast<int>(s->marker.size());
+            int start = end + 1; // ВАЖНО: после последней строки диапазона, а не pos + marker.size()
             int need = static_cast<int>(s->after.size());
-
-            if (start < 0 || start + need > static_cast<int>(lines.size()))
+            if (start < 0 ||
+                start + need > static_cast<int>(lines.size()))
             {
                 ok = false;
             }
@@ -506,7 +511,7 @@ static int find_best_marker_match(const std::vector<std::string> &lines,
         }
 
         if (ok)
-            strict.push_back(pos);
+            strict.push_back(ci);
     }
 
     if (strict.empty())
@@ -515,8 +520,9 @@ static int find_best_marker_match(const std::vector<std::string> &lines,
     if (strict.size() > 1)
         throw std::runtime_error("strict marker match is ambiguous");
 
-    return strict.front();
+    return strict.front(); // индекс в candidates
 }
+
 
 static void apply_text_commands(const std::string &filepath,
                                 std::vector<std::string> &lines,
@@ -526,50 +532,43 @@ static void apply_text_commands(const std::string &filepath,
     {
         if (s->marker.empty())
             throw std::runtime_error("empty marker in text command for file: " +
-                                     filepath);
+                                    filepath);
 
-        // Собираем все вхождения маркера
-        std::vector<int> candidates;
-        {
-            int base = 0;
-            while (base < static_cast<int>(lines.size()))
-            {
-                std::vector<std::string> sub(lines.begin() + base, lines.end());
-                int idx = find_subsequence(sub, s->marker);
-                if (idx < 0)
-                    break;
-                candidates.push_back(base + idx);
-                base += idx + 1;
-            }
-        }
-
-        if (candidates.empty())
+        // Ищем все вхождения маркера, игнорируя пустые строки.
+        std::vector<MarkerMatch> matches = find_marker_matches(lines, s->marker);
+        if (matches.empty())
             throw std::runtime_error(
                 "text marker not found for file: " + filepath +
                 "\ncommand: " + s->command + "\n");
 
-        int idx = find_best_marker_match(lines, s, candidates);
-        if (idx < 0)
+        int mindex = find_best_marker_match(lines, s, matches);
+        if (mindex < 0)
             throw std::runtime_error("cannot locate marker uniquely");
 
-        std::size_t pos = static_cast<std::size_t>(idx);
+        const MarkerMatch &mm = matches[static_cast<std::size_t>(mindex)];
+        if (mm.begin < 0 || mm.end < mm.begin ||
+            mm.end >= static_cast<int>(lines.size()))
+            throw std::runtime_error("internal error: invalid marker match range");
+
+        std::size_t begin = static_cast<std::size_t>(mm.begin);
+        std::size_t end   = static_cast<std::size_t>(mm.end);
+        std::size_t span  = end - begin + 1;
 
         // Локальная копия payload, чтобы можно было добавить отступ
         std::vector<std::string> payload = s->payload;
-
         if (s->indent_from_marker &&
             (s->command == "insert-after-text" ||
-             s->command == "insert-before-text" ||
-             s->command == "replace-text"))
+            s->command == "insert-before-text" ||
+            s->command == "replace-text"))
         {
-            // Берём отступ первой строки маркера
+            // Берём отступ первой строки маркера (begin)
             std::string prefix;
-            if (pos < lines.size())
+            if (begin < lines.size())
             {
-                const std::string &marker_line = lines[pos];
+                const std::string &marker_line = lines[begin];
                 std::size_t j = 0;
                 while (j < marker_line.size() &&
-                       (marker_line[j] == ' ' || marker_line[j] == '\t'))
+                    (marker_line[j] == ' ' || marker_line[j] == '\t'))
                     ++j;
                 prefix.assign(marker_line, 0, j);
             }
@@ -588,37 +587,45 @@ static void apply_text_commands(const std::string &filepath,
 
         if (s->command == "insert-after-text")
         {
-            pos += s->marker.size();
+            // Вставляем после последней строки диапазона
+            std::size_t pos = end + 1;
             lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(pos),
-                         payload.begin(),
-                         payload.end());
+                        payload.begin(),
+                        payload.end());
         }
         else if (s->command == "insert-before-text")
         {
+            // Вставляем перед первой строкой диапазона
+            std::size_t pos = begin;
             lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(pos),
-                         payload.begin(),
-                         payload.end());
+                        payload.begin(),
+                        payload.end());
         }
         else if (s->command == "replace-text")
         {
-            auto begin = lines.begin() + static_cast<std::ptrdiff_t>(pos);
-            auto end = begin + static_cast<std::ptrdiff_t>(s->marker.size());
-            lines.erase(begin, end);
-            lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(pos),
-                         payload.begin(),
-                         payload.end());
+            auto it_begin = lines.begin() +
+                            static_cast<std::ptrdiff_t>(begin);
+            auto it_end   = it_begin +
+                            static_cast<std::ptrdiff_t>(span);
+            lines.erase(it_begin, it_end);
+            lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(begin),
+                        payload.begin(),
+                        payload.end());
         }
         else if (s->command == "delete-text")
         {
-            auto begin = lines.begin() + static_cast<std::ptrdiff_t>(pos);
-            auto end = begin + static_cast<std::ptrdiff_t>(s->marker.size());
-            lines.erase(begin, end);
+            auto it_begin = lines.begin() +
+                            static_cast<std::ptrdiff_t>(begin);
+            auto it_end   = it_begin +
+                            static_cast<std::ptrdiff_t>(span);
+            lines.erase(it_begin, it_end);
         }
         else
         {
             throw std::runtime_error("unknown text command: " + s->command);
         }
     }
+
 }
 
 static std::string join_lines(const std::vector<std::string> &lines)
