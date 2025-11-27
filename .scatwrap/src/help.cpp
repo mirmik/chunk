@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>src/chunk_help.cpp</title>
+  <title>src/help.cpp</title>
 </head>
 <body>
 <!-- BEGIN SCAT CODE -->
-#include&nbsp;&quot;chunk_help.h&quot;<br>
+#include&nbsp;&quot;help.h&quot;<br>
 #include&nbsp;&lt;iostream&gt;<br>
 <br>
 void&nbsp;print_chunk_help()<br>

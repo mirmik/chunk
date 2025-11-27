@@ -5,13 +5,27 @@ project(chunk LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Все исходники утилиты
-file(GLOB CHUNK_SOURCES CONFIGURE_DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+file(GLOB YAML_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/yaml/*.cpp
 )
 
-add_executable(chunk ${CHUNK_SOURCES})
+set(CHUNK_CORE_SOURCES
+    src/apply.cpp
+    src/file_io.cpp
+    src/help.cpp
+    src/runner.cpp
+    src/section.cpp
+    src/symbol_commands.cpp
+    src/text_commands.cpp
+    src/symbols.cpp
+    src/symbols_py.cpp
+)
+
+add_executable(chunk
+    src/main.cpp
+    ${CHUNK_CORE_SOURCES}
+    ${YAML_SOURCES}
+)
 target_include_directories(chunk PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/yaml
@@ -34,14 +48,8 @@ add_executable(chunk_tests
     tests/apply_symbols.cpp  
     tests/symbols.cpp  
     tests/yaml_parser.cpp
-    src/yaml/yaml.cpp
-    src/yaml/trent.cpp
-    src/yaml/trent_path.cpp
-    src/yaml/string_ext.cpp
-    src/symbols.cpp
-    src/symbols_py.cpp
-    src/apply_chunk_v2.cpp
-    src/chunk_help.cpp
+    ${CHUNK_CORE_SOURCES}
+    ${YAML_SOURCES}
 )
 target_include_directories(chunk_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src

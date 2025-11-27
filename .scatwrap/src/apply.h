@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>src/chunk_help.h</title>
+  <title>src/apply.h</title>
 </head>
 <body>
 <!-- BEGIN SCAT CODE -->
 #pragma&nbsp;once<br>
 <br>
-void&nbsp;print_chunk_help();<br>
+int&nbsp;apply_chunk_main(int&nbsp;argc,&nbsp;char&nbsp;**argv);<br>
 <!-- END SCAT CODE -->
 </body>
 </html>
