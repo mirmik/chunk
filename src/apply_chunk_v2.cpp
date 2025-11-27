@@ -284,35 +284,150 @@ static std::vector<Section> parse_yaml_patch_text(const std::string &text)
     return sections;
 }
 
-
-static int find_subsequence(const std::vector<std::string> &haystack,
-                            const std::vector<std::string> &needle)
+struct MarkerMatch
 {
-    if (needle.empty() || needle.size() > haystack.size())
-        return -1;
+    int begin = -1; // индекс первой строки маркера в исходном файле
+    int end   = -1; // индекс последней строки маркера в исходном файле (включительно)
+};
 
-    const std::size_t n = haystack.size();
-    const std::size_t m = needle.size();
 
+static bool is_blank_line(const std::string &s)
+{
+    return trim(s).empty();
+}
+
+static std::vector<MarkerMatch>
+find_marker_matches(const std::vector<std::string> &haystack,
+                    const std::vector<std::string> &needle)
+{
+    std::vector<MarkerMatch> matches;
+
+    // Собираем непустые строки маркера
+    std::vector<std::string> pat;
+    pat.reserve(needle.size());
+    for (const auto &s : needle)
+    {
+        std::string t = trim(s);
+        if (!t.empty())
+            pat.push_back(std::move(t));
+    }
+
+    if (pat.empty())
+        return matches; // маркер из одних пустых строк — считаем, что ничего не ищем
+
+    // Собираем непустые строки файла + отображение индексов
+    std::vector<std::string> hs;
+    std::vector<int>         hs_idx;
+    hs.reserve(haystack.size());
+    hs_idx.reserve(haystack.size());
+
+    for (int i = 0; i < (int)haystack.size(); ++i)
+    {
+        std::string t = trim(haystack[i]);
+        if (!t.empty())
+        {
+            hs.emplace_back(std::move(t));
+            hs_idx.push_back(i);
+        }
+    }
+
+    if (hs.empty() || pat.size() > hs.size())
+        return matches;
+
+    const std::size_t n = hs.size();
+    const std::size_t m = pat.size();
+
+    // Обычный поиск подпоследовательности в hs
     for (std::size_t i = 0; i + m <= n; ++i)
     {
         bool ok = true;
         for (std::size_t j = 0; j < m; ++j)
         {
-            std::string h = trim(haystack[i + j]);
-            std::string nn = trim(needle[j]);
-            if (h != nn)
+            if (hs[i + j] != pat[j])
             {
                 ok = false;
                 break;
             }
         }
+
         if (ok)
-            return static_cast<int>(i);
+        {
+            int begin = hs_idx[i];
+            int end   = hs_idx[i + m - 1];
+            matches.push_back(MarkerMatch{begin, end});
+        }
+    }
+
+    return matches;
+}
+
+static int find_subsequence(const std::vector<std::string> &haystack,
+                            const std::vector<std::string> &needle)
+{
+    // Если маркер пустой или в нём только пустые строки – не матчим
+    std::vector<std::string> pattern;
+    pattern.reserve(needle.size());
+    for (const auto &ln : needle)
+    {
+        std::string t = trim(ln);
+        if (!t.empty())
+            pattern.push_back(std::move(t));
+    }
+
+    if (pattern.empty())
+        return -1;
+
+    const std::size_t n = haystack.size();
+    const std::size_t m = pattern.size();
+
+    // Предварительно тримим все строки файла, чтобы не делать это в цикле по 100 раз
+    std::vector<std::string> htrim;
+    htrim.reserve(n);
+    for (const auto &ln : haystack)
+        htrim.push_back(trim(ln));
+
+    // Пытаемся найти последовательность pattern[0..m-1] в htrim,
+    // разрешая произвольное количество пустых строк в файле между непустыми.
+    for (std::size_t start = 0; start < n; ++start)
+    {
+        std::size_t pos = start;
+        std::size_t j   = 0;
+
+        // пытаемся последовательно совпасть по всем непустым строкам паттерна
+        while (j < m && pos < n)
+        {
+            // пропускаем пустые строки файла
+            while (pos < n && htrim[pos].empty())
+                ++pos;
+
+            if (pos == n)
+                break;
+
+            if (htrim[pos] != pattern[j])
+                break;
+
+            ++pos;
+            ++j;
+        }
+
+        if (j == m)
+        {
+            // нашли матч: возвращаем индекс первой непустой строки
+            std::size_t first = start;
+            while (first < n && htrim[first].empty())
+                ++first;
+
+            if (first < n)
+                return static_cast<int>(first);
+
+            // теоретически сюда не попадём, но на всякий случай
+            return static_cast<int>(start);
+        }
     }
 
     return -1;
 }
+
 
 // Строгий выбор позиции маркера с учётом BEFORE/AFTER.
 // Никакого fuzzy, только точное позиционное совпадение.
