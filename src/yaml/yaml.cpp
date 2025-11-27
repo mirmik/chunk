@@ -530,7 +530,8 @@ namespace nos
                 }
 
                 nos::trent parse_block_scalar(const line &ln,
-                                              size_t indicator_pos)
+                                              size_t indicator_pos,
+                                              size_t line_idx)
                 {
                     char indicator = ln.no_comment[indicator_pos];
                     char chomping = 0;
@@ -562,7 +563,7 @@ namespace nos
                         break;
                     }
 
-                    size_t content_start = index + 1;
+                    size_t content_start = line_idx + 1;
                     int content_indent = 0;
                     if (explicit_indent > 0)
                         content_indent = ln.indent + explicit_indent;
@@ -595,6 +596,13 @@ namespace nos
                     while (idx < lines.size())
                     {
                         const auto &cur = lines[idx];
+                        if (cur.indent < content_indent &&
+                            cur.trimmed.empty())
+                        {
+                            collected.emplace_back(std::string());
+                            ++idx;
+                            continue;
+                        }
                         if (cur.indent < content_indent)
                             break;
 
@@ -606,6 +614,12 @@ namespace nos
                         ++idx;
                     }
                     index = idx;
+
+                    if (chomping == '-')
+                    {
+                        while (!collected.empty() && collected.back().empty())
+                            collected.pop_back();
+                    }
 
                     std::string text;
                     if (indicator == '|')
@@ -907,10 +921,6 @@ namespace nos
                     size_t idx = start_idx;
                     std::vector<char> stack;
 
-                    auto opener = lines[start_idx].no_comment[start_pos];
-                    auto expected = (opener == '[') ? ']' : '}';
-                    stack.push_back(expected);
-
                     bool in_single = false;
                     bool in_double = false;
                     std::string buffer;
@@ -998,12 +1008,22 @@ namespace nos
                 }
 
                 nos::trent parse_flow_collection(const line &ln,
-                                                 size_t value_pos)
+                                                 size_t value_pos,
+                                                 size_t start_idx)
                 {
                     size_t start_column =
                         compute_column(ln.no_comment, value_pos + 1);
-                    std::string flow = gather_flow_text(
-                        index, value_pos);
+                    if (value_pos >= ln.no_comment.size())
+                        throw nos::yaml::parse_error(
+                            ln.number, start_column, "invalid flow start");
+                    char opener = ln.no_comment[value_pos];
+                    if (opener != '[' && opener != '{')
+                        throw nos::yaml::parse_error(
+                            ln.number,
+                            start_column,
+                            "flow collection must start with '[' or '{'");
+                    std::string flow =
+                        gather_flow_text(start_idx, value_pos);
                     flow_parser fp(flow, ln.number, start_column);
                     nos::trent val = fp.parse_value();
                     fp.expect_end();
@@ -1012,7 +1032,8 @@ namespace nos
 
                 nos::trent parse_value(const line &ln,
                                        size_t value_pos,
-                                       int indent)
+                                       int indent,
+                                       size_t line_idx)
                 {
                     std::string value_text =
                         trim(ln.no_comment.substr(value_pos));
@@ -1033,11 +1054,11 @@ namespace nos
                     char first = value_text.front();
                     if (first == '|' || first == '>')
                     {
-                        return parse_block_scalar(ln, value_pos);
+                        return parse_block_scalar(ln, value_pos, line_idx);
                     }
                     if (first == '[' || first == '{')
                     {
-                        return parse_flow_collection(ln, value_pos);
+                        return parse_flow_collection(ln, value_pos, line_idx);
                     }
                     return parse_scalar_text(value_text, ln.number, column);
                 }
@@ -1060,15 +1081,17 @@ namespace nos
                     if (is_mapping_line(index, lines[index].indent))
                         return parse_mapping(lines[index].indent);
 
+                    size_t current_index = index;
                     const auto &ln = lines[index];
                     ++index;
 
                     if (!ln.trimmed.empty() &&
                         (ln.trimmed[0] == '|' || ln.trimmed[0] == '>'))
                     {
-                        return parse_block_scalar(ln,
-                                                  ln.no_comment.find_first_not_of(
-                                                      " \t"));
+                        return parse_block_scalar(
+                            ln,
+                            ln.no_comment.find_first_not_of(" \t"),
+                            current_index);
                     }
 
                     return parse_scalar_text(ln.trimmed,
@@ -1098,8 +1121,7 @@ namespace nos
                         if (value_pos != std::string::npos)
                             rest = trim(ln.no_comment.substr(value_pos));
 
-                        ++index;
-
+                        size_t current_index = index;
                         nos::trent element;
                         bool element_initialized = false;
 
@@ -1110,6 +1132,9 @@ namespace nos
                             {
                                 element.init(nos::trent::type::dict);
                                 std::string key = trim(rest.substr(0, colon));
+                                size_t value_pos_in_line =
+                                    ln.no_comment.find_first_not_of(
+                                        " \t", value_pos + colon + 1);
                                 std::string value_text =
                                     trim(rest.substr(colon + 1));
                                 if (key.empty())
@@ -1118,26 +1143,37 @@ namespace nos
                                         compute_column(ln.no_comment,
                                                        value_pos + colon + 1),
                                         "empty key in sequence mapping");
-                                if (value_text.empty())
+                                if (value_text.empty() ||
+                                    value_pos_in_line == std::string::npos)
                                 {
                                     element[key] = nos::trent::nil();
                                 }
                                 else
                                 {
-                                    element[key] = parse_scalar_text(
-                                        value_text,
-                                        ln.number,
-                                        compute_column(ln.no_comment,
-                                                       value_pos + colon + 1));
+                                    element[key] = parse_value(
+                                        ln,
+                                        value_pos_in_line,
+                                        indent,
+                                        current_index);
                                 }
                                 element_initialized = true;
                             }
                             else
                             {
                                 element = parse_value(
-                                    ln, value_pos, indent);
+                                    ln, value_pos, indent, current_index);
                                 element_initialized = true;
                             }
+                        }
+
+                        if (rest.empty())
+                        {
+                            index = current_index + 1;
+                        }
+                        else
+                        {
+                            if (index < current_index + 1)
+                                index = current_index + 1;
                         }
 
                         if (index < lines.size() &&
@@ -1195,10 +1231,14 @@ namespace nos
                         size_t colon = find_unescaped_colon(ln.no_comment);
 
                         std::string key = trim(ln.no_comment.substr(0, colon));
+                        size_t value_pos = ln.no_comment.find_first_not_of(
+                            " \t", colon + 1);
                         std::string value_text =
-                            trim(ln.no_comment.substr(colon + 1));
+                            value_pos == std::string::npos
+                                ? std::string()
+                                : trim(ln.no_comment.substr(colon + 1));
 
-                        ++index;
+                        size_t current_index = index;
 
                         if (key.empty())
                             throw nos::yaml::parse_error(
@@ -1208,13 +1248,14 @@ namespace nos
 
                         if (!value_text.empty())
                         {
-                            obj[key] = parse_scalar_text(
-                                value_text,
-                                ln.number,
-                                compute_column(ln.no_comment,
-                                               colon + 2));
+                            obj[key] =
+                                parse_value(ln, value_pos, indent, current_index);
+                            if (index < current_index + 1)
+                                index = current_index + 1;
                             continue;
                         }
+
+                        index = current_index + 1;
 
                         if (index < lines.size() &&
                             lines[index].indent > indent)

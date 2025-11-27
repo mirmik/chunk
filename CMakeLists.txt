@@ -20,3 +20,17 @@ target_include_directories(chunk PRIVATE
 if (HAS_LIBSTDCXXFS)
     target_link_libraries(chunk PRIVATE stdc++fs)
 endif()
+
+add_executable(chunk_tests
+    tests/main.cpp
+    tests/yaml_parser.cpp
+    src/yaml/yaml.cpp
+    src/yaml/trent.cpp
+    src/yaml/trent_path.cpp
+    src/yaml/string_ext.cpp
+)
+target_include_directories(chunk_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/yaml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)

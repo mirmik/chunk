@@ -28,6 +28,20 @@ target_include_directories(chunk&nbsp;PRIVATE<br>
 if&nbsp;(HAS_LIBSTDCXXFS)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;target_link_libraries(chunk&nbsp;PRIVATE&nbsp;stdc++fs)<br>
 endif()<br>
+<br>
+add_executable(chunk_tests<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tests/main.cpp<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tests/yaml_parser.cpp<br>
+&nbsp;&nbsp;&nbsp;&nbsp;src/yaml/yaml.cpp<br>
+&nbsp;&nbsp;&nbsp;&nbsp;src/yaml/trent.cpp<br>
+&nbsp;&nbsp;&nbsp;&nbsp;src/yaml/trent_path.cpp<br>
+&nbsp;&nbsp;&nbsp;&nbsp;src/yaml/string_ext.cpp<br>
+)<br>
+target_include_directories(chunk_tests&nbsp;PRIVATE<br>
+&nbsp;&nbsp;&nbsp;&nbsp;${CMAKE_CURRENT_SOURCE_DIR}/src<br>
+&nbsp;&nbsp;&nbsp;&nbsp;${CMAKE_CURRENT_SOURCE_DIR}/src/yaml<br>
+&nbsp;&nbsp;&nbsp;&nbsp;${CMAKE_CURRENT_SOURCE_DIR}/tests<br>
+)<br>
 <!-- END SCAT CODE -->
 </body>
 </html>
