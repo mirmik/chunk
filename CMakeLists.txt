@@ -17,6 +17,11 @@ target_include_directories(chunk PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/yaml
 )
 
+include(GNUInstallDirs)
+install(TARGETS chunk
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
 if (HAS_LIBSTDCXXFS)
     target_link_libraries(chunk PRIVATE stdc++fs)
 endif()
