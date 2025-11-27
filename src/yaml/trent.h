@@ -10,13 +10,12 @@
 #include <cstring>
 #include <initializer_list>
 #include <map>
-#include <nos/buffer.h>
-#include <nos/print.h>
-#include <nos/trent/trent_path.h>
-#include <nos/util/ctrdtr.h>
-#include <nos/util/error.h>
-#include <nos/util/expected.h>
-#include <nos/util/flat_map.h>
+#include "buffer.h"
+#include "trent_path.h"
+#include "ctrdtr.h"
+#include "error.h"
+#include "expected.h"
+#include "flat_map.h"
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -300,9 +299,6 @@ namespace nos
         bool is_dict() const;
         bool is_string() const;
 
-        template <class O>
-        nos::expected<size_t, nos::output_error> print_to(O &os) const;
-
         trent &operator=(const trent &other);
         trent &operator=(trent &&other) noexcept;
 
@@ -340,69 +336,7 @@ namespace nos
             }
         }
     };
-
-    template <class O>
-    nos::expected<size_t, nos::output_error> trent::print_to(O &os) const
-    {
-        bool sep = false;
-
-        switch (get_type())
-        {
-        case type::boolean:
-            nos::print_to(os, unsafe_bool_const() ? "true" : "false");
-            return 0;
-
-        case type::numer:
-            nos::print_to(os, unsafe_numer_const());
-            return 0;
-
-        case type::string:
-            os.putbyte('"');
-            nos::print_to(os, unsafe_string_const());
-            os.putbyte('"');
-            return 0;
-
-        case type::list:
-            os.putbyte('[');
-
-            for (auto &v : unsafe_list_const())
-            {
-                if (sep)
-                    os.putbyte(',');
-
-                v.print_to(os);
-                sep = true;
-            }
-
-            os.putbyte(']');
-            return 0;
-
-        case type::dict:
-            os.putbyte('{');
-
-            for (auto &p : unsafe_dict_const())
-            {
-                if (sep)
-                    os.putbyte(',');
-
-                os.putbyte('"');
-                nos::print_to(os, p.first);
-                os.putbyte('"');
-                os.putbyte(':');
-                p.second.print_to(os);
-                sep = true;
-            }
-
-            os.putbyte('}');
-            return 0;
-
-        case type::nil:
-            nos::print_to(os, "nil");
-            return 0;
-        }
-        return 0;
-    }
-
-} // namespace nos
+}
+    
 
 #endif

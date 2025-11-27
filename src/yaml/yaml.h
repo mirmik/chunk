@@ -2,7 +2,7 @@
 #define NOS_TRENT_YAML_H
 
 #include <iosfwd>
-#include <nos/trent/trent.h>
+#include "trent.h"
 #include <string>
 
 namespace nos

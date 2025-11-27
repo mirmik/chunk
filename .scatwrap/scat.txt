@@ -6,8 +6,8 @@
 </head>
 <body>
 <!-- BEGIN SCAT CODE -->
-src/*<br>
-tests/*<br>
+src/**<br>
+tests/**<br>
 !tests/doctest/**<br>
 CMakeLists.txt<br>
 scat.txt<br>

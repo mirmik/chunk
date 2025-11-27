@@ -1,5 +1,5 @@
-src/*
-tests/*
+src/**
+tests/**
 !tests/doctest/**
 CMakeLists.txt
 scat.txt

@@ -1,4 +1,5 @@
-#include <nos/trent/trent.h>
+#include "trent.h"
+#include "trent_path.h"
 
 const char *nos::typestr(nos::trent_type m_type)
 {
