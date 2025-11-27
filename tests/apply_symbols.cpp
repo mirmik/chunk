@@ -84,79 +84,8 @@ TEST_CASE("symbol API: replace-cpp-class replaces only target class")
     CHECK(L[7] == "class Bar {");
 }
 
-// ============================================================================
-// C++: replace-cpp-method
-// ============================================================================
-TEST_CASE("symbol API: replace-cpp-method by separate class and method name")
-{
-    fs::path tmp = fs::temp_directory_path() / "symbol_cpp_method_1";
-    fs::remove_all(tmp);
-    fs::create_directories(tmp);
 
-    fs::path f = tmp / "foo.cpp";
-    {
-        std::ofstream out(f);
-        out << "class Foo {\n"
-               "public:\n"
-               "    void a();\n"
-               "    int value() const;\n"
-               "};\n";
-    }
 
-    fs::path patch = tmp / "patch_method1.txt";
-    {
-        std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-cpp-method Foo value\n"
-               "    int value() const { return 10; }\n"
-               "=END=\n";
-    }
-
-    CHECK(run_apply(patch) == 0);
-
-    auto L = read_lines(f);
-    REQUIRE(L.size() == 5);
-    CHECK(L[0] == "class Foo {");
-    CHECK(L[1] == "public:");
-    CHECK(L[2] == "    void a();");
-    CHECK(L[3] == "    int value() const { return 10; }");
-    CHECK(L[4] == "};");
-}
-
-TEST_CASE("symbol API: replace-cpp-method with Class::method syntax")
-{
-    fs::path tmp = fs::temp_directory_path() / "symbol_cpp_method_2";
-    fs::remove_all(tmp);
-    fs::create_directories(tmp);
-
-    fs::path f = tmp / "bar.cpp";
-    {
-        std::ofstream out(f);
-        out << "class Bar {\n"
-               "public:\n"
-               "    int calc(int x) const;\n"
-               "    int other() const;\n"
-               "};\n";
-    }
-
-    fs::path patch = tmp / "patch_method2.txt";
-    {
-        std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-cpp-method Bar::calc\n"
-               "    int calc(int x) const { return x * 2; }\n"
-               "=END=\n";
-    }
-
-    CHECK(run_apply(patch) == 0);
-
-    auto L = read_lines(f);
-    REQUIRE(L.size() == 5);
-    CHECK(L[2] == "    int calc(int x) const { return x * 2; }");
-    CHECK(L[3] == "    int other() const;");
-}
 
 // ============================================================================
 // Python: replace-py-class

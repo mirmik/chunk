@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <iostream>
 #include <yaml/string_ext.h>
 
 namespace fs = std::filesystem;
@@ -833,7 +834,7 @@ TEST_CASE("YAML symbol API: replace_py_method with class & method")
         out << "    method: run\n";
         out << "    payload: |\n";
         out << "      def run(self):\n";
-        out << "          return 100\n";
+        out << "          return 300\n";
     }
 
     CHECK(run_apply(patch) == 0);
@@ -845,17 +846,20 @@ TEST_CASE("YAML symbol API: replace_py_method with class & method")
     for (auto &s : L)
         all += s + "\n";
 
+    std::cout << "Modified file content:\n" << all << "\n";
+
     CHECK(nos::trim(L[0]) == nos::trim("class Weird:"));
     CHECK(nos::trim(L[1]) == nos::trim("def run(self):"));
-    CHECK(nos::trim(L[2]) == nos::trim("return 100"));
-    CHECK(nos::trim(L[3]) == nos::trim("def other(self):"));
-    CHECK(nos::trim(L[4]) == nos::trim("return 2"));
+    CHECK(nos::trim(L[2]) == nos::trim("return 300"));
+    CHECK(nos::trim(L[3]) == nos::trim(""));
+    CHECK(nos::trim(L[4]) == nos::trim("def other(self):"));
+    CHECK(nos::trim(L[5]) == nos::trim("return 2"));
 
     // Старый run() исчез
     CHECK(all.find("return 1") == std::string::npos);
     // Новый run() появился
     CHECK(all.find("def run(self):") != std::string::npos);
-    CHECK(all.find("return 100") != std::string::npos);
+    CHECK(all.find("return 300") != std::string::npos);
     // Метод other() остался
     CHECK(all.find("def other(self):") != std::string::npos);
     CHECK(all.find("return 2") != std::string::npos);

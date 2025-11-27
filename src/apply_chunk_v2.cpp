@@ -670,6 +670,43 @@ static void apply_text_commands(const std::string &filepath,
 
 }
 
+static std::string extract_indent_prefix(const std::vector<std::string> &lines,
+                                         int index)
+{
+    if (index < 0 || index >= static_cast<int>(lines.size()))
+        return {};
+
+    const std::string &line = lines[static_cast<std::size_t>(index)];
+    std::size_t j = 0;
+    while (j < line.size() &&
+           (line[j] == ' ' || line[j] == '\t'))
+        ++j;
+
+    return std::string(line, 0, j);
+}
+
+static std::vector<std::string>
+apply_indent_prefix(const std::vector<std::string> &payload,
+                    const std::string &prefix,
+                    bool enabled)
+{
+    if (!enabled || prefix.empty())
+        return payload;
+
+    std::vector<std::string> result;
+    result.reserve(payload.size());
+    for (const auto &ln : payload)
+    {
+        if (ln.empty())
+            result.push_back(ln);
+        else
+            result.push_back(prefix + ln);
+    }
+    return result;
+}
+
+
+
 static std::string join_lines(const std::vector<std::string> &lines)
 {
     if (lines.empty())
@@ -697,9 +734,10 @@ static void apply_symbol_commands(const std::string &filepath,
 {
     for (const Section *s : sections)
     {
-        // Всегда работаем с текущей версией файла
+        // Всегда работаем с актуальной версией файла в каждой итерации
         std::string text = join_lines(lines);
 
+        // --- C++: class / method -------------------------------------------------
         if (s->command == "replace-cpp-class" ||
             s->command == "replace-cpp-method")
         {
@@ -724,11 +762,18 @@ static void apply_symbol_commands(const std::string &filepath,
                         "replace-cpp-class: invalid region");
 
                 auto begin = lines.begin() + r.start_line;
-                auto end = lines.begin() + (r.end_line + 1);
+                auto end   = lines.begin() + (r.end_line + 1);
+
+                std::string prefix =
+                    extract_indent_prefix(lines, r.start_line);
+                std::vector<std::string> payload =
+                    apply_indent_prefix(s->payload, prefix,
+                                        s->indent_from_marker);
+
                 lines.erase(begin, end);
                 lines.insert(lines.begin() + r.start_line,
-                             s->payload.begin(),
-                             s->payload.end());
+                             payload.begin(),
+                             payload.end());
             }
             else // replace-cpp-method
             {
@@ -737,7 +782,7 @@ static void apply_symbol_commands(const std::string &filepath,
 
                 if (!s->arg2.empty())
                 {
-                    cls = s->arg1;
+                    cls    = s->arg1;
                     method = s->arg2;
                 }
                 else
@@ -747,8 +792,7 @@ static void apply_symbol_commands(const std::string &filepath,
                         throw std::runtime_error(
                             "replace-cpp-method: expected 'Class::method' or "
                             "'Class method'");
-
-                    cls = s->arg1.substr(0, pos);
+                    cls    = s->arg1.substr(0, pos);
                     method = s->arg1.substr(pos + 2);
                 }
 
@@ -768,16 +812,24 @@ static void apply_symbol_commands(const std::string &filepath,
                         "replace-cpp-method: invalid region");
 
                 auto begin = lines.begin() + r.start_line;
-                auto end = lines.begin() + (r.end_line + 1);
+                auto end   = lines.begin() + (r.end_line + 1);
+
+                std::string prefix =
+                    extract_indent_prefix(lines, r.start_line);
+                std::vector<std::string> payload =
+                    apply_indent_prefix(s->payload, prefix,
+                                        s->indent_from_marker);
+
                 lines.erase(begin, end);
                 lines.insert(lines.begin() + r.start_line,
-                             s->payload.begin(),
-                             s->payload.end());
+                             payload.begin(),
+                             payload.end());
             }
 
             continue;
         }
 
+        // --- Python: class / method ---------------------------------------------
         if (s->command == "replace-py-class" ||
             s->command == "replace-py-method")
         {
@@ -802,11 +854,18 @@ static void apply_symbol_commands(const std::string &filepath,
                         "replace-py-class: invalid region");
 
                 auto begin = lines.begin() + r.start_line;
-                auto end = lines.begin() + (r.end_line + 1);
+                auto end   = lines.begin() + (r.end_line + 1);
+
+                std::string prefix =
+                    extract_indent_prefix(lines, r.start_line);
+                std::vector<std::string> payload =
+                    apply_indent_prefix(s->payload, prefix,
+                                        s->indent_from_marker);
+
                 lines.erase(begin, end);
                 lines.insert(lines.begin() + r.start_line,
-                             s->payload.begin(),
-                             s->payload.end());
+                             payload.begin(),
+                             payload.end());
             }
             else // replace-py-method
             {
@@ -815,7 +874,7 @@ static void apply_symbol_commands(const std::string &filepath,
 
                 if (!s->arg2.empty())
                 {
-                    cls = s->arg1;
+                    cls    = s->arg1;
                     method = s->arg2;
                 }
                 else
@@ -825,8 +884,7 @@ static void apply_symbol_commands(const std::string &filepath,
                         throw std::runtime_error(
                             "replace-py-method: expected 'Class.method' or "
                             "'Class method'");
-
-                    cls = s->arg1.substr(0, pos);
+                    cls    = s->arg1.substr(0, pos);
                     method = s->arg1.substr(pos + 1);
                 }
 
@@ -846,20 +904,30 @@ static void apply_symbol_commands(const std::string &filepath,
                         "replace-py-method: invalid region");
 
                 auto begin = lines.begin() + r.start_line;
-                auto end = lines.begin() + (r.end_line + 1);
+                auto end   = lines.begin() + (r.end_line + 1);
+
+                std::string prefix =
+                    extract_indent_prefix(lines, r.start_line);
+                std::vector<std::string> payload =
+                    apply_indent_prefix(s->payload, prefix,
+                                        s->indent_from_marker);
+
                 lines.erase(begin, end);
                 lines.insert(lines.begin() + r.start_line,
-                             s->payload.begin(),
-                             s->payload.end());
+                             payload.begin(),
+                             payload.end());
             }
 
             continue;
         }
 
-        throw std::runtime_error("apply_symbol_commands: unknown command: " +
-                                 s->command);
+        // Если сюда попали — значит в sections засунули что-то, что не является
+        // symbol-командой.
+        throw std::runtime_error(
+            "apply_symbol_commands: unknown command: " + s->command);
     }
 }
+
 
 static Section parse_section(std::istream &in, const std::string &header)
 {
