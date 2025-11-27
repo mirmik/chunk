@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <yaml/yaml.h>
 
 namespace fs = std::filesystem;
 
@@ -23,11 +24,14 @@ struct Section
     std::vector<std::string> payload;
     std::vector<std::string> marker;
     std::vector<std::string> before; // контекст до маркера (BEFORE:)
-    std::vector<std::string> after; // контекст после маркера (AFTER:)
+    std::vector<std::string> after;  // контекст после маркера (AFTER:)
     int seq = 0;
     std::string arg1; // доп. аргументы команды (например, имя класса)
     std::string arg2; // второй аргумент (например, имя метода)
+
+    bool indent_from_marker = false;
 };
+
 
 static std::vector<std::string> read_file_lines(const fs::path &p)
 {
@@ -88,6 +92,195 @@ static bool is_symbol_command(const std::string &cmd)
     return cmd == "replace-cpp-method" || cmd == "replace-cpp-class" ||
            cmd == "replace-py-method" || cmd == "replace-py-class";
 }
+
+static std::vector<std::string> split_scalar_lines(const std::string &text)
+{
+    std::vector<std::string> result;
+    if (text.empty())
+        return result;
+
+    std::size_t start = 0;
+    const std::size_t n = text.size();
+
+    while (true)
+    {
+        std::size_t pos = text.find('\n', start);
+        if (pos == std::string::npos)
+        {
+            // Последний фрагмент без завершающего '\n'
+            if (start < n)
+                result.emplace_back(text.substr(start));
+            break;
+        }
+
+        result.emplace_back(text.substr(start, pos - start));
+        start = pos + 1;
+
+        if (start >= n)
+        {
+            // Строка заканчивалась на '\n' — не создаём лишнюю пустую строку.
+            break;
+        }
+    }
+
+    return result;
+}
+
+static std::vector<Section> parse_yaml_patch_text(const std::string &text)
+{
+    using nos::trent;
+
+    trent root = nos::yaml::parse(text);
+
+    const trent *ops_node = nullptr;
+
+    if (root.is_dict())
+    {
+        auto &dict = root.as_dict();
+        auto it = dict.find("operations");
+        if (it == dict.end())
+            throw std::runtime_error("YAML patch: missing 'operations' key");
+        ops_node = &it->second;
+    }
+    else if (root.is_list())
+    {
+        // Допускаем формат: в корне сразу список операций
+        ops_node = &root;
+    }
+    else
+    {
+        throw std::runtime_error(
+            "YAML patch: root must be mapping or sequence");
+    }
+
+    if (!ops_node->is_list())
+        throw std::runtime_error("YAML patch: 'operations' must be a sequence");
+
+    const auto &ops = ops_node->as_list();
+    std::vector<Section> sections;
+    sections.reserve(ops.size());
+
+    int seq = 0;
+
+    for (const trent &op_node : ops)
+    {
+        if (!op_node.is_dict())
+            throw std::runtime_error("YAML patch: each operation must be a mapping");
+
+        const auto &m = op_node.as_dict();
+
+        auto it_path = m.find("path");
+        auto it_op   = m.find("op");
+        if (it_path == m.end())
+            throw std::runtime_error("YAML patch: operation missing 'path'");
+        if (it_op == m.end())
+            throw std::runtime_error("YAML patch: operation missing 'op'");
+
+        Section s;
+        s.filepath = it_path->second.as_string();
+        if (s.filepath.empty())
+            throw std::runtime_error("YAML patch: 'path' must not be empty");
+
+        std::string op_name = it_op->second.as_string();
+
+        if (op_name == "create_file")
+            s.command = "create-file";
+        else if (op_name == "delete_file")
+            s.command = "delete-file";
+        else if (op_name == "insert_after_text")
+            s.command = "insert-after-text";
+        else if (op_name == "insert_before_text")
+            s.command = "insert-before-text";
+        else if (op_name == "replace_text")
+            s.command = "replace-text";
+        else if (op_name == "delete_text")
+            s.command = "delete-text";
+        else
+            throw std::runtime_error("YAML patch: unknown op: " + op_name);
+
+        s.seq = seq++;
+
+        auto get_scalar = [&](const char *key) -> std::string
+        {
+            auto it = m.find(key);
+            if (it == m.end())
+                return std::string();
+            const trent &v = it->second;
+            if (v.is_nil())
+                return std::string();
+            return v.as_string();
+        };
+
+        std::string marker_text  = get_scalar("marker");
+        std::string before_text  = get_scalar("before");
+        std::string after_text   = get_scalar("after");
+        std::string payload_text = get_scalar("payload");
+
+        // Опции (сейчас используем только indent: from-marker)
+        auto it_opts = m.find("options");
+        if (it_opts != m.end() && !it_opts->second.is_nil())
+        {
+            const auto &opts = it_opts->second.as_dict();
+            auto it_ind = opts.find("indent");
+            if (it_ind != opts.end())
+            {
+                std::string mode = it_ind->second.as_string();
+                if (mode == "from-marker")
+                {
+                    s.indent_from_marker = true;
+                }
+                else if (mode == "none" || mode == "as-is")
+                {
+                    s.indent_from_marker = false;
+                }
+                else
+                {
+                    throw std::runtime_error(
+                        "YAML patch: unknown indent mode: " + mode);
+                }
+            }
+        }
+
+        if (s.command == "create-file")
+        {
+            if (!payload_text.empty())
+                s.payload = split_scalar_lines(payload_text);
+        }
+        else if (s.command == "delete-file")
+        {
+            // Ничего больше не нужно.
+        }
+        else if (is_text_command(s.command))
+        {
+            if (marker_text.empty())
+                throw std::runtime_error(
+                    "YAML patch: text op '" + op_name +
+                    "' for file '" + s.filepath + "' requires 'marker'");
+
+            s.marker = split_scalar_lines(marker_text);
+
+            if (!before_text.empty())
+                s.before = split_scalar_lines(before_text);
+            if (!after_text.empty())
+                s.after = split_scalar_lines(after_text);
+
+            if (s.command != "delete-text")
+            {
+                if (!payload_text.empty())
+                    s.payload = split_scalar_lines(payload_text);
+            }
+        }
+        else
+        {
+            // сюда попадать не должны (create/delete уже обработаны)
+        }
+
+        sections.emplace_back(std::move(s));
+    }
+
+    return sections;
+}
+
 
 static int find_subsequence(const std::vector<std::string> &haystack,
                             const std::vector<std::string> &needle)
@@ -243,18 +436,50 @@ static void apply_text_commands(const std::string &filepath,
 
         std::size_t pos = static_cast<std::size_t>(idx);
 
+        // Локальная копия payload, чтобы можно было добавить отступ
+        std::vector<std::string> payload = s->payload;
+
+        if (s->indent_from_marker &&
+            (s->command == "insert-after-text" ||
+             s->command == "insert-before-text" ||
+             s->command == "replace-text"))
+        {
+            // Берём отступ первой строки маркера
+            std::string prefix;
+            if (pos < lines.size())
+            {
+                const std::string &marker_line = lines[pos];
+                std::size_t j = 0;
+                while (j < marker_line.size() &&
+                       (marker_line[j] == ' ' || marker_line[j] == '\t'))
+                    ++j;
+                prefix.assign(marker_line, 0, j);
+            }
+
+            std::vector<std::string> adjusted;
+            adjusted.reserve(payload.size());
+            for (const auto &ln : payload)
+            {
+                if (ln.empty())
+                    adjusted.push_back(ln);
+                else
+                    adjusted.push_back(prefix + ln);
+            }
+            payload.swap(adjusted);
+        }
+
         if (s->command == "insert-after-text")
         {
             pos += s->marker.size();
             lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(pos),
-                         s->payload.begin(),
-                         s->payload.end());
+                         payload.begin(),
+                         payload.end());
         }
         else if (s->command == "insert-before-text")
         {
             lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(pos),
-                         s->payload.begin(),
-                         s->payload.end());
+                         payload.begin(),
+                         payload.end());
         }
         else if (s->command == "replace-text")
         {
@@ -262,8 +487,8 @@ static void apply_text_commands(const std::string &filepath,
             auto end = begin + static_cast<std::ptrdiff_t>(s->marker.size());
             lines.erase(begin, end);
             lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(pos),
-                         s->payload.begin(),
-                         s->payload.end());
+                         payload.begin(),
+                         payload.end());
         }
         else if (s->command == "delete-text")
         {
@@ -825,27 +1050,58 @@ int apply_chunk_main(int argc, char **argv)
         return 1;
     }
 
-    std::ifstream in(argv[1]);
-    if (!in)
+    std::ifstream fin(argv[1], std::ios::binary);
+    if (!fin)
     {
         std::cerr << "cannot open patch file: " << argv[1] << "\n";
         return 1;
     }
 
-    std::string line;
+    std::ostringstream oss;
+    oss << fin.rdbuf();
+    std::string text = oss.str();
+
+    // Находим первую непустую строку
+    std::string first_nonempty;
+    {
+        std::istringstream iss(text);
+        std::string line;
+        while (std::getline(iss, line))
+        {
+            if (!trim(line).empty())
+            {
+                first_nonempty = line;
+                break;
+            }
+        }
+    }
+
     std::vector<Section> sections;
-    int seq = 0;
 
     try
     {
-        while (std::getline(in, line))
+        int seq = 0;
+
+        if (!first_nonempty.empty() &&
+            first_nonempty.rfind("=== file:", 0) == 0)
         {
-            if (line.rfind("=== file:", 0) == 0)
+            // Старый формат патча
+            std::istringstream iss(text);
+            std::string line;
+            while (std::getline(iss, line))
             {
-                Section s = parse_section(in, line);
-                s.seq = seq++;
-                sections.push_back(std::move(s));
+                if (line.rfind("=== file:", 0) == 0)
+                {
+                    Section s = parse_section(iss, line);
+                    s.seq = seq++;
+                    sections.push_back(std::move(s));
+                }
             }
+        }
+        else
+        {
+            // Новый YAML-формат: description + operations
+            sections = parse_yaml_patch_text(text);
         }
 
         apply_all(sections);
