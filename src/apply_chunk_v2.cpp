@@ -216,7 +216,7 @@ static std::vector<Section> parse_yaml_patch_text(const std::string &text)
         std::string after_text   = get_scalar("after");
         std::string payload_text = get_scalar("payload");
 
-        // Опции (сейчас используем только indent: from-marker)
+        // Опции (используем только indent)
         auto it_opts = m.find("options");
         if (it_opts != m.end() && !it_opts->second.is_nil())
         {
@@ -225,13 +225,16 @@ static std::vector<Section> parse_yaml_patch_text(const std::string &text)
             if (it_ind != opts.end())
             {
                 std::string mode = it_ind->second.as_string();
-                if (mode == "from-marker")
-                {
-                    s.indent_from_marker = true;
-                }
-                else if (mode == "none" || mode == "as-is")
+
+                // явное выключение авто-идентации
+                if (mode == "none" || mode == "as-is")
                 {
                     s.indent_from_marker = false;
+                }
+                // явно включить (на случай если кто-то всё ещё пишет from-marker)
+                else if (mode == "from-marker" || mode == "marker" || mode == "auto")
+                {
+                    s.indent_from_marker = true;
                 }
                 else
                 {
