@@ -182,7 +182,6 @@ static std::vector<Section> parse_yaml_patch_text(const std::string &text)
             throw std::runtime_error("YAML patch: 'path' must not be empty");
 
         std::string op_name = it_op->second.as_string();
-
         if (op_name == "create_file")
             s.command = "create-file";
         else if (op_name == "delete_file")
@@ -195,6 +194,14 @@ static std::vector<Section> parse_yaml_patch_text(const std::string &text)
             s.command = "replace-text";
         else if (op_name == "delete_text")
             s.command = "delete-text";
+        else if (op_name == "replace_cpp_class")
+            s.command = "replace-cpp-class";
+        else if (op_name == "replace_cpp_method")
+            s.command = "replace-cpp-method";
+        else if (op_name == "replace_py_class")
+            s.command = "replace-py-class";
+        else if (op_name == "replace_py_method")
+            s.command = "replace-py-method";
         else
             throw std::runtime_error("YAML patch: unknown op: " + op_name);
 
@@ -215,7 +222,9 @@ static std::vector<Section> parse_yaml_patch_text(const std::string &text)
         std::string before_text  = get_scalar("before");
         std::string after_text   = get_scalar("after");
         std::string payload_text = get_scalar("payload");
-
+        std::string class_text   = get_scalar("class");
+        std::string method_text  = get_scalar("method");
+        std::string symbol_text  = get_scalar("symbol");
         // Опции (используем только indent)
         auto it_opts = m.find("options");
         if (it_opts != m.end() && !it_opts->second.is_nil())
@@ -225,7 +234,6 @@ static std::vector<Section> parse_yaml_patch_text(const std::string &text)
             if (it_ind != opts.end())
             {
                 std::string mode = it_ind->second.as_string();
-
                 // явное выключение авто-идентации
                 if (mode == "none" || mode == "as-is")
                 {
@@ -243,7 +251,6 @@ static std::vector<Section> parse_yaml_patch_text(const std::string &text)
                 }
             }
         }
-
         if (s.command == "create-file")
         {
             if (!payload_text.empty())
@@ -259,23 +266,58 @@ static std::vector<Section> parse_yaml_patch_text(const std::string &text)
                 throw std::runtime_error(
                     "YAML patch: text op '" + op_name +
                     "' for file '" + s.filepath + "' requires 'marker'");
-
             s.marker = split_scalar_lines(marker_text);
 
             if (!before_text.empty())
                 s.before = split_scalar_lines(before_text);
             if (!after_text.empty())
                 s.after = split_scalar_lines(after_text);
-
             if (s.command != "delete-text")
             {
                 if (!payload_text.empty())
                     s.payload = split_scalar_lines(payload_text);
             }
         }
+        else if (is_symbol_command(s.command))
+        {
+            if (payload_text.empty())
+                throw std::runtime_error(
+                    "YAML patch: symbol op '" + op_name +
+                    "' for file '" + s.filepath + "' requires 'payload'");
+            s.payload = split_scalar_lines(payload_text);
+
+            if (s.command == "replace-cpp-class" ||
+                s.command == "replace-py-class")
+            {
+                if (class_text.empty())
+                    throw std::runtime_error(
+                        "YAML patch: op '" + op_name + "' requires 'class' key");
+                s.arg1 = class_text;
+            }
+            else if (s.command == "replace-cpp-method" ||
+                     s.command == "replace-py-method")
+            {
+                if (!class_text.empty() && !method_text.empty())
+                {
+                    s.arg1 = class_text;
+                    s.arg2 = method_text;
+                }
+                else if (!symbol_text.empty())
+                {
+                    // для cpp ожидаем "Class::method", для python — "Class.method"
+                    s.arg1 = symbol_text;
+                }
+                else
+                {
+                    throw std::runtime_error(
+                        "YAML patch: op '" + op_name +
+                        "' requires 'class'+'method' or 'symbol'");
+                }
+            }
+        }
         else
         {
-            // сюда попадать не должны (create/delete уже обработаны)
+            // сюда попадать не должны (create/delete/symbol уже обработаны)
         }
 
         sections.emplace_back(std::move(s));
