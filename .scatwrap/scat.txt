@@ -12,12 +12,16 @@ tests/**<br>
 CMakeLists.txt<br>
 scat.txt<br>
 README.md<br>
+CHUNK.md<br>
 <br>
 [TREE]<br>
 **<br>
 !CMakeFiles/**<br>
 !.github/**<br>
 !.git/**<br>
+scat.txt<br>
+README.md<br>
+CHUNK.md<br>
 <br>
 <br>
 [MAPFORMAT]<br>

@@ -4,12 +4,16 @@ tests/**
 CMakeLists.txt
 scat.txt
 README.md
+CHUNK.md
 
 [TREE]
 **
 !CMakeFiles/**
 !.github/**
 !.git/**
+scat.txt
+README.md
+CHUNK.md
 
 
 [MAPFORMAT]
