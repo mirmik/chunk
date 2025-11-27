@@ -51,14 +51,14 @@ TEST_CASE("apply_chunk_main: insert-after-text")
     fs::path patch = tmp / "patch.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- insert-after-text\n"
-               "LINE2\n"
-               "---\n"
-               "AFTER\n"
-               "TEXT\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: insert_after_text\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    marker: \"LINE2\"\n"
+               "    payload: |\n"
+               "      AFTER\n"
+               "      TEXT\n";
     }
 
     int r = run_apply(patch);
@@ -90,14 +90,14 @@ TEST_CASE("apply_chunk_main: insert-before-text")
     fs::path patch = tmp / "patch.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- insert-before-text\n"
-               "BBB\n"
-               "---\n"
-               "X\n"
-               "Y\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: insert_before_text\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    marker: \"BBB\"\n"
+               "    payload: |\n"
+               "      X\n"
+               "      Y\n";
     }
 
     int r = run_apply(patch);
@@ -129,14 +129,14 @@ TEST_CASE("apply_chunk_main: replace-text")
     fs::path patch = tmp / "patch.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-text\n"
-               "beta\n"
-               "---\n"
-               "BETA1\n"
-               "BETA2\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: replace_text\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    marker: \"beta\"\n"
+               "    payload: |\n"
+               "      BETA1\n"
+               "      BETA2\n";
     }
 
     int r = run_apply(patch);
@@ -168,13 +168,13 @@ TEST_CASE("apply_chunk_main: delete-text")
     fs::path patch = tmp / "patch.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- delete-text\n"
-               "two\n"
-               "three\n"
-               "---\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: delete_text\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    marker: |\n"
+               "      two\n"
+               "      three\n";
     }
 
     int r = run_apply(patch);
@@ -206,18 +206,16 @@ TEST_CASE("apply_chunk_main: delete-file then create-file")
     fs::path patch = tmp / "patch.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- delete-file\n"
-               "=END=\n"
-               "\n"
-               "=== file: "
-            << f.string()
-            << " ===\n"
-               "--- create-file\n"
-               "NEW1\n"
-               "NEW2\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: delete_file\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "  - op: create_file\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    payload: |\n"
+               "      NEW1\n"
+               "      NEW2\n";
     }
 
     int r = run_apply(patch);

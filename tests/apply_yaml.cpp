@@ -50,14 +50,12 @@ TEST_CASE("YAML: only MARKER: behaves like legacy replace-text")
     fs::path patch = tmp / "patch1.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-text\n"
-               "MARKER:\n"
-               "B\n"
-               "---\n"
-               "X\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: replace_text\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    marker: \"B\"\n"
+               "    payload: \"X\"\n";
     }
 
     CHECK(run_apply(patch) == 0);
@@ -93,16 +91,13 @@ TEST_CASE("YAML: BEFORE fuzzy selects the correct marker")
     fs::path patch = tmp / "patch2.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-text\n"
-               "BEFORE:\n"
-               "XXX\n"
-               "MARKER:\n"
-               "target\n"
-               "---\n"
-               "SECOND\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: replace_text\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    before: \"XXX\"\n"
+               "    marker: \"target\"\n"
+               "    payload: \"SECOND\"\n";
     }
 
     CHECK(run_apply(patch) == 0);
@@ -136,16 +131,13 @@ TEST_CASE("YAML: AFTER fuzzy selects correct block")
     fs::path patch = tmp / "patch3.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-text\n"
-               "MARKER:\n"
-               "X\n"
-               "AFTER:\n"
-               "finish\n"
-               "---\n"
-               "CHANGED\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: replace_text\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    marker: \"X\"\n"
+               "    after: \"finish\"\n"
+               "    payload: \"CHANGED\"\n";
     }
 
     CHECK(run_apply(patch) == 0);
@@ -179,18 +171,14 @@ TEST_CASE("YAML: strong fuzzy match with BEFORE + AFTER")
     fs::path patch = tmp / "patch4.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-text\n"
-               "BEFORE:\n"
-               "C\n"
-               "MARKER:\n"
-               "mark\n"
-               "AFTER:\n"
-               "D\n"
-               "---\n"
-               "SELECTED\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: replace_text\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    before: \"C\"\n"
+               "    marker: \"mark\"\n"
+               "    after: \"D\"\n"
+               "    payload: \"SELECTED\"\n";
     }
 
     CHECK(run_apply(patch) == 0);
@@ -199,42 +187,6 @@ TEST_CASE("YAML: strong fuzzy match with BEFORE + AFTER")
     REQUIRE(L.size() == 7);
     CHECK(L[5] == "SELECTED");
 }
-
-// ============================================================================
-// 7. Legacy format still works
-// ============================================================================
-TEST_CASE("YAML: legacy replace-text still works")
-{
-    fs::path tmp = fs::temp_directory_path() / "yaml_legacy_test2";
-    fs::remove_all(tmp);
-    fs::create_directories(tmp);
-
-    fs::path f = tmp / "g.txt";
-    {
-        std::ofstream out(f);
-        out << "1\n"
-               "2\n"
-               "3\n";
-    }
-
-    fs::path patch = tmp / "patch7.txt";
-    {
-        std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-text\n"
-               "2\n"
-               "---\n"
-               "X\n"
-               "=END=\n";
-    }
-
-    CHECK(run_apply(patch) == 0);
-
-    auto L = read_lines(f);
-    CHECK(L[1] == "X");
-}
-
 
 // ============================================================================
 // 8. Новый YAML-формат: create_file + delete_file

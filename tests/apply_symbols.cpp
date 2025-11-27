@@ -59,14 +59,16 @@ TEST_CASE("symbol API: replace-cpp-class replaces only target class")
     fs::path patch = tmp / "patch_class.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-cpp-class Foo\n"
-               "class Foo {\n"
-               "public:\n"
-               "    int y() const { return 42; }\n"
-               "};\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: replace_cpp_class\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    class: \"Foo\"\n"
+               "    payload: |\n"
+               "      class Foo {\n"
+               "      public:\n"
+               "          int y() const { return 42; }\n"
+               "      };\n";
     }
 
     CHECK(run_apply(patch) == 0);
@@ -110,15 +112,17 @@ TEST_CASE("symbol API: replace-py-class replaces whole class body")
     fs::path patch = tmp / "patch_py_class.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-py-class Foo\n"
-               "class Foo:\n"
-               "    def __init__(self):\n"
-               "        self.x = 2\n"
-               "    def answer(self):\n"
-               "        return 42\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: replace_py_class\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    class: \"Foo\"\n"
+               "    payload: |\n"
+               "      class Foo:\n"
+               "          def __init__(self):\n"
+               "              self.x = 2\n"
+               "          def answer(self):\n"
+               "              return 42\n";
     }
 
     CHECK(run_apply(patch) == 0);
@@ -179,12 +183,15 @@ TEST_CASE("symbol API: replace-py-method with separate class and method name")
     fs::path patch = tmp / "patch_py_method1.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-py-method Weird run\n"
-               "    def run(self):\n"
-               "        return 100\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: replace_py_method\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    class: \"Weird\"\n"
+               "    method: \"run\"\n"
+               "    payload: |\n"
+               "      def run(self):\n"
+               "          return 100\n";
     }
 
     CHECK(run_apply(patch) == 0);
@@ -235,12 +242,14 @@ TEST_CASE("symbol API: replace-py-method with Class.method syntax")
     fs::path patch = tmp / "patch_py_method2.txt";
     {
         std::ofstream out(patch);
-        out << "=== file: " << f.string()
-            << " ===\n"
-               "--- replace-py-method Foo.bar\n"
-               "    async def bar(self):\n"
-               "        return 2\n"
-               "=END=\n";
+        out << "operations:\n"
+               "  - op: replace_py_method\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    symbol: \"Foo.bar\"\n"
+               "    payload: |\n"
+               "      async def bar(self):\n"
+               "          return 2\n";
     }
 
     CHECK(run_apply(patch) == 0);
