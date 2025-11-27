@@ -28,6 +28,7 @@ CHUNK.md<br>
 ------------------------------<br>
 Актуальная&nbsp;версия&nbsp;репозитория:<br>
 {RAWMAP}<br>
+Присылать&nbsp;патчи&nbsp;к&nbsp;коду&nbsp;можно&nbsp;в&nbsp;формате&nbsp;CHUNK:&nbsp;https://mirmik.github.io/chunk/CHUNK.html<br>
 ------------------------------<br>
 <!-- END SCAT CODE -->
 </body>
