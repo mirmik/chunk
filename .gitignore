@@ -1,0 +1,62 @@
+# --- Build directories ---
+build/
+build-*/
+out/
+bin/
+obj/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CTestTestfile.cmake
+compile_commands.json
+install_manifest.txt
+x64/
+
+# Visual Studio / VSCode / CLion
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.pdb
+*.ipch
+*.user
+*.opensdf
+*.sdf
+*.cache
+.vscode/
+.idea/
+
+# Compiled binaries
+*.exe
+*.out
+*.obj
+*.o
+*.a
+*.so
+*.dll
+*.lib
+chunk
+
+# macOS junk
+.DS_Store
+
+# Windows junk
+Thumbs.db
+
+# Logs
+*.log
+
+# Other editor clutter
+*.swp
+*.swo
+
+# Sanitizer outputs
+*.lsan
+
+chunk.dir
+Testing
+chunk_tests
+
+tree.patch
