@@ -13,8 +13,9 @@
 <br>
 struct&nbsp;Section<br>
 {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;filepath;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;command;<br>
+	std::string&nbsp;filepath;<br>
+	std::string&nbsp;command;<br>
+	std::string&nbsp;language;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;a&nbsp;=&nbsp;-1;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;b&nbsp;=&nbsp;-1;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;payload;<br>

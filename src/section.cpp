@@ -92,26 +92,31 @@ bool is_symbol_command(const std::string &cmd)
 
 std::vector<Section> parse_yaml_patch_text(const std::string &text)
 {
-    trent root = nos::yaml::parse(text);
-    const trent *ops_node = nullptr;
-
-    if (root.is_dict())
-    {
-        auto &dict = root.as_dict();
-        auto it = dict.find("operations");
-        if (it == dict.end())
-            throw std::runtime_error("YAML patch: missing 'operations' key");
-        ops_node = &it->second;
-    }
-    else if (root.is_list())
-    {
-        ops_node = &root;
-    }
-    else
-    {
-        throw std::runtime_error(
-            "YAML patch: root must be mapping or sequence");
-    }
+	trent root = nos::yaml::parse(text);
+	std::string patch_language;
+	const trent *ops_node = nullptr;
+	if (root.is_dict())
+	{
+		auto &dict = root.as_dict();
+		auto it_lang = dict.find("language");
+		if (it_lang != dict.end() && !it_lang->second.is_nil())
+		{
+			patch_language = it_lang->second.as_string();
+		}
+		auto it = dict.find("operations");
+		if (it == dict.end())
+			throw std::runtime_error("YAML patch: missing 'operations' key");
+		ops_node = &it->second;
+	}
+	else if (root.is_list())
+	{
+		ops_node = &root;
+	}
+	else
+	{
+		throw std::runtime_error(
+		    "YAML patch: root must be mapping or sequence");
+	}
 
     if (!ops_node->is_list())
         throw std::runtime_error("YAML patch: 'operations' must be a sequence");
@@ -139,9 +144,9 @@ std::vector<Section> parse_yaml_patch_text(const std::string &text)
         Section s;
         s.filepath = it_path->second.as_string();
         if (s.filepath.empty())
-            throw std::runtime_error("YAML patch: 'path' must not be empty");
-
+        	throw std::runtime_error("YAML patch: 'path' must not be empty");
         s.command = normalize_op_name(it_op->second.as_string());
+        s.language = patch_language;
         s.seq = seq++;
         s.comment = get_scalar(op_node, "comment");
 

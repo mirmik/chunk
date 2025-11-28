@@ -100,26 +100,31 @@ bool&nbsp;is_symbol_command(const&nbsp;std::string&nbsp;&amp;cmd)<br>
 <br>
 std::vector&lt;Section&gt;&nbsp;parse_yaml_patch_text(const&nbsp;std::string&nbsp;&amp;text)<br>
 {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;trent&nbsp;root&nbsp;=&nbsp;nos::yaml::parse(text);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;trent&nbsp;*ops_node&nbsp;=&nbsp;nullptr;<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(root.is_dict())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;&amp;dict&nbsp;=&nbsp;root.as_dict();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;it&nbsp;=&nbsp;dict.find(&quot;operations&quot;);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(it&nbsp;==&nbsp;dict.end())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;YAML&nbsp;patch:&nbsp;missing&nbsp;'operations'&nbsp;key&quot;);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ops_node&nbsp;=&nbsp;&amp;it-&gt;second;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;if&nbsp;(root.is_list())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ops_node&nbsp;=&nbsp;&amp;root;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;else<br>
-&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;YAML&nbsp;patch:&nbsp;root&nbsp;must&nbsp;be&nbsp;mapping&nbsp;or&nbsp;sequence&quot;);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	trent&nbsp;root&nbsp;=&nbsp;nos::yaml::parse(text);<br>
+	std::string&nbsp;patch_language;<br>
+	const&nbsp;trent&nbsp;*ops_node&nbsp;=&nbsp;nullptr;<br>
+	if&nbsp;(root.is_dict())<br>
+	{<br>
+		auto&nbsp;&amp;dict&nbsp;=&nbsp;root.as_dict();<br>
+		auto&nbsp;it_lang&nbsp;=&nbsp;dict.find(&quot;language&quot;);<br>
+		if&nbsp;(it_lang&nbsp;!=&nbsp;dict.end()&nbsp;&amp;&amp;&nbsp;!it_lang-&gt;second.is_nil())<br>
+		{<br>
+			patch_language&nbsp;=&nbsp;it_lang-&gt;second.as_string();<br>
+		}<br>
+		auto&nbsp;it&nbsp;=&nbsp;dict.find(&quot;operations&quot;);<br>
+		if&nbsp;(it&nbsp;==&nbsp;dict.end())<br>
+			throw&nbsp;std::runtime_error(&quot;YAML&nbsp;patch:&nbsp;missing&nbsp;'operations'&nbsp;key&quot;);<br>
+		ops_node&nbsp;=&nbsp;&amp;it-&gt;second;<br>
+	}<br>
+	else&nbsp;if&nbsp;(root.is_list())<br>
+	{<br>
+		ops_node&nbsp;=&nbsp;&amp;root;<br>
+	}<br>
+	else<br>
+	{<br>
+		throw&nbsp;std::runtime_error(<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&quot;YAML&nbsp;patch:&nbsp;root&nbsp;must&nbsp;be&nbsp;mapping&nbsp;or&nbsp;sequence&quot;);<br>
+	}<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!ops_node-&gt;is_list())<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;YAML&nbsp;patch:&nbsp;'operations'&nbsp;must&nbsp;be&nbsp;a&nbsp;sequence&quot;);<br>
@@ -147,9 +152,9 @@ std::vector&lt;Section&gt;&nbsp;parse_yaml_patch_text(const&nbsp;std::string&nbs
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Section&nbsp;s;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s.filepath&nbsp;=&nbsp;it_path-&gt;second.as_string();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s.filepath.empty())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;YAML&nbsp;patch:&nbsp;'path'&nbsp;must&nbsp;not&nbsp;be&nbsp;empty&quot;);<br>
-<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	throw&nbsp;std::runtime_error(&quot;YAML&nbsp;patch:&nbsp;'path'&nbsp;must&nbsp;not&nbsp;be&nbsp;empty&quot;);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s.command&nbsp;=&nbsp;normalize_op_name(it_op-&gt;second.as_string());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s.language&nbsp;=&nbsp;patch_language;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s.seq&nbsp;=&nbsp;seq++;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s.comment&nbsp;=&nbsp;get_scalar(op_node,&nbsp;&quot;comment&quot;);<br>
 <br>

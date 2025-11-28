@@ -11,6 +11,11 @@
 #include&nbsp;&lt;stdexcept&gt;<br>
 #include&nbsp;&lt;string&gt;<br>
 #include&nbsp;&lt;string_view&gt;<br>
+#include&nbsp;&quot;text_commands.h&quot;<br>
+#include&nbsp;&lt;stdexcept&gt;<br>
+#include&nbsp;&lt;string&gt;<br>
+#include&nbsp;&lt;string_view&gt;<br>
+#include&nbsp;&lt;cctype&gt;<br>
 <br>
 namespace<br>
 {<br>
@@ -42,83 +47,163 @@ std::string&nbsp;trim(std::string_view&nbsp;view)<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;std::string(left,&nbsp;(right&nbsp;-&nbsp;left)&nbsp;+&nbsp;1);<br>
 }<br>
+std::string&nbsp;trim(std::string_view&nbsp;view)<br>
+{<br>
+	if&nbsp;(view.empty())<br>
+		return&nbsp;&quot;&quot;;<br>
+<br>
+	const&nbsp;char&nbsp;*left&nbsp;=&nbsp;view.data();<br>
+	const&nbsp;char&nbsp;*right&nbsp;=&nbsp;view.data()&nbsp;+&nbsp;view.size()&nbsp;-&nbsp;1;<br>
+	const&nbsp;char&nbsp;*end&nbsp;=&nbsp;view.data()&nbsp;+&nbsp;view.size();<br>
+	while&nbsp;(left&nbsp;!=&nbsp;end&nbsp;&amp;&amp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(*left&nbsp;==&nbsp;'&nbsp;'&nbsp;||&nbsp;*left&nbsp;==&nbsp;'\n'&nbsp;||&nbsp;*left&nbsp;==&nbsp;'\r'&nbsp;||&nbsp;*left&nbsp;==&nbsp;'\t'))<br>
+		++left;<br>
+<br>
+	if&nbsp;(left&nbsp;==&nbsp;end)<br>
+		return&nbsp;&quot;&quot;;<br>
+<br>
+	while&nbsp;(left&nbsp;!=&nbsp;right&nbsp;&amp;&amp;&nbsp;(*right&nbsp;==&nbsp;'&nbsp;'&nbsp;||&nbsp;*right&nbsp;==&nbsp;'\n'&nbsp;||<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*right&nbsp;==&nbsp;'\r'&nbsp;||&nbsp;*right&nbsp;==&nbsp;'\t'))<br>
+		--right;<br>
+<br>
+	return&nbsp;std::string(left,&nbsp;(right&nbsp;-&nbsp;left)&nbsp;+&nbsp;1);<br>
+}<br>
+<br>
+enum&nbsp;class&nbsp;PatchLanguage<br>
+{<br>
+	Unknown,<br>
+	Cpp,<br>
+	Python<br>
+};<br>
+<br>
+PatchLanguage&nbsp;detect_language(const&nbsp;Section&nbsp;*s)<br>
+{<br>
+	if&nbsp;(!s)<br>
+		return&nbsp;PatchLanguage::Unknown;<br>
+	std::string&nbsp;lang&nbsp;=&nbsp;s-&gt;language;<br>
+	if&nbsp;(lang.empty())<br>
+		return&nbsp;PatchLanguage::Unknown;<br>
+<br>
+	for&nbsp;(char&nbsp;&amp;ch&nbsp;:&nbsp;lang)<br>
+		ch&nbsp;=&nbsp;static_cast&lt;char&gt;(std::tolower(static_cast&lt;unsigned&nbsp;char&gt;(ch)));<br>
+<br>
+	if&nbsp;(lang&nbsp;==&nbsp;&quot;c++&quot;&nbsp;||&nbsp;lang&nbsp;==&nbsp;&quot;cpp&quot;&nbsp;||&nbsp;lang&nbsp;==&nbsp;&quot;cxx&quot;)<br>
+		return&nbsp;PatchLanguage::Cpp;<br>
+	if&nbsp;(lang&nbsp;==&nbsp;&quot;python&quot;&nbsp;||&nbsp;lang&nbsp;==&nbsp;&quot;py&quot;)<br>
+		return&nbsp;PatchLanguage::Python;<br>
+	return&nbsp;PatchLanguage::Unknown;<br>
+}<br>
+<br>
+std::string&nbsp;strip_code_comment(std::string_view&nbsp;view,&nbsp;PatchLanguage&nbsp;lang)<br>
+{<br>
+	if&nbsp;(view.empty())<br>
+		return&nbsp;std::string();<br>
+<br>
+	if&nbsp;(lang&nbsp;==&nbsp;PatchLanguage::Python)<br>
+	{<br>
+		const&nbsp;char&nbsp;*data&nbsp;=&nbsp;view.data();<br>
+		std::size_t&nbsp;len&nbsp;=&nbsp;view.size();<br>
+		for&nbsp;(std::size_t&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;len;&nbsp;++i)<br>
+		{<br>
+			if&nbsp;(data[i]&nbsp;==&nbsp;'#')<br>
+				return&nbsp;std::string(data,&nbsp;i);<br>
+		}<br>
+		return&nbsp;std::string(view);<br>
+	}<br>
+	if&nbsp;(lang&nbsp;==&nbsp;PatchLanguage::Cpp)<br>
+	{<br>
+		std::string&nbsp;s(view);<br>
+		std::size_t&nbsp;pos&nbsp;=&nbsp;s.find(&quot;//&quot;);<br>
+		if&nbsp;(pos&nbsp;!=&nbsp;std::string::npos)<br>
+			s.resize(pos);<br>
+		return&nbsp;s;<br>
+	}<br>
+	return&nbsp;std::string(view);<br>
+}<br>
+<br>
+std::string&nbsp;normalize_line_for_match(std::string_view&nbsp;view,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PatchLanguage&nbsp;lang)<br>
+{<br>
+	std::string&nbsp;no_comment&nbsp;=&nbsp;strip_code_comment(view,&nbsp;lang);<br>
+	return&nbsp;trim(no_comment);<br>
+}<br>
 <br>
 std::vector&lt;MarkerMatch&gt;<br>
 find_marker_matches(const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;haystack,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;needle)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;needle,<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;Section&nbsp;*section)<br>
 {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;MarkerMatch&gt;&nbsp;matches;<br>
+	std::vector&lt;MarkerMatch&gt;&nbsp;matches;<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;pat;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;pat.reserve(needle.size());<br>
-&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(const&nbsp;auto&nbsp;&amp;s&nbsp;:&nbsp;needle)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;t&nbsp;=&nbsp;trim(s);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!t.empty())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pat.push_back(std::move(t));<br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	PatchLanguage&nbsp;lang&nbsp;=&nbsp;detect_language(section);<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pat.empty())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;matches;<br>
+	std::vector&lt;std::string&gt;&nbsp;pat;<br>
+	pat.reserve(needle.size());<br>
+	for&nbsp;(const&nbsp;auto&nbsp;&amp;s&nbsp;:&nbsp;needle)<br>
+	{<br>
+		std::string&nbsp;t&nbsp;=&nbsp;normalize_line_for_match(s,&nbsp;lang);<br>
+		if&nbsp;(!t.empty())<br>
+			pat.push_back(std::move(t));<br>
+	}<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;hs;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;int&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hs_idx;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;hs.reserve(haystack.size());<br>
-&nbsp;&nbsp;&nbsp;&nbsp;hs_idx.reserve(haystack.size());<br>
+	if&nbsp;(pat.empty())<br>
+		return&nbsp;matches;<br>
+	std::vector&lt;std::string&gt;&nbsp;hs;<br>
+	std::vector&lt;int&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hs_idx;<br>
+	hs.reserve(haystack.size());<br>
+	hs_idx.reserve(haystack.size());<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;(int)haystack.size();&nbsp;++i)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;t&nbsp;=&nbsp;trim(haystack[i]);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!t.empty())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hs.emplace_back(std::move(t));<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hs_idx.push_back(i);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;(int)haystack.size();&nbsp;++i)<br>
+	{<br>
+		std::string&nbsp;t&nbsp;=&nbsp;normalize_line_for_match(haystack[i],&nbsp;lang);<br>
+		if&nbsp;(!t.empty())<br>
+		{<br>
+			hs.emplace_back(std::move(t));<br>
+			hs_idx.push_back(i);<br>
+		}<br>
+	}<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(hs.empty()&nbsp;||&nbsp;pat.size()&nbsp;&gt;&nbsp;hs.size())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;matches;<br>
+	if&nbsp;(hs.empty()&nbsp;||&nbsp;pat.size()&nbsp;&gt;&nbsp;hs.size())<br>
+		return&nbsp;matches;<br>
+	const&nbsp;std::size_t&nbsp;n&nbsp;=&nbsp;hs.size();<br>
+	const&nbsp;std::size_t&nbsp;m&nbsp;=&nbsp;pat.size();<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::size_t&nbsp;n&nbsp;=&nbsp;hs.size();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::size_t&nbsp;m&nbsp;=&nbsp;pat.size();<br>
+	for&nbsp;(std::size_t&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;+&nbsp;m&nbsp;&lt;=&nbsp;n;&nbsp;++i)<br>
+	{<br>
+		bool&nbsp;ok&nbsp;=&nbsp;true;<br>
+		for&nbsp;(std::size_t&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;m;&nbsp;++j)<br>
+		{<br>
+			if&nbsp;(hs[i&nbsp;+&nbsp;j]&nbsp;!=&nbsp;pat[j])<br>
+			{<br>
+				ok&nbsp;=&nbsp;false;<br>
+				break;<br>
+			}<br>
+		}<br>
+		if&nbsp;(ok)<br>
+		{<br>
+			int&nbsp;begin&nbsp;=&nbsp;hs_idx[i];<br>
+			int&nbsp;end&nbsp;&nbsp;&nbsp;=&nbsp;hs_idx[i&nbsp;+&nbsp;m&nbsp;-&nbsp;1];<br>
+			matches.push_back(MarkerMatch{begin,&nbsp;end});<br>
+		}<br>
+	}<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(std::size_t&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;+&nbsp;m&nbsp;&lt;=&nbsp;n;&nbsp;++i)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;ok&nbsp;=&nbsp;true;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(std::size_t&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;m;&nbsp;++j)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(hs[i&nbsp;+&nbsp;j]&nbsp;!=&nbsp;pat[j])<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ok&nbsp;=&nbsp;false;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ok)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;begin&nbsp;=&nbsp;hs_idx[i];<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;end&nbsp;&nbsp;&nbsp;=&nbsp;hs_idx[i&nbsp;+&nbsp;m&nbsp;-&nbsp;1];<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;matches.push_back(MarkerMatch{begin,&nbsp;end});<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;matches;<br>
+	return&nbsp;matches;<br>
 }<br>
 <br>
 int&nbsp;find_best_marker_match(const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;lines,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;Section&nbsp;*s,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::vector&lt;MarkerMatch&gt;&nbsp;&amp;candidates)<br>
+			&nbsp;&nbsp;&nbsp;const&nbsp;Section&nbsp;*s,<br>
+			&nbsp;&nbsp;&nbsp;const&nbsp;std::vector&lt;MarkerMatch&gt;&nbsp;&amp;candidates)<br>
 {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(candidates.empty())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;<br>
+	if&nbsp;(candidates.empty())<br>
+		return&nbsp;-1;<br>
+	if&nbsp;(s-&gt;before.empty()&nbsp;&amp;&amp;&nbsp;s-&gt;after.empty())<br>
+		return&nbsp;0;<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s-&gt;before.empty()&nbsp;&amp;&amp;&nbsp;s-&gt;after.empty())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;<br>
+	PatchLanguage&nbsp;lang&nbsp;=&nbsp;detect_language(s);<br>
+	auto&nbsp;match_eq&nbsp;=&nbsp;[&amp;](const&nbsp;std::string&nbsp;&amp;a,&nbsp;const&nbsp;std::string&nbsp;&amp;b)<br>
+	{&nbsp;return&nbsp;normalize_line_for_match(a,&nbsp;lang)&nbsp;==&nbsp;normalize_line_for_match(b,&nbsp;lang);&nbsp;};<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;trim_eq&nbsp;=&nbsp;[&amp;](const&nbsp;std::string&nbsp;&amp;a,&nbsp;const&nbsp;std::string&nbsp;&amp;b)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;return&nbsp;trim(a)&nbsp;==&nbsp;trim(b);&nbsp;};<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;int&gt;&nbsp;strict;<br>
+	std::vector&lt;int&gt;&nbsp;strict;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;ci&nbsp;=&nbsp;0;&nbsp;ci&nbsp;&lt;&nbsp;static_cast&lt;int&gt;(candidates.size());&nbsp;++ci)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
@@ -138,15 +223,15 @@ int&nbsp;find_best_marker_match(const&nbsp;std::vector&lt;std::string&gt;&nbsp;&
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;need;&nbsp;++i)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;want&nbsp;=<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s-&gt;before[static_cast&lt;std::size_t&gt;(need&nbsp;-&nbsp;1&nbsp;-&nbsp;i)];<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;got&nbsp;=<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lines[static_cast&lt;std::size_t&gt;(pos&nbsp;-&nbsp;1&nbsp;-&nbsp;i)];<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!trim_eq(got,&nbsp;want))<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ok&nbsp;=&nbsp;false;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	const&nbsp;std::string&nbsp;&amp;want&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;s-&gt;before[static_cast&lt;std::size_t&gt;(need&nbsp;-&nbsp;1&nbsp;-&nbsp;i)];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	const&nbsp;std::string&nbsp;&amp;got&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;lines[static_cast&lt;std::size_t&gt;(pos&nbsp;-&nbsp;1&nbsp;-&nbsp;i)];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	if&nbsp;(!match_eq(got,&nbsp;want))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;		ok&nbsp;=&nbsp;false;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;		break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
@@ -164,15 +249,15 @@ int&nbsp;find_best_marker_match(const&nbsp;std::vector&lt;std::string&gt;&nbsp;&
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;need;&nbsp;++i)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;want&nbsp;=<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s-&gt;after[static_cast&lt;std::size_t&gt;(i)];<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;got&nbsp;=<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lines[static_cast&lt;std::size_t&gt;(start&nbsp;+&nbsp;i)];<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!trim_eq(got,&nbsp;want))<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ok&nbsp;=&nbsp;false;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	const&nbsp;std::string&nbsp;&amp;want&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;s-&gt;after[static_cast&lt;std::size_t&gt;(i)];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	const&nbsp;std::string&nbsp;&amp;got&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;lines[static_cast&lt;std::size_t&gt;(start&nbsp;+&nbsp;i)];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	if&nbsp;(!match_eq(got,&nbsp;want))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;		ok&nbsp;=&nbsp;false;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;		break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
@@ -201,7 +286,7 @@ void&nbsp;apply_text_commands(const&nbsp;std::string&nbsp;&amp;filepath,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;empty&nbsp;marker&nbsp;in&nbsp;text&nbsp;command&nbsp;for&nbsp;file:&nbsp;&quot;&nbsp;+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filepath);<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;MarkerMatch&gt;&nbsp;matches&nbsp;=&nbsp;find_marker_matches(lines,&nbsp;s-&gt;marker);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;MarkerMatch&gt;&nbsp;matches&nbsp;=&nbsp;find_marker_matches(lines,&nbsp;s-&gt;marker,&nbsp;s);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(matches.empty())<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;text&nbsp;marker&nbsp;not&nbsp;found&nbsp;for&nbsp;file:&nbsp;&quot;&nbsp;+&nbsp;filepath&nbsp;+<br>

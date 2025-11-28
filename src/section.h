@@ -5,8 +5,9 @@
 
 struct Section
 {
-    std::string filepath;
-    std::string command;
+	std::string filepath;
+	std::string command;
+	std::string language;
     int a = -1;
     int b = -1;
     std::vector<std::string> payload;
