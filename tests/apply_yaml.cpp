@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <chrono>
 #include <yaml/string_ext.h>
 
 namespace fs = std::filesystem;
@@ -565,6 +566,59 @@ TEST_CASE("YAML patch: unknown indent mode causes failure and rollback")
     REQUIRE(L.size() == 2);
     CHECK(L[0] == "foo");
     CHECK(L[1] == "bar");
+}
+
+// ============================================================================
+// 15b. Роллбек восстанавливает метаданные
+// ============================================================================
+TEST_CASE("YAML patch: rollback restores metadata")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_rollback_metadata";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "meta.txt";
+    {
+        std::ofstream out(f);
+        out << "alpha\n"
+               "beta\n"
+               "gamma\n";
+    }
+
+    fs::perms original_perms = fs::perms::owner_all | fs::perms::group_read;
+    fs::permissions(f, original_perms);
+
+    auto original_time = fs::file_time_type::clock::now() - std::chrono::hours(1);
+    fs::last_write_time(f, original_time);
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n";
+        out << "  - path: " << f.string() << "\n";
+        out << "    op: replace_text\n";
+        out << "    marker: |\n";
+        out << "      beta\n";
+        out << "    payload: |\n";
+        out << "      XXX\n";
+        out << "  - path: " << f.string() << "\n";
+        out << "    op: delete_text\n";
+        out << "    marker: |\n";
+        out << "      missing\n";
+    }
+
+    CHECK(run_apply(patch) != 0);
+
+    auto L = read_lines(f);
+    REQUIRE(L.size() == 3);
+    CHECK(L[0] == "alpha");
+    CHECK(L[1] == "beta");
+    CHECK(L[2] == "gamma");
+
+    auto status = fs::status(f);
+    CHECK((status.permissions() & fs::perms::all) ==
+          (original_perms & fs::perms::all));
+    CHECK(fs::last_write_time(f) == original_time);
 }
 
 

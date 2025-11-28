@@ -272,9 +272,9 @@ TEST_CASE("apply_chunk_main: marker ignores C++ comments when language is set")
 
 TEST_CASE("apply_chunk_main: marker ignores Python comments when language is set")
 {
-	fs::path tmp = fs::temp_directory_path() / "chunk_test_marker_python_comments";
-	fs::remove_all(tmp);
-	fs::create_directories(tmp);
+        fs::path tmp = fs::temp_directory_path() / "chunk_test_marker_python_comments";
+        fs::remove_all(tmp);
+        fs::create_directories(tmp);
 
 	fs::path f = tmp / "code.py";
 	{
@@ -303,10 +303,213 @@ TEST_CASE("apply_chunk_main: marker ignores Python comments when language is set
 	int r = run_apply(patch);
 	CHECK(r == 0);
 	auto lines = read_lines(f);
-	REQUIRE(lines.size() == 3);
-	CHECK(lines[0] == "def value(x):");
-	CHECK(lines[1] == "    y = x + 2");
-	CHECK(lines[2] == "    return y");
+        REQUIRE(lines.size() == 3);
+        CHECK(lines[0] == "def value(x):");
+        CHECK(lines[1] == "    y = x + 2");
+        CHECK(lines[2] == "    return y");
 }
 
+TEST_CASE("apply_chunk_main: replace-text on top")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_replace_text";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
 
+    fs::path f = tmp / "c.txt";
+    {
+        std::ofstream out(f);
+        out << "header\n"
+               "beta\n"
+               "gamma\n";
+    }
+
+    fs::path patch = tmp / "patch.txt";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: replace_text\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    marker: \"header\"\n"
+               "    payload: |\n"
+               "      BETA1\n"
+               "      BETA2\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    auto lines = read_lines(f);
+    REQUIRE(lines.size() == 4);
+    CHECK(lines[0] == "BETA1");
+    CHECK(lines[1] == "BETA2");
+    CHECK(lines[2] == "beta");
+    CHECK(lines[3] == "gamma");
+}
+
+TEST_CASE("apply_chunk_main: replace section in long markdown file")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_markdown_replace";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    const std::vector<std::string> original = {
+        "# Sample Project",
+        "",
+        "Intro line 1",
+        "Intro line 2",
+        "",
+        "## Overview",
+        "- Purpose line 1",
+        "- Purpose line 2",
+        "- Purpose line 3",
+        "",
+        "## Getting Started",
+        "1. Install dependencies",
+        "2. Build the project",
+        "3. Run the binary",
+        "4. Read the docs",
+        "",
+        "## Details",
+        "Paragraph 1",
+        "Paragraph 2",
+        "Paragraph 3",
+        "",
+        "## FAQ",
+        "Q: How to configure?",
+        "A: Use config.yaml",
+        "",
+        "## License",
+        "MIT License",
+    };
+
+    fs::path f = tmp / "README.md";
+    {
+        std::ofstream out(f);
+        for (const auto &line : original)
+            out << line << '\n';
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: replace_text\n"
+               "    path: \"" << f.string() << "\"\n"
+               "    marker: |\n"
+               "      ## Getting Started\n"
+               "      1. Install dependencies\n"
+               "      2. Build the project\n"
+               "      3. Run the binary\n"
+               "      4. Read the docs\n"
+               "    payload: |\n"
+               "      ## Getting Started\n"
+               "      1. Install dependencies\n"
+               "      2. Build the project in release mode\n"
+               "      3. Run the binary with --help\n"
+               "      4. Check sample configs\n"
+               "      5. File issues on the tracker\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    auto lines = read_lines(f);
+    REQUIRE(lines.size() == 28);
+
+    CHECK(lines[0] == "# Sample Project");
+    CHECK(lines[5] == "## Overview");
+    CHECK(lines[10] == "## Getting Started");
+    CHECK(lines[11] == "1. Install dependencies");
+    CHECK(lines[12] == "2. Build the project in release mode");
+    CHECK(lines[13] == "3. Run the binary with --help");
+    CHECK(lines[14] == "4. Check sample configs");
+    CHECK(lines[15] == "5. File issues on the tracker");
+    CHECK(lines[17] == "## Details");
+    CHECK(lines.back() == "MIT License");
+}
+
+TEST_CASE("apply_chunk_main: insert section into long markdown file")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_markdown_insert";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    const std::vector<std::string> original = {
+        "# Sample Project",
+        "",
+        "Intro line 1",
+        "Intro line 2",
+        "",
+        "## Overview",
+        "- Purpose line 1",
+        "- Purpose line 2",
+        "- Purpose line 3",
+        "",
+        "## Getting Started",
+        "1. Install dependencies",
+        "2. Build the project",
+        "3. Run the binary",
+        "4. Read the docs",
+        "",
+        "## Details",
+        "Paragraph 1",
+        "Paragraph 2",
+        "Paragraph 3",
+        "",
+        "## FAQ",
+        "Q: How to configure?",
+        "A: Use config.yaml",
+        "",
+        "## License",
+        "MIT License",
+    };
+
+    fs::path f = tmp / "README.md";
+    {
+        std::ofstream out(f);
+        for (const auto &line : original)
+            out << line << '\n';
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: insert_after_text\n"
+               "    path: \"" << f.string() << "\"\n"
+               "    marker: |\n"
+               "      ## FAQ\n"
+               "      Q: How to configure?\n"
+               "      A: Use config.yaml\n"
+               "    payload: |\n"
+               "      ## Contributing\n"
+               "      - Fork the repository\n"
+               "      - Add tests for every change\n"
+               "      - Run chunk on updated docs\n"
+               "      \n"
+               "      ## Support\n"
+               "      For help, open an issue on the tracker\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    auto lines = read_lines(f);
+    REQUIRE(lines.size() == 34);
+
+    CHECK(lines[21] == "## FAQ");
+    CHECK(lines[22] == "Q: How to configure?");
+    CHECK(lines[23] == "A: Use config.yaml");
+
+    CHECK(lines[24] == "## Contributing");
+    CHECK(lines[25] == "- Fork the repository");
+    CHECK(lines[26] == "- Add tests for every change");
+    CHECK(lines[27] == "- Run chunk on updated docs");
+    CHECK(lines[28] == "");
+    CHECK(lines[29] == "## Support");
+    CHECK(lines[30] == "For help, open an issue on the tracker");
+
+    CHECK(lines[32] == "## License");
+    CHECK(lines[33] == "MIT License");
+}

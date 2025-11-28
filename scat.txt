@@ -1,11 +1,11 @@
-src/**
-tests/**
+src/*
+#tests/**
 !tests/doctest/**
-CMakeLists.txt
-scat.txt
-README.md
-CHUNK.md
-docs/*
+#CMakeLists.txt
+#scat.txt
+#README.md
+#CHUNK.md
+#docs/*
 
 [TREE]
 **

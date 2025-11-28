@@ -10,6 +10,7 @@
 <br>
 #include&nbsp;&lt;string&gt;<br>
 #include&nbsp;&lt;vector&gt;<br>
+#include&nbsp;&lt;sstream&gt;<br>
 <br>
 struct&nbsp;Section<br>
 {<br>

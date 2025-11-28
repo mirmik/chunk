@@ -25,7 +25,7 @@ bool read_clipboard(std::string &out)
 {
 #ifdef _WIN32
     const char *commands[] = {
-        "powershell -command Get-Clipboard",
+        "powershell -NoProfile -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard -Raw\"",
     };
 #else
     const char *commands[] = {
@@ -100,8 +100,8 @@ int apply_chunk_main(int argc, char **argv)
         if (!read_clipboard(text))
         {
 #ifdef _WIN32
-            std::cerr << "cannot read patch from clipboard "
-                         "(tried: powershell Get-Clipboard)\n";
+        std::cerr << "cannot read patch from clipboard "
+                     "(tried: powershell -NoProfile -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard -Raw\")\n";
 #else
             std::cerr << "cannot read patch from clipboard "
                          "(tried: wl-paste, xclip, xsel, pbpaste)\n";

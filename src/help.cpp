@@ -31,5 +31,5 @@ void print_chunk_help()
         << "    xsel -b\n"
         << "    pbpaste\n"
         << "  On Windows it uses:\n"
-        << "    powershell -command Get-Clipboard\n";
+        << "    powershell -NoProfile -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard -Raw\"\n";
 }

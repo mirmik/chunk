@@ -27,3 +27,34 @@ void write_file_lines(const std::filesystem::path &p,
     for (const auto &s : lines)
         out << s << "\n";
 }
+
+std::string read_file_bytes(const std::filesystem::path &p)
+{
+    std::ifstream in(p, std::ios::binary);
+    if (!in)
+        throw std::runtime_error("cannot open file: " + p.string());
+
+    std::string data;
+    in.seekg(0, std::ios::end);
+    std::streampos size = in.tellg();
+    if (size > 0)
+    {
+        data.resize(static_cast<std::size_t>(size));
+        in.seekg(0, std::ios::beg);
+        in.read(&data[0], size);
+    }
+
+    return data;
+}
+
+void write_file_bytes(const std::filesystem::path &p,
+                      const std::string &data)
+{
+    std::ofstream out(p, std::ios::binary | std::ios::trunc);
+    if (!out)
+        throw std::runtime_error("cannot write file: " + p.string());
+
+    if (!data.empty())
+        out.write(data.data(),
+                  static_cast<std::streamsize>(data.size()));
+}
