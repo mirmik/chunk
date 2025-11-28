@@ -186,6 +186,76 @@ TEST_CASE("apply_chunk_main: delete-text")
     CHECK(lines[1] == "four");
 }
 
+TEST_CASE("apply_chunk_main: prepend-text")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_prepend_text";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "prepend.txt";
+    {
+        std::ofstream out(f);
+        out << "MIDDLE1\n"
+               "MIDDLE2\n";
+    }
+
+    fs::path patch = tmp / "patch.txt";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: prepend_text\n"
+               "    path: \"" << f.string() << "\"\n"
+               "    payload: |\n"
+               "      START1\n"
+               "      START2\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    auto lines = read_lines(f);
+    REQUIRE(lines.size() == 4);
+    CHECK(lines[0] == "START1");
+    CHECK(lines[1] == "START2");
+    CHECK(lines[2] == "MIDDLE1");
+    CHECK(lines[3] == "MIDDLE2");
+}
+
+TEST_CASE("apply_chunk_main: append-text")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_append_text";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "append.txt";
+    {
+        std::ofstream out(f);
+        out << "ONE\n"
+               "TWO\n";
+    }
+
+    fs::path patch = tmp / "patch.txt";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: append_text\n"
+               "    path: \"" << f.string() << "\"\n"
+               "    payload: |\n"
+               "      THREE\n"
+               "      FOUR\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    auto lines = read_lines(f);
+    REQUIRE(lines.size() == 4);
+    CHECK(lines[0] == "ONE");
+    CHECK(lines[1] == "TWO");
+    CHECK(lines[2] == "THREE");
+    CHECK(lines[3] == "FOUR");
+}
+
 TEST_CASE("apply_chunk_main: delete-file then create-file")
 {
     namespace fs = std::filesystem;

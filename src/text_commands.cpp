@@ -361,6 +361,17 @@ void apply_text_commands(const std::string &filepath,
 {
     for (const Section *s : sections)
     {
+        if (s->command == "prepend-text")
+        {
+            lines.insert(lines.begin(), s->payload.begin(), s->payload.end());
+            continue;
+        }
+        else if (s->command == "append-text")
+        {
+            lines.insert(lines.end(), s->payload.begin(), s->payload.end());
+            continue;
+        }
+
         if (s->marker.empty())
             throw std::runtime_error("empty marker in text command for file: " +
                                     filepath);
