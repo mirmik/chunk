@@ -1073,8 +1073,6 @@ TEST_CASE("YAML symbol API: replace_py_method with class & method")
     for (auto &s : L)
         all += s + "\n";
 
-    std::cout << "Modified file content:\n" << all << "\n";
-
     CHECK(nos::trim(L[0]) == nos::trim("class Weird:"));
     CHECK(nos::trim(L[1]) == nos::trim("def run(self):"));
     CHECK(nos::trim(L[2]) == nos::trim("return 300"));
