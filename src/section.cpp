@@ -53,26 +53,26 @@ std::string get_scalar(const trent &node, const char *key)
 
 std::string normalize_op_name(const std::string &op_name)
 {
-    if (op_name == "create_file")
-        return "create-file";
-    if (op_name == "delete_file")
-        return "delete-file";
-    if (op_name == "insert_after_text")
-        return "insert-after-text";
-    if (op_name == "insert_before_text")
-        return "insert-before-text";
-    if (op_name == "replace_text")
-        return "replace-text";
-    if (op_name == "delete_text")
-        return "delete-text";
-    if (op_name == "replace_cpp_class")
-        return "replace-cpp-class";
-    if (op_name == "replace_cpp_method")
-        return "replace-cpp-method";
-    if (op_name == "replace_py_class")
-        return "replace-py-class";
-    if (op_name == "replace_py_method")
-        return "replace-py-method";
+    std::string name = op_name;
+    for (char &ch : name)
+    {
+        if (ch == '_')
+            ch = '-';
+    }
+
+    if (name == "create-file" ||
+        name == "delete-file" ||
+        name == "insert-after-text" ||
+        name == "insert-before-text" ||
+        name == "replace-text" ||
+        name == "delete-text" ||
+        name == "replace-cpp-class" ||
+        name == "replace-cpp-method" ||
+        name == "replace-py-class" ||
+        name == "replace-py-method")
+    {
+        return name;
+    }
 
     throw std::runtime_error("YAML patch: unknown op: " + op_name);
 }
