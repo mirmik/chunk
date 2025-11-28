@@ -62,8 +62,6 @@ std::string normalize_op_name(const std::string &op_name)
 
     if (name == "create-file" ||
         name == "delete-file" ||
-        name == "insert-after-text" ||
-        name == "insert-before-text" ||
         name == "replace-text" ||
         name == "delete-text" ||
         name == "replace-cpp-class" ||
@@ -72,6 +70,14 @@ std::string normalize_op_name(const std::string &op_name)
         name == "replace-py-method")
     {
         return name;
+    }
+    else if (name == "insert-after-text" || name == "insert-text-after")
+    {
+        return "insert-after-text";
+    }
+    else if (name == "insert-before-text" || name == "insert-text-before")
+    {
+        return "insert-before-text";
     }
 
     throw std::runtime_error("YAML patch: unknown op: " + op_name);
