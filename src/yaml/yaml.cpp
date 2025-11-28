@@ -94,32 +94,9 @@ namespace nos
 
             inline std::string strip_comment(const std::string &text)
             {
-                bool in_single = false;
-                bool in_double = false;
-                for (size_t i = 0; i < text.size(); ++i)
-                {
-                    char ch = text[i];
-                    if (ch == '"' && !in_single)
-                    {
-                        in_double = !in_double;
-                        continue;
-                    }
-                    if (ch == '\'' && !in_double)
-                    {
-                        if (in_single && i + 1 < text.size() &&
-                            text[i + 1] == '\'')
-                        {
-                            ++i;
-                            continue;
-                        }
-                        in_single = !in_single;
-                        continue;
-                    }
-                    if (ch == '#' && !in_single && !in_double)
-                    {
-                        return text.substr(0, i);
-                    }
-                }
+                // yaml-lite в CHUNK не поддерживает комментарии.
+                // Символ '#' всегда считается частью значения.
+                // Функция оставлена для совместимости с существующим кодом.
                 return text;
             }
 
@@ -477,8 +454,6 @@ namespace nos
                                     text[i + 1])))
                                 return i;
                         }
-                        if (ch == '#' && !in_single && !in_double)
-                            break;
                     }
                     return std::string::npos;
                 }
@@ -726,12 +701,6 @@ namespace nos
                                 get();
                                 continue;
                             }
-                            if (c == '#')
-                            {
-                                while (!eof() && peek() != '\n')
-                                    get();
-                                continue;
-                            }
                             break;
                         }
                     }
@@ -744,11 +713,10 @@ namespace nos
                             char c = peek();
                             if (c == ',' || c == ']' || c == '}' || c == '\n')
                                 break;
-                            if (c == '#' || c == ':')
+                            if (c == ':')
                             {
                                 size_t next = pos + 1;
-                                if (c == ':' &&
-                                    next < src.size() &&
+                                if (next < src.size() &&
                                     !std::isspace(static_cast<unsigned char>(
                                         src[next])))
                                 {

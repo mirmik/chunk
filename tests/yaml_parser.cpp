@@ -81,22 +81,6 @@ TEST_CASE("YAML parser reports flow errors with location")
     }
 }
 
-TEST_CASE("YAML parser handles document markers and comments")
-{
-    const char *src =
-        "---\n"
-        "name: test # comment\n"
-        "list: [a, b] # trailing\n"
-        "...\n";
-
-    nos::trent root = nos::yaml::parse(src);
-    auto &dict = root.as_dict();
-    CHECK(dict.at("name").as_string() == "test");
-    auto &list = dict.at("list").as_list();
-    REQUIRE(list.size() == 2);
-    CHECK(list[0].as_string() == "a");
-    CHECK(list[1].as_string() == "b");
-}
 
 TEST_CASE("YAML parser respects quoted scalars and escapes")
 {
@@ -266,19 +250,6 @@ TEST_CASE("YAML parser allows blank lines between mapping entries")
     CHECK(dict.at("b").as_numer() == doctest::Approx(2));
 }
 
-TEST_CASE("YAML parser allows comments and blank lines between mapping entries")
-{
-    const char *src =
-        "first: one\n"
-        "# comment between keys\n"
-        "   \n"
-        "second: two\n";
-
-    auto dict = nos::yaml::parse(src).as_dict();
-    REQUIRE(dict.size() == 2);
-    CHECK(dict.at("first").as_string() == "one");
-    CHECK(dict.at("second").as_string() == "two");
-}
 
 TEST_CASE("YAML parser allows blank lines inside sequences")
 {
