@@ -9,7 +9,7 @@
 
 ---
 
-[Формат патчей CHUNK](CHUNK_ru.md)
+[Формат патчей CHUNK (Русский)](CHUNK_ru.md)
 
 [Утилита chunk для применения патчей](https://github.com/mirmik/chunk)
 
@@ -36,7 +36,7 @@ Why? Because when a neural network generates a unified diff, the result is… no
 
 ---
 
-[CHUNK patch format](CHUNK_en.md)
+[CHUNK patch format (English)](CHUNK_en.md)
 
 [`chunk` utility for applying patches](https://github.com/mirmik/chunk)
 

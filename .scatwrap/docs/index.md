@@ -17,7 +17,7 @@
 <br>
 ---<br>
 <br>
-[Формат&nbsp;патчей&nbsp;CHUNK](CHUNK_ru.md)<br>
+[Формат&nbsp;патчей&nbsp;CHUNK&nbsp;(Русский)](CHUNK_ru.md)<br>
 <br>
 [Утилита&nbsp;chunk&nbsp;для&nbsp;применения&nbsp;патчей](https://github.com/mirmik/chunk)<br>
 <br>
@@ -44,7 +44,7 @@ Why?&nbsp;Because&nbsp;when&nbsp;a&nbsp;neural&nbsp;network&nbsp;generates&nbsp;
 <br>
 ---<br>
 <br>
-[CHUNK&nbsp;patch&nbsp;format](CHUNK_en.md)<br>
+[CHUNK&nbsp;patch&nbsp;format&nbsp;(English)](CHUNK_en.md)<br>
 <br>
 [`chunk`&nbsp;utility&nbsp;for&nbsp;applying&nbsp;patches](https://github.com/mirmik/chunk)<br>
 <br>
