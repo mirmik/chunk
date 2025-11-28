@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <memory>
 
 struct Section
 {
@@ -24,4 +25,5 @@ struct Section
 
 bool is_text_command(const std::string &cmd);
 bool is_symbol_command(const std::string &cmd);
-std::vector<Section> parse_yaml_patch_text(const std::string &text);
+class Command;
+std::vector<std::unique_ptr<Command>> parse_yaml_patch_text(const std::string &text);

@@ -18,6 +18,8 @@ void&nbsp;write_file_lines(const&nbsp;std::filesystem::path&nbsp;&amp;p,<br>
 <br>
 std::string&nbsp;read_file_bytes(const&nbsp;std::filesystem::path&nbsp;&amp;p);<br>
 void&nbsp;write_file_bytes(const&nbsp;std::filesystem::path&nbsp;&amp;p,&nbsp;const&nbsp;std::string&nbsp;&amp;data);<br>
+<br>
+std::string&nbsp;read_all(std::istream&nbsp;&amp;in);<br>
 <!-- END SCAT CODE -->
 </body>
 </html>

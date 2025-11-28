@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>src/file_command_objects.cpp</title>
+</head>
+<body>
+<!-- BEGIN SCAT CODE -->
+#include&nbsp;&quot;file_command_objects.h&quot;<br>
+<br>
+#include&nbsp;&quot;command_parse_helpers.h&quot;<br>
+#include&nbsp;&quot;file_io.h&quot;<br>
+<br>
+#include&nbsp;&lt;stdexcept&gt;<br>
+<br>
+using&nbsp;command_parse::get_scalar;<br>
+using&nbsp;command_parse::split_scalar_lines;<br>
+<br>
+CreateFileCommand::CreateFileCommand()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Command(&quot;create-file&quot;)<br>
+{<br>
+}<br>
+<br>
+void&nbsp;CreateFileCommand::parse(const&nbsp;nos::trent&nbsp;&amp;tr)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;section_.filepath&nbsp;=&nbsp;get_scalar(tr,&nbsp;&quot;path&quot;);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(section_.filepath.empty())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;YAML&nbsp;patch:&nbsp;op&nbsp;'create-file'&nbsp;requires&nbsp;'path'&nbsp;key&quot;);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;section_.payload&nbsp;=&nbsp;split_scalar_lines(get_scalar(tr,&nbsp;&quot;payload&quot;));<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;section_.comment&nbsp;=&nbsp;get_scalar(tr,&nbsp;&quot;comment&quot;);<br>
+}<br>
+<br>
+void&nbsp;CreateFileCommand::execute(std::vector&lt;std::string&gt;&nbsp;&amp;lines)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(void)lines;<br>
+}<br>
+<br>
+DeleteFileCommand::DeleteFileCommand()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Command(&quot;delete-file&quot;)<br>
+{<br>
+}<br>
+<br>
+void&nbsp;DeleteFileCommand::parse(const&nbsp;nos::trent&nbsp;&amp;tr)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;section_.filepath&nbsp;=&nbsp;get_scalar(tr,&nbsp;&quot;path&quot;);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(section_.filepath.empty())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;YAML&nbsp;patch:&nbsp;op&nbsp;'delete-file'&nbsp;requires&nbsp;'path'&nbsp;key&quot;);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;section_.comment&nbsp;=&nbsp;get_scalar(tr,&nbsp;&quot;comment&quot;);<br>
+}<br>
+<br>
+void&nbsp;DeleteFileCommand::execute(std::vector&lt;std::string&gt;&nbsp;&amp;lines)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(void)lines;<br>
+}<br>
+<br>
+std::unique_ptr&lt;Command&gt;&nbsp;create_file_command(const&nbsp;std::string&nbsp;&amp;name)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(name&nbsp;==&nbsp;&quot;create-file&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;std::make_unique&lt;CreateFileCommand&gt;();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(name&nbsp;==&nbsp;&quot;delete-file&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;std::make_unique&lt;DeleteFileCommand&gt;();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;nullptr;<br>
+}<br>
+<!-- END SCAT CODE -->
+</body>
+</html>

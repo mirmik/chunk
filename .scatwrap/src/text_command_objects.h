@@ -10,6 +10,7 @@
 <br>
 #include&nbsp;&quot;command.h&quot;<br>
 #include&nbsp;&quot;section.h&quot;<br>
+#include&nbsp;&quot;yaml/trent.h&quot;<br>
 <br>
 #include&nbsp;&lt;cstddef&gt;<br>
 #include&nbsp;&lt;functional&gt;<br>
@@ -22,18 +23,19 @@ namespace&nbsp;text_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;SimpleInsertCommand&nbsp;:&nbsp;public&nbsp;Command<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;explicit&nbsp;SimpleInsertCommand(const&nbsp;Section&nbsp;&amp;s,&nbsp;bool&nbsp;prepend);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SimpleInsertCommand(const&nbsp;std::string&nbsp;&amp;name,&nbsp;bool&nbsp;prepend);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;parse(const&nbsp;nos::trent&nbsp;&amp;tr)&nbsp;override;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;execute(std::vector&lt;std::string&gt;&nbsp;&amp;lines)&nbsp;override;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;private:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;Section&nbsp;&amp;section;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;prepend_mode&nbsp;=&nbsp;false;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;};<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;MarkerTextCommand&nbsp;:&nbsp;public&nbsp;Command<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MarkerTextCommand(const&nbsp;Section&nbsp;&amp;s,&nbsp;std::string&nbsp;path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MarkerTextCommand(const&nbsp;std::string&nbsp;&amp;name);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;parse(const&nbsp;nos::trent&nbsp;&amp;tr)&nbsp;override;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;execute(std::vector&lt;std::string&gt;&nbsp;&amp;lines)&nbsp;override;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;protected:<br>
@@ -50,16 +52,12 @@ namespace&nbsp;text_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;begin,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;end,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;payload)&nbsp;=&nbsp;0;<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;protected:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;Section&nbsp;&amp;section;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;filepath;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;};<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;InsertAfterTextCommand&nbsp;:&nbsp;public&nbsp;MarkerTextCommand<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InsertAfterTextCommand(const&nbsp;Section&nbsp;&amp;s,&nbsp;std::string&nbsp;path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InsertAfterTextCommand();<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;protected:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;should_indent_payload()&nbsp;const&nbsp;override<br>
@@ -75,7 +73,7 @@ namespace&nbsp;text_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;InsertBeforeTextCommand&nbsp;:&nbsp;public&nbsp;MarkerTextCommand<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InsertBeforeTextCommand(const&nbsp;Section&nbsp;&amp;s,&nbsp;std::string&nbsp;path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InsertBeforeTextCommand();<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;protected:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;should_indent_payload()&nbsp;const&nbsp;override<br>
@@ -91,7 +89,7 @@ namespace&nbsp;text_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;ReplaceTextCommand&nbsp;:&nbsp;public&nbsp;MarkerTextCommand<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReplaceTextCommand(const&nbsp;Section&nbsp;&amp;s,&nbsp;std::string&nbsp;path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReplaceTextCommand();<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;protected:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;should_indent_payload()&nbsp;const&nbsp;override<br>
@@ -107,7 +105,7 @@ namespace&nbsp;text_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;DeleteTextCommand&nbsp;:&nbsp;public&nbsp;MarkerTextCommand<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DeleteTextCommand(const&nbsp;Section&nbsp;&amp;s,&nbsp;std::string&nbsp;path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DeleteTextCommand();<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;private:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;apply(std::vector&lt;std::string&gt;&nbsp;&amp;lines,<br>
@@ -116,8 +114,8 @@ namespace&nbsp;text_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;payload)&nbsp;override;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;};<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;using&nbsp;CommandFactory&nbsp;=&nbsp;std::function&lt;std::unique_ptr&lt;Command&gt;(<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;Section&nbsp;&amp;,&nbsp;const&nbsp;std::string&nbsp;&amp;)&gt;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;using&nbsp;CommandFactory&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::function&lt;std::unique_ptr&lt;Command&gt;()&gt;;<br>
 }&nbsp;//&nbsp;namespace&nbsp;text_commands_detail<br>
 <!-- END SCAT CODE -->
 </body>

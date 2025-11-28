@@ -1,6 +1,7 @@
 #include "symbol_commands.h"
 #include "symbol_command_objects.h"
 
+#include "command_parse_helpers.h"
 #include "symbols.h"
 
 #include <functional>
@@ -68,52 +69,34 @@ namespace
         return text;
     }
 
-    std::pair<std::string, std::string> parse_cpp_target(const Section &s)
-    {
-        if (!s.arg2.empty())
-            return {s.arg1, s.arg2};
-
-        auto pos = s.arg1.find("::");
-        if (pos == std::string::npos)
-            throw std::runtime_error("replace-cpp-method: expected "
-                                     "'Class::method' or 'Class method'");
-
-        std::string cls = s.arg1.substr(0, pos);
-        std::string method = s.arg1.substr(pos + 2);
-        if (cls.empty() || method.empty())
-            throw std::runtime_error(
-                "replace-cpp-method: empty class or method name");
-
-        return {cls, method};
-    }
-
-    std::pair<std::string, std::string> parse_python_target(const Section &s)
-    {
-        if (!s.arg2.empty())
-            return {s.arg1, s.arg2};
-
-        auto pos = s.arg1.find('.');
-        if (pos == std::string::npos)
-            throw std::runtime_error(
-                "replace-py-method: expected 'Class.method' or 'Class method'");
-
-        std::string cls = s.arg1.substr(0, pos);
-        std::string method = s.arg1.substr(pos + 1);
-        if (cls.empty() || method.empty())
-            throw std::runtime_error(
-                "replace-py-method: empty class or method name");
-
-        return {cls, method};
-    }
-
 } // namespace
 
 namespace symbol_commands_detail
 {
-    RegionReplaceCommand::RegionReplaceCommand(const Section &s,
-                                               std::string path)
-        : section(s), filepath(std::move(path))
+    RegionReplaceCommand::RegionReplaceCommand(const std::string &name)
+        : Command(name)
     {
+    }
+
+    void RegionReplaceCommand::parse(const nos::trent &tr)
+    {
+        section_.filepath = command_parse::get_scalar(tr, "path");
+        if (section_.filepath.empty())
+            throw std::runtime_error("YAML patch: op '" + command_name() +
+                                     "' requires 'path' key");
+
+        section_.indent_from_marker =
+            command_parse::parse_indent_from_options(
+                tr, section_.indent_from_marker);
+        section_.comment = command_parse::get_scalar(tr, "comment");
+
+        std::string payload_text = command_parse::get_scalar(tr, "payload");
+        if (payload_text.empty())
+            throw std::runtime_error("YAML patch: symbol op '" +
+                                     command_name() + "' for file '" +
+                                     section_.filepath +
+                                     "' requires 'payload'");
+        section_.payload = command_parse::split_scalar_lines(payload_text);
     }
 
     void RegionReplaceCommand::execute(std::vector<std::string> &lines)
@@ -132,33 +115,40 @@ namespace symbol_commands_detail
 
         std::string prefix = extract_indent_prefix(lines, r.start_line);
         std::vector<std::string> payload = apply_indent_prefix(
-            section.payload, prefix, section.indent_from_marker);
+            section_.payload, prefix, section_.indent_from_marker);
 
         lines.erase(begin, end);
         lines.insert(
             lines.begin() + r.start_line, payload.begin(), payload.end());
     }
 
-    ReplaceCppClassCommand::ReplaceCppClassCommand(const Section &s,
-                                                   std::string path)
-        : RegionReplaceCommand(s, std::move(path))
+    ReplaceCppClassCommand::ReplaceCppClassCommand()
+        : RegionReplaceCommand("replace-cpp-class")
     {
-        if (section.arg1.empty())
-            throw std::runtime_error(
-                "replace-cpp-class: missing class name for file: " + filepath);
+    }
+
+    void ReplaceCppClassCommand::parse(const nos::trent &tr)
+    {
+        RegionReplaceCommand::parse(tr);
+
+        std::string class_text = command_parse::get_scalar(tr, "class");
+        if (class_text.empty())
+            throw std::runtime_error("YAML patch: op '" + command_name() +
+                                     "' requires 'class' key");
+        section_.arg1 = class_text;
     }
 
     bool ReplaceCppClassCommand::find_region(const std::string &text,
                                              Region &r) const
     {
         CppSymbolFinder finder(text);
-        return finder.find_class(section.arg1, r);
+        return finder.find_class(section_.arg1, r);
     }
 
     std::string ReplaceCppClassCommand::not_found_error() const
     {
-        return "replace-cpp-class: class not found: " + section.arg1 +
-               " in file: " + filepath;
+        return "replace-cpp-class: class not found: " + section_.arg1 +
+               " in file: " + section_.filepath;
     }
 
     std::string ReplaceCppClassCommand::invalid_region_error() const
@@ -166,11 +156,44 @@ namespace symbol_commands_detail
         return "replace-cpp-class: invalid region";
     }
 
-    ReplaceCppMethodCommand::ReplaceCppMethodCommand(const Section &s,
-                                                     std::string path)
-        : RegionReplaceCommand(s, std::move(path))
+    ReplaceCppMethodCommand::ReplaceCppMethodCommand()
+        : RegionReplaceCommand("replace-cpp-method")
     {
-        std::tie(cls, method) = parse_cpp_target(s);
+    }
+
+    void ReplaceCppMethodCommand::parse(const nos::trent &tr)
+    {
+        RegionReplaceCommand::parse(tr);
+
+        std::string class_text = command_parse::get_scalar(tr, "class");
+        std::string method_text = command_parse::get_scalar(tr, "method");
+        std::string symbol_text = command_parse::get_scalar(tr, "symbol");
+
+        if (!class_text.empty() && !method_text.empty())
+        {
+            cls = class_text;
+            method = method_text;
+        }
+        else if (!symbol_text.empty())
+        {
+            auto pos = symbol_text.find("::");
+            if (pos == std::string::npos)
+                throw std::runtime_error(
+                    "replace-cpp-method: expected 'Class::method' or "
+                    "'Class method'");
+            cls = symbol_text.substr(0, pos);
+            method = symbol_text.substr(pos + 2);
+        }
+        else
+        {
+            throw std::runtime_error(
+                "YAML patch: op '" + command_name() +
+                "' requires 'class'+'method' or 'symbol'");
+        }
+
+        if (cls.empty() || method.empty())
+            throw std::runtime_error(
+                "replace-cpp-method: empty class or method name");
     }
 
     bool ReplaceCppMethodCommand::find_region(const std::string &text,
@@ -183,7 +206,7 @@ namespace symbol_commands_detail
     std::string ReplaceCppMethodCommand::not_found_error() const
     {
         return "replace-cpp-method: method not found: " + cls + "::" + method +
-               " in file: " + filepath;
+               " in file: " + section_.filepath;
     }
 
     std::string ReplaceCppMethodCommand::invalid_region_error() const
@@ -191,26 +214,33 @@ namespace symbol_commands_detail
         return "replace-cpp-method: invalid region";
     }
 
-    ReplacePyClassCommand::ReplacePyClassCommand(const Section &s,
-                                                 std::string path)
-        : RegionReplaceCommand(s, std::move(path))
+    ReplacePyClassCommand::ReplacePyClassCommand()
+        : RegionReplaceCommand("replace-py-class")
     {
-        if (section.arg1.empty())
-            throw std::runtime_error(
-                "replace-py-class: missing class name for file: " + filepath);
+    }
+
+    void ReplacePyClassCommand::parse(const nos::trent &tr)
+    {
+        RegionReplaceCommand::parse(tr);
+
+        std::string class_text = command_parse::get_scalar(tr, "class");
+        if (class_text.empty())
+            throw std::runtime_error("YAML patch: op '" + command_name() +
+                                     "' requires 'class' key");
+        section_.arg1 = class_text;
     }
 
     bool ReplacePyClassCommand::find_region(const std::string &text,
                                             Region &r) const
     {
         PythonSymbolFinder finder(text);
-        return finder.find_class(section.arg1, r);
+        return finder.find_class(section_.arg1, r);
     }
 
     std::string ReplacePyClassCommand::not_found_error() const
     {
-        return "replace-py-class: class not found: " + section.arg1 +
-               " in file: " + filepath;
+        return "replace-py-class: class not found: " + section_.arg1 +
+               " in file: " + section_.filepath;
     }
 
     std::string ReplacePyClassCommand::invalid_region_error() const
@@ -218,11 +248,44 @@ namespace symbol_commands_detail
         return "replace-py-class: invalid region";
     }
 
-    ReplacePyMethodCommand::ReplacePyMethodCommand(const Section &s,
-                                                   std::string path)
-        : RegionReplaceCommand(s, std::move(path))
+    ReplacePyMethodCommand::ReplacePyMethodCommand()
+        : RegionReplaceCommand("replace-py-method")
     {
-        std::tie(cls, method) = parse_python_target(s);
+    }
+
+    void ReplacePyMethodCommand::parse(const nos::trent &tr)
+    {
+        RegionReplaceCommand::parse(tr);
+
+        std::string class_text = command_parse::get_scalar(tr, "class");
+        std::string method_text = command_parse::get_scalar(tr, "method");
+        std::string symbol_text = command_parse::get_scalar(tr, "symbol");
+
+        if (!class_text.empty() && !method_text.empty())
+        {
+            cls = class_text;
+            method = method_text;
+        }
+        else if (!symbol_text.empty())
+        {
+            auto pos = symbol_text.find('.');
+            if (pos == std::string::npos)
+                throw std::runtime_error(
+                    "replace-py-method: expected 'Class.method' or "
+                    "'Class method'");
+            cls = symbol_text.substr(0, pos);
+            method = symbol_text.substr(pos + 1);
+        }
+        else
+        {
+            throw std::runtime_error(
+                "YAML patch: op '" + command_name() +
+                "' requires 'class'+'method' or 'symbol'");
+        }
+
+        if (cls.empty() || method.empty())
+            throw std::runtime_error(
+                "replace-py-method: empty class or method name");
     }
 
     bool ReplacePyMethodCommand::find_region(const std::string &text,
@@ -235,7 +298,7 @@ namespace symbol_commands_detail
     std::string ReplacePyMethodCommand::not_found_error() const
     {
         return "replace-py-method: method not found: " + cls + "." + method +
-               " in file: " + filepath;
+               " in file: " + section_.filepath;
     }
 
     std::string ReplacePyMethodCommand::invalid_region_error() const
@@ -252,43 +315,34 @@ namespace
     {
         using namespace symbol_commands_detail;
 
-        static const std::unordered_map<std::string, CommandFactory>
-            registry = {
+        static const std::unordered_map<std::string, CommandFactory> registry =
+            {
                 {"replace-cpp-class",
-                 [](const Section &s, const std::string &filepath) {
-                     return std::make_unique<ReplaceCppClassCommand>(s,
-                                                                     filepath);
-                 }},
+                 []() { return std::make_unique<ReplaceCppClassCommand>(); }},
                 {"replace-cpp-method",
-                 [](const Section &s, const std::string &filepath) {
-                     return std::make_unique<ReplaceCppMethodCommand>(s,
-                                                                      filepath);
-                 }},
+                 []() { return std::make_unique<ReplaceCppMethodCommand>(); }},
                 {"replace-py-class",
-                 [](const Section &s, const std::string &filepath) {
-                     return std::make_unique<ReplacePyClassCommand>(s,
-                                                                    filepath);
-                 }},
+                 []() { return std::make_unique<ReplacePyClassCommand>(); }},
                 {"replace-py-method",
-                 [](const Section &s, const std::string &filepath) {
-                     return std::make_unique<ReplacePyMethodCommand>(s,
-                                                                     filepath);
-                 }},
+                 []() { return std::make_unique<ReplacePyMethodCommand>(); }},
             };
 
         return registry;
     }
 } // namespace
 
-std::unique_ptr<Command>
-create_symbol_command(const Section &section, const std::string &filepath)
+std::unique_ptr<Command> create_symbol_command(const Section &section,
+                                               const std::string &filepath)
 {
     const auto &registry = symbol_command_registry();
     auto it = registry.find(section.command);
     if (it == registry.end())
-        throw std::runtime_error(
-            "apply_symbol_commands: unknown command: " + section.command);
-    return it->second(section, filepath);
+        throw std::runtime_error("apply_symbol_commands: unknown command: " +
+                                 section.command);
+    auto cmd = it->second();
+    cmd->load_section(section);
+    (void)filepath;
+    return cmd;
 }
 
 void apply_symbol_commands(const std::string &filepath,

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "section.h"
+#include "command.h"
 
 #include <vector>
+#include <memory>
 
-void apply_sections(const std::vector<Section> &sections);
+void apply_sections(const std::vector<std::unique_ptr<Command>> &commands);

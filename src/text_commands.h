@@ -3,8 +3,8 @@
 #include "command.h"
 #include "section.h"
 
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
 void apply_text_commands(const std::string &filepath,

@@ -10,3 +10,5 @@ void write_file_lines(const std::filesystem::path &p,
 
 std::string read_file_bytes(const std::filesystem::path &p);
 void write_file_bytes(const std::filesystem::path &p, const std::string &data);
+
+std::string read_all(std::istream &in);

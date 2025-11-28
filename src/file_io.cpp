@@ -56,3 +56,10 @@ void write_file_bytes(const std::filesystem::path &p, const std::string &data)
     if (!data.empty())
         out.write(data.data(), static_cast<std::streamsize>(data.size()));
 }
+
+std::string read_all(std::istream &in)
+{
+    std::ostringstream oss;
+    oss << in.rdbuf();
+    return oss.str();
+}

@@ -1,13 +1,13 @@
 #include "runner.h"
 
-#include "file_io.h"
 #include "command.h"
+#include "file_io.h"
 #include "symbol_commands.h"
 #include "text_commands.h"
 #include <algorithm>
 #include <filesystem>
-#include <memory>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -81,7 +81,7 @@ namespace
     }
 
     void apply_for_file(const std::string &filepath,
-                        const std::vector<const Section *> &sections)
+                        const std::vector<Command *> &commands)
     {
         fs::path p = filepath;
         std::vector<std::string> orig;
@@ -97,20 +97,20 @@ namespace
             orig.clear();
         }
 
-        for (const Section *s : sections)
+        for (Command *cmd : commands)
         {
-            if (!existed && s->command == "delete-file")
+            if (!existed && cmd->command_name() == "delete-file")
                 throw std::runtime_error("delete-file: file does not exist");
         }
 
-        for (const Section *s : sections)
+        for (Command *cmd : commands)
         {
-            if (s->command == "create-file")
+            if (cmd->command_name() == "create-file")
             {
-                write_file_lines(p, s->payload);
+                write_file_lines(p, cmd->data().payload);
                 return;
             }
-            if (s->command == "delete-file")
+            if (cmd->command_name() == "delete-file")
             {
                 std::error_code ec;
                 fs::remove(p, ec);
@@ -120,34 +120,31 @@ namespace
             }
         }
 
-        std::vector<std::unique_ptr<Command>> commands;
-        commands.reserve(sections.size());
-
-        for (const Section *s : sections)
+        for (Command *cmd : commands)
         {
-            if (is_text_command(s->command))
-                commands.push_back(create_text_command(*s, filepath));
-            else if (is_symbol_command(s->command))
-                commands.push_back(create_symbol_command(*s, filepath));
-            else
-                throw std::runtime_error("unexpected non-text command: " +
-                                         s->command);
-        }
+            if (cmd->command_name() == "create-file" ||
+                cmd->command_name() == "delete-file")
+                continue;
 
-        for (auto &cmd : commands)
-            cmd->execute(orig);
+            if (is_text_command(cmd->command_name()) ||
+                is_symbol_command(cmd->command_name()))
+                cmd->execute(orig);
+            else
+                throw std::runtime_error("unexpected command: " +
+                                         cmd->command_name());
+        }
 
         if (!commands.empty())
             write_file_lines(p, orig);
     }
 } // namespace
 
-void apply_sections(const std::vector<Section> &sections)
+void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
 {
     std::vector<std::string> files;
-    files.reserve(sections.size());
-    for (auto &s : sections)
-        files.push_back(s.filepath);
+    files.reserve(commands.size());
+    for (auto &cmd : commands)
+        files.push_back(cmd->filepath());
 
     std::sort(files.begin(), files.end());
     files.erase(std::unique(files.begin(), files.end()), files.end());
@@ -195,16 +192,16 @@ void apply_sections(const std::vector<Section> &sections)
         backup[f] = std::move(b);
     }
 
-    const Section *current_section = nullptr;
+    Command *current_command = nullptr;
     std::vector<std::string> rollback_errors;
 
     try
     {
-        for (auto &s : sections)
+        for (const auto &cmd : commands)
         {
-            current_section = &s;
-            std::vector<const Section *> single{&s};
-            apply_for_file(s.filepath, single);
+            current_command = cmd.get();
+            std::vector<Command *> single{cmd.get()};
+            apply_for_file(cmd->filepath(), single);
         }
     }
     catch (const std::exception &e)
@@ -216,24 +213,25 @@ void apply_sections(const std::vector<Section> &sections)
                 rollback_errors.push_back(std::move(err));
         }
 
-        if (!rollback_errors.empty() || current_section)
+        if (!rollback_errors.empty() || current_command)
         {
             std::ostringstream oss;
             oss << e.what();
 
-            if (current_section)
+            if (current_command)
             {
-                if (!current_section->comment.empty())
-                    oss << "\nsection comment: " << current_section->comment;
-                if (!current_section->marker.empty())
+                const Section &s = current_command->data();
+                if (!s.comment.empty())
+                    oss << "\nsection comment: " << s.comment;
+                if (!s.marker.empty())
                 {
                     oss << "\nsection marker preview:\n";
                     size_t max_preview_lines = 3;
-                    for (size_t i = 0; i < current_section->marker.size() &&
+                    for (size_t i = 0; i < s.marker.size() &&
                                        i < max_preview_lines;
                          ++i)
                     {
-                        oss << current_section->marker[i] << "\n";
+                        oss << s.marker[i] << "\n";
                     }
                 }
             }
@@ -261,8 +259,8 @@ void apply_sections(const std::vector<Section> &sections)
 
         std::ostringstream oss;
         oss << "unknown error while applying patch";
-        if (current_section)
-            oss << " in file '" << current_section->filepath << "'";
+        if (current_command)
+            oss << " in file '" << current_command->filepath() << "'";
 
         if (!rollback_errors.empty())
         {

@@ -1,5 +1,6 @@
 #include "text_commands.h"
 #include "text_command_objects.h"
+#include "command_parse_helpers.h"
 
 #include <cctype>
 #include <cstddef>
@@ -357,40 +358,99 @@ namespace
 
 namespace text_commands_detail
 {
-    SimpleInsertCommand::SimpleInsertCommand(const Section &s, bool prepend)
-        : section(s), prepend_mode(prepend)
+    SimpleInsertCommand::SimpleInsertCommand(const std::string &name, bool prepend)
+        : Command(name), prepend_mode(prepend)
     {
+    }
+
+    void SimpleInsertCommand::parse(const nos::trent &tr)
+    {
+        section_.filepath = command_parse::get_scalar(tr, "path");
+        if (section_.filepath.empty())
+            throw std::runtime_error("YAML patch: op '" + command_name() +
+                                     "' requires 'path' key");
+
+        section_.payload = command_parse::split_scalar_lines(
+            command_parse::get_scalar(tr, "payload"));
+        if (section_.payload.empty())
+            throw std::runtime_error(
+                "YAML patch: text op '" + command_name() + "' for file '" +
+                section_.filepath + "' requires 'payload'");
+
+        section_.comment = command_parse::get_scalar(tr, "comment");
     }
 
     void SimpleInsertCommand::execute(std::vector<std::string> &lines)
     {
         if (prepend_mode)
             lines.insert(
-                lines.begin(), section.payload.begin(), section.payload.end());
+                lines.begin(), section_.payload.begin(), section_.payload.end());
         else
             lines.insert(
-                lines.end(), section.payload.begin(), section.payload.end());
+                lines.end(), section_.payload.begin(), section_.payload.end());
     }
 
-    MarkerTextCommand::MarkerTextCommand(const Section &s, std::string path)
-        : section(s), filepath(std::move(path))
+    MarkerTextCommand::MarkerTextCommand(const std::string &name)
+        : Command(name)
     {
+    }
+
+    void MarkerTextCommand::parse(const nos::trent &tr)
+    {
+        section_.filepath = command_parse::get_scalar(tr, "path");
+        if (section_.filepath.empty())
+            throw std::runtime_error("YAML patch: op '" + command_name() +
+                                     "' requires 'path' key");
+
+        section_.indent_from_marker =
+            command_parse::parse_indent_from_options(
+                tr, section_.indent_from_marker);
+        section_.comment = command_parse::get_scalar(tr, "comment");
+
+        std::string marker_text = command_parse::get_scalar(tr, "marker");
+        std::string before_text = command_parse::get_scalar(tr, "before");
+        std::string after_text = command_parse::get_scalar(tr, "after");
+        std::string payload_text = command_parse::get_scalar(tr, "payload");
+
+        if (command_name() == "prepend-text" || command_name() == "append-text")
+        {
+            if (payload_text.empty())
+                throw std::runtime_error(
+                    "YAML patch: text op '" + command_name() + "' for file '" +
+                    section_.filepath + "' requires 'payload'");
+            section_.payload = command_parse::split_scalar_lines(payload_text);
+            return;
+        }
+
+        if (marker_text.empty())
+            throw std::runtime_error(
+                "YAML patch: text op '" + command_name() + "' for file '" +
+                section_.filepath + "' requires 'marker'");
+
+        section_.marker = command_parse::split_scalar_lines(marker_text);
+
+        if (!before_text.empty())
+            section_.before = command_parse::split_scalar_lines(before_text);
+        if (!after_text.empty())
+            section_.after = command_parse::split_scalar_lines(after_text);
+        if (command_name() != "delete-text" && !payload_text.empty())
+            section_.payload = command_parse::split_scalar_lines(payload_text);
     }
 
     void MarkerTextCommand::execute(std::vector<std::string> &lines)
     {
-        if (section.marker.empty())
+        if (section_.marker.empty())
             throw std::runtime_error("empty marker in text command for file: " +
-                                     filepath);
+                                     section_.filepath);
 
         std::vector<MarkerMatch> matches =
-            find_marker_matches(lines, section.marker, &section);
+            find_marker_matches(lines, section_.marker, &section_);
         if (matches.empty())
             throw std::runtime_error(
-                "text marker not found for file: " + filepath +
-                "\ncommand: " + section.command + "\n");
+                "text marker not found for file: " + section_.filepath +
+                "\ncommand: " + section_.command + "\n");
 
-        int mindex = find_best_marker_match(lines, &section, matches);
+        int mindex = find_best_marker_match(lines, &section_, matches);
         if (mindex < 0)
             throw std::runtime_error("cannot locate marker uniquely");
 
@@ -411,8 +471,8 @@ namespace text_commands_detail
     MarkerTextCommand::prepare_payload(const std::vector<std::string> &lines,
                                        std::size_t begin) const
     {
-        if (!should_indent_payload() || !section.indent_from_marker)
-            return section.payload;
+        if (!should_indent_payload() || !section_.indent_from_marker)
+            return section_.payload;
 
         std::string prefix;
         if (begin < lines.size())
@@ -426,8 +486,8 @@ namespace text_commands_detail
         }
 
         std::vector<std::string> adjusted;
-        adjusted.reserve(section.payload.size());
-        for (const auto &ln : section.payload)
+        adjusted.reserve(section_.payload.size());
+        for (const auto &ln : section_.payload)
         {
             if (ln.empty())
                 adjusted.push_back(ln);
@@ -437,9 +497,8 @@ namespace text_commands_detail
         return adjusted;
     }
 
-    InsertAfterTextCommand::InsertAfterTextCommand(const Section &s,
-                                                   std::string path)
-        : MarkerTextCommand(s, std::move(path))
+    InsertAfterTextCommand::InsertAfterTextCommand()
+        : MarkerTextCommand("insert-after-text")
     {
     }
 
@@ -455,9 +514,8 @@ namespace text_commands_detail
                      payload.end());
     }
 
-    InsertBeforeTextCommand::InsertBeforeTextCommand(const Section &s,
-                                                     std::string path)
-        : MarkerTextCommand(s, std::move(path))
+    InsertBeforeTextCommand::InsertBeforeTextCommand()
+        : MarkerTextCommand("insert-before-text")
     {
     }
 
@@ -471,8 +529,8 @@ namespace text_commands_detail
                      payload.end());
     }
 
-    ReplaceTextCommand::ReplaceTextCommand(const Section &s, std::string path)
-        : MarkerTextCommand(s, std::move(path))
+    ReplaceTextCommand::ReplaceTextCommand()
+        : MarkerTextCommand("replace-text")
     {
     }
 
@@ -489,8 +547,8 @@ namespace text_commands_detail
                      payload.end());
     }
 
-    DeleteTextCommand::DeleteTextCommand(const Section &s, std::string path)
-        : MarkerTextCommand(s, std::move(path))
+    DeleteTextCommand::DeleteTextCommand()
+        : MarkerTextCommand("delete-text")
     {
     }
 
@@ -514,41 +572,37 @@ namespace
     {
         using namespace text_commands_detail;
 
-        static const std::unordered_map<std::string, CommandFactory> registry = {
-            {"prepend-text",
-             [](const Section &s, const std::string &)
-             { return std::make_unique<SimpleInsertCommand>(s, true); }},
-            {"append-text",
-             [](const Section &s, const std::string &)
-             { return std::make_unique<SimpleInsertCommand>(s, false); }},
-            {"insert-after-text",
-             [](const Section &s, const std::string &filepath) {
-                 return std::make_unique<InsertAfterTextCommand>(s, filepath);
-             }},
-            {"insert-before-text",
-             [](const Section &s, const std::string &filepath) {
-                 return std::make_unique<InsertBeforeTextCommand>(s, filepath);
-             }},
-            {"replace-text",
-             [](const Section &s, const std::string &filepath)
-             { return std::make_unique<ReplaceTextCommand>(s, filepath); }},
-            {"delete-text",
-             [](const Section &s, const std::string &filepath)
-             { return std::make_unique<DeleteTextCommand>(s, filepath); }},
-        };
+        static const std::unordered_map<std::string, CommandFactory> registry =
+            {
+                {"prepend-text",
+                 []() { return std::make_unique<SimpleInsertCommand>("prepend-text", true); }},
+                {"append-text",
+                 []() { return std::make_unique<SimpleInsertCommand>("append-text", false); }},
+                {"insert-after-text",
+                 []() { return std::make_unique<InsertAfterTextCommand>(); }},
+                {"insert-before-text",
+                 []() { return std::make_unique<InsertBeforeTextCommand>(); }},
+                {"replace-text",
+                 []() { return std::make_unique<ReplaceTextCommand>(); }},
+                {"delete-text",
+                 []() { return std::make_unique<DeleteTextCommand>(); }},
+            };
 
         return registry;
     }
 } // namespace
 
-std::unique_ptr<Command>
-create_text_command(const Section &section, const std::string &filepath)
+std::unique_ptr<Command> create_text_command(const Section &section,
+                                             const std::string &filepath)
 {
     const auto &registry = text_command_registry();
     auto it = registry.find(section.command);
     if (it == registry.end())
         throw std::runtime_error("unknown text command: " + section.command);
-    return it->second(section, filepath);
+    auto cmd = it->second();
+    cmd->load_section(section);
+    (void)filepath;
+    return cmd;
 }
 
 void apply_text_commands(const std::string &filepath,

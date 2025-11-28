@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>src/command_parse_helpers.cpp</title>
+</head>
+<body>
+<!-- BEGIN SCAT CODE -->
+#include&nbsp;&quot;command_parse_helpers.h&quot;<br>
+<br>
+#include&nbsp;&lt;stdexcept&gt;<br>
+<br>
+using&nbsp;nos::trent;<br>
+<br>
+namespace&nbsp;command_parse<br>
+{<br>
+std::string&nbsp;get_scalar(const&nbsp;trent&nbsp;&amp;node,&nbsp;const&nbsp;char&nbsp;*key)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;auto&nbsp;&amp;dict&nbsp;=&nbsp;node.as_dict();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;it&nbsp;=&nbsp;dict.find(key);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(it&nbsp;==&nbsp;dict.end())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;std::string();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;trent&nbsp;&amp;v&nbsp;=&nbsp;it-&gt;second;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(v.is_nil())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;std::string();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;v.as_string();<br>
+}<br>
+<br>
+std::vector&lt;std::string&gt;&nbsp;split_scalar_lines(const&nbsp;std::string&nbsp;&amp;text)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;result;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;start&nbsp;=&nbsp;0;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(start&nbsp;&lt;&nbsp;text.size())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;pos&nbsp;=&nbsp;text.find('\n',&nbsp;start);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pos&nbsp;==&nbsp;std::string::npos)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result.emplace_back(text.substr(start));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result.emplace_back(text.substr(start,&nbsp;pos&nbsp;-&nbsp;start));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start&nbsp;=&nbsp;pos&nbsp;+&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;result;<br>
+}<br>
+<br>
+bool&nbsp;parse_indent_from_options(const&nbsp;trent&nbsp;&amp;node,&nbsp;bool&nbsp;default_value)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;auto&nbsp;&amp;dict&nbsp;=&nbsp;node.as_dict();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;it_opts&nbsp;=&nbsp;dict.find(&quot;options&quot;);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(it_opts&nbsp;==&nbsp;dict.end()&nbsp;||&nbsp;it_opts-&gt;second.is_nil())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;default_value;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;auto&nbsp;&amp;opts&nbsp;=&nbsp;it_opts-&gt;second.as_dict();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;it_ind&nbsp;=&nbsp;opts.find(&quot;indent&quot;);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(it_ind&nbsp;==&nbsp;opts.end())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;default_value;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;mode&nbsp;=&nbsp;it_ind-&gt;second.as_string();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mode&nbsp;==&nbsp;&quot;none&quot;&nbsp;||&nbsp;mode&nbsp;==&nbsp;&quot;as-is&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;false;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mode&nbsp;==&nbsp;&quot;from-marker&quot;&nbsp;||&nbsp;mode&nbsp;==&nbsp;&quot;marker&quot;&nbsp;||&nbsp;mode&nbsp;==&nbsp;&quot;auto&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;true;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;YAML&nbsp;patch:&nbsp;unknown&nbsp;indent&nbsp;mode:&nbsp;&quot;&nbsp;+&nbsp;mode);<br>
+}<br>
+}&nbsp;//&nbsp;namespace&nbsp;command_parse<br>
+<!-- END SCAT CODE -->
+</body>
+</html>

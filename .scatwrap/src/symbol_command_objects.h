@@ -11,6 +11,7 @@
 #include&nbsp;&quot;command.h&quot;<br>
 #include&nbsp;&quot;section.h&quot;<br>
 #include&nbsp;&quot;symbols.h&quot;<br>
+#include&nbsp;&quot;yaml/trent.h&quot;<br>
 <br>
 #include&nbsp;&lt;functional&gt;<br>
 #include&nbsp;&lt;memory&gt;<br>
@@ -22,7 +23,8 @@ namespace&nbsp;symbol_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;RegionReplaceCommand&nbsp;:&nbsp;public&nbsp;Command<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RegionReplaceCommand(const&nbsp;Section&nbsp;&amp;s,&nbsp;std::string&nbsp;path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;explicit&nbsp;RegionReplaceCommand(const&nbsp;std::string&nbsp;&amp;name);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;parse(const&nbsp;nos::trent&nbsp;&amp;tr)&nbsp;override;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;execute(std::vector&lt;std::string&gt;&nbsp;&amp;lines)&nbsp;override;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;protected:<br>
@@ -30,14 +32,13 @@ namespace&nbsp;symbol_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;std::string&nbsp;not_found_error()&nbsp;const&nbsp;=&nbsp;0;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;std::string&nbsp;invalid_region_error()&nbsp;const&nbsp;=&nbsp;0;<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;Section&nbsp;&amp;section;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;filepath;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;};<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;ReplaceCppClassCommand&nbsp;:&nbsp;public&nbsp;RegionReplaceCommand<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReplaceCppClassCommand(const&nbsp;Section&nbsp;&amp;s,&nbsp;std::string&nbsp;path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReplaceCppClassCommand();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;parse(const&nbsp;nos::trent&nbsp;&amp;tr)&nbsp;override;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;protected:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;find_region(const&nbsp;std::string&nbsp;&amp;text,&nbsp;Region&nbsp;&amp;r)&nbsp;const&nbsp;override;<br>
@@ -48,7 +49,8 @@ namespace&nbsp;symbol_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;ReplaceCppMethodCommand&nbsp;:&nbsp;public&nbsp;RegionReplaceCommand<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReplaceCppMethodCommand(const&nbsp;Section&nbsp;&amp;s,&nbsp;std::string&nbsp;path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReplaceCppMethodCommand();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;parse(const&nbsp;nos::trent&nbsp;&amp;tr)&nbsp;override;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;protected:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;find_region(const&nbsp;std::string&nbsp;&amp;text,&nbsp;Region&nbsp;&amp;r)&nbsp;const&nbsp;override;<br>
@@ -63,7 +65,8 @@ namespace&nbsp;symbol_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;ReplacePyClassCommand&nbsp;:&nbsp;public&nbsp;RegionReplaceCommand<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReplacePyClassCommand(const&nbsp;Section&nbsp;&amp;s,&nbsp;std::string&nbsp;path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReplacePyClassCommand();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;parse(const&nbsp;nos::trent&nbsp;&amp;tr)&nbsp;override;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;protected:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;find_region(const&nbsp;std::string&nbsp;&amp;text,&nbsp;Region&nbsp;&amp;r)&nbsp;const&nbsp;override;<br>
@@ -74,7 +77,8 @@ namespace&nbsp;symbol_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;ReplacePyMethodCommand&nbsp;:&nbsp;public&nbsp;RegionReplaceCommand<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReplacePyMethodCommand(const&nbsp;Section&nbsp;&amp;s,&nbsp;std::string&nbsp;path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReplacePyMethodCommand();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;parse(const&nbsp;nos::trent&nbsp;&amp;tr)&nbsp;override;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;protected:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;find_region(const&nbsp;std::string&nbsp;&amp;text,&nbsp;Region&nbsp;&amp;r)&nbsp;const&nbsp;override;<br>
@@ -86,8 +90,8 @@ namespace&nbsp;symbol_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;method;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;};<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;using&nbsp;CommandFactory&nbsp;=&nbsp;std::function&lt;std::unique_ptr&lt;Command&gt;(<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;Section&nbsp;&amp;,&nbsp;const&nbsp;std::string&nbsp;&amp;)&gt;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;using&nbsp;CommandFactory&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::function&lt;std::unique_ptr&lt;Command&gt;()&gt;;<br>
 }&nbsp;//&nbsp;namespace&nbsp;symbol_commands_detail<br>
 <!-- END SCAT CODE -->
 </body>

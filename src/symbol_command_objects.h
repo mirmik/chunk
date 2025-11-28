@@ -3,6 +3,7 @@
 #include "command.h"
 #include "section.h"
 #include "symbols.h"
+#include "yaml/trent.h"
 
 #include <functional>
 #include <memory>
@@ -14,7 +15,8 @@ namespace symbol_commands_detail
     class RegionReplaceCommand : public Command
     {
     public:
-        RegionReplaceCommand(const Section &s, std::string path);
+        explicit RegionReplaceCommand(const std::string &name);
+        void parse(const nos::trent &tr) override;
         void execute(std::vector<std::string> &lines) override;
 
     protected:
@@ -22,14 +24,13 @@ namespace symbol_commands_detail
         virtual std::string not_found_error() const = 0;
         virtual std::string invalid_region_error() const = 0;
 
-        const Section &section;
-        std::string filepath;
     };
 
     class ReplaceCppClassCommand : public RegionReplaceCommand
     {
     public:
-        ReplaceCppClassCommand(const Section &s, std::string path);
+        ReplaceCppClassCommand();
+        void parse(const nos::trent &tr) override;
 
     protected:
         bool find_region(const std::string &text, Region &r) const override;
@@ -40,7 +41,8 @@ namespace symbol_commands_detail
     class ReplaceCppMethodCommand : public RegionReplaceCommand
     {
     public:
-        ReplaceCppMethodCommand(const Section &s, std::string path);
+        ReplaceCppMethodCommand();
+        void parse(const nos::trent &tr) override;
 
     protected:
         bool find_region(const std::string &text, Region &r) const override;
@@ -55,7 +57,8 @@ namespace symbol_commands_detail
     class ReplacePyClassCommand : public RegionReplaceCommand
     {
     public:
-        ReplacePyClassCommand(const Section &s, std::string path);
+        ReplacePyClassCommand();
+        void parse(const nos::trent &tr) override;
 
     protected:
         bool find_region(const std::string &text, Region &r) const override;
@@ -66,7 +69,8 @@ namespace symbol_commands_detail
     class ReplacePyMethodCommand : public RegionReplaceCommand
     {
     public:
-        ReplacePyMethodCommand(const Section &s, std::string path);
+        ReplacePyMethodCommand();
+        void parse(const nos::trent &tr) override;
 
     protected:
         bool find_region(const std::string &text, Region &r) const override;
@@ -78,6 +82,6 @@ namespace symbol_commands_detail
         std::string method;
     };
 
-    using CommandFactory = std::function<std::unique_ptr<Command>(
-        const Section &, const std::string &)>;
+    using CommandFactory =
+        std::function<std::unique_ptr<Command>()>;
 } // namespace symbol_commands_detail

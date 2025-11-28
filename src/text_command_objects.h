@@ -2,6 +2,7 @@
 
 #include "command.h"
 #include "section.h"
+#include "yaml/trent.h"
 
 #include <cstddef>
 #include <functional>
@@ -14,18 +15,19 @@ namespace text_commands_detail
     class SimpleInsertCommand : public Command
     {
     public:
-        explicit SimpleInsertCommand(const Section &s, bool prepend);
+        SimpleInsertCommand(const std::string &name, bool prepend);
+        void parse(const nos::trent &tr) override;
         void execute(std::vector<std::string> &lines) override;
 
     private:
-        const Section &section;
         bool prepend_mode = false;
     };
 
     class MarkerTextCommand : public Command
     {
     public:
-        MarkerTextCommand(const Section &s, std::string path);
+        MarkerTextCommand(const std::string &name);
+        void parse(const nos::trent &tr) override;
         void execute(std::vector<std::string> &lines) override;
 
     protected:
@@ -42,16 +44,12 @@ namespace text_commands_detail
                            std::size_t begin,
                            std::size_t end,
                            const std::vector<std::string> &payload) = 0;
-
-    protected:
-        const Section &section;
-        std::string filepath;
     };
 
     class InsertAfterTextCommand : public MarkerTextCommand
     {
     public:
-        InsertAfterTextCommand(const Section &s, std::string path);
+        InsertAfterTextCommand();
 
     protected:
         bool should_indent_payload() const override
@@ -67,7 +65,7 @@ namespace text_commands_detail
     class InsertBeforeTextCommand : public MarkerTextCommand
     {
     public:
-        InsertBeforeTextCommand(const Section &s, std::string path);
+        InsertBeforeTextCommand();
 
     protected:
         bool should_indent_payload() const override
@@ -83,7 +81,7 @@ namespace text_commands_detail
     class ReplaceTextCommand : public MarkerTextCommand
     {
     public:
-        ReplaceTextCommand(const Section &s, std::string path);
+        ReplaceTextCommand();
 
     protected:
         bool should_indent_payload() const override
@@ -99,7 +97,7 @@ namespace text_commands_detail
     class DeleteTextCommand : public MarkerTextCommand
     {
     public:
-        DeleteTextCommand(const Section &s, std::string path);
+        DeleteTextCommand();
 
     private:
         void apply(std::vector<std::string> &lines,
@@ -108,6 +106,6 @@ namespace text_commands_detail
                    const std::vector<std::string> &payload) override;
     };
 
-    using CommandFactory = std::function<std::unique_ptr<Command>(
-        const Section &, const std::string &)>;
+    using CommandFactory =
+        std::function<std::unique_ptr<Command>()>;
 } // namespace text_commands_detail

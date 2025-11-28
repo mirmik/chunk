@@ -1,58 +1,55 @@
 #include "section.h"
 
+#include "command.h"
+#include "file_command_objects.h"
+#include "symbol_commands.h"
+#include "text_commands.h"
+
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <yaml/yaml.h>
 
 using nos::trent;
 
+static std::unordered_map<std::string, std::vector<std::string>> synonyms = {
+    {"insert-after-text", {"insert-after-text", "insert-text-after"}},
+    {"insert-before-text", {"insert-before-text", "insert-text-before"}},
+    {"replace-text", {"replace-text"}},
+    {"delete-text", {"delete-text"}},
+    {"prepend-text", {"prepend-text"}},
+    {"append-text", {"append-text"}},
+    {"create-file", {"create-file"}},
+    {"delete-file", {"delete-file"}},
+    {"replace-cpp-class", {"replace-cpp-class"}},
+    {"replace-cpp-method", {"replace-cpp-method"}},
+    {"replace-py-class", {"replace-py-class"}},
+    {"replace-py-method", {"replace-py-method"}},
+};
+
+static std::unordered_map<std::string, std::string> synonym_map;
+
 namespace
 {
-    std::vector<std::string> split_scalar_lines(const std::string &text)
+    void ensure_synonym_map()
     {
-        std::vector<std::string> result;
-        if (text.empty())
-            return result;
+        if (!synonym_map.empty())
+            return;
 
-        std::size_t start = 0;
-        const std::size_t n = text.size();
-
-        while (true)
+        for (const auto &pair : synonyms)
         {
-            std::size_t pos = text.find('\n', start);
-            if (pos == std::string::npos)
+            const std::string &canonical = pair.first;
+            for (const std::string &syn : pair.second)
             {
-                if (start < n)
-                    result.emplace_back(text.substr(start));
-                break;
+                synonym_map[syn] = canonical;
             }
-
-            result.emplace_back(text.substr(start, pos - start));
-            start = pos + 1;
-
-            if (start >= n)
-                break;
         }
-
-        return result;
-    }
-
-    std::string get_scalar(const trent &node, const char *key)
-    {
-        const auto &dict = node.as_dict();
-        auto it = dict.find(key);
-        if (it == dict.end())
-            return std::string();
-
-        const trent &v = it->second;
-        if (v.is_nil())
-            return std::string();
-
-        return v.as_string();
     }
 
     std::string normalize_op_name(const std::string &op_name)
     {
+        ensure_synonym_map();
+
         std::string name = op_name;
         for (char &ch : name)
         {
@@ -60,24 +57,13 @@ namespace
                 ch = '-';
         }
 
-        if (name == "create-file" || name == "delete-file" ||
-            name == "replace-text" || name == "delete-text" ||
-            name == "prepend-text" || name == "append-text" ||
-            name == "replace-cpp-class" || name == "replace-cpp-method" ||
-            name == "replace-py-class" || name == "replace-py-method")
+        auto it = synonym_map.find(name);
+        if (it == synonym_map.end())
         {
-            return name;
-        }
-        else if (name == "insert-after-text" || name == "insert-text-after")
-        {
-            return "insert-after-text";
-        }
-        else if (name == "insert-before-text" || name == "insert-text-before")
-        {
-            return "insert-before-text";
+            throw std::runtime_error("YAML patch: unknown operation: " + op_name);
         }
 
-        throw std::runtime_error("YAML patch: unknown op: " + op_name);
+        return it->second;
     }
 } // namespace
 
@@ -94,7 +80,32 @@ bool is_symbol_command(const std::string &cmd)
            cmd == "replace-py-method" || cmd == "replace-py-class";
 }
 
-std::vector<Section> parse_yaml_patch_text(const std::string &text)
+namespace
+{
+    std::unique_ptr<Command> make_command(const std::string &name)
+    {
+        if (auto file_cmd = create_file_command(name))
+            return file_cmd;
+
+        if (is_text_command(name))
+        {
+            Section s;
+            s.command = name;
+            return create_text_command(s, std::string());
+        }
+        if (is_symbol_command(name))
+        {
+            Section s;
+            s.command = name;
+            return create_symbol_command(s, std::string());
+        }
+
+        throw std::runtime_error("YAML patch: unknown operation: " + name);
+    }
+} // namespace
+
+std::vector<std::unique_ptr<Command>>
+parse_yaml_patch_text(const std::string &text)
 {
     trent root = nos::yaml::parse(text);
     std::string patch_language;
@@ -126,8 +137,8 @@ std::vector<Section> parse_yaml_patch_text(const std::string &text)
         throw std::runtime_error("YAML patch: 'operations' must be a sequence");
 
     const auto &ops = ops_node->as_list();
-    std::vector<Section> sections;
-    sections.reserve(ops.size());
+    std::vector<std::unique_ptr<Command>> commands;
+    commands.reserve(ops.size());
 
     int seq = 0;
 
@@ -139,130 +150,18 @@ std::vector<Section> parse_yaml_patch_text(const std::string &text)
 
         const auto &m = op_node.as_dict();
 
-        auto it_path = m.find("path");
         auto it_op = m.find("op");
-        if (it_path == m.end())
-            throw std::runtime_error("YAML patch: operation missing 'path'");
         if (it_op == m.end())
             throw std::runtime_error("YAML patch: operation missing 'op'");
 
-        Section s;
-        s.filepath = it_path->second.as_string();
-        if (s.filepath.empty())
-            throw std::runtime_error("YAML patch: 'path' must not be empty");
-        s.command = normalize_op_name(it_op->second.as_string());
-        s.language = patch_language;
-        s.seq = seq++;
-        s.comment = get_scalar(op_node, "comment");
+        std::string op_name = normalize_op_name(it_op->second.as_string());
+        auto cmd = make_command(op_name);
+        cmd->set_patch_language(patch_language);
+        cmd->set_sequence(seq++);
+        cmd->parse(op_node);
 
-        std::string marker_text = get_scalar(op_node, "marker");
-        std::string before_text = get_scalar(op_node, "before");
-        std::string after_text = get_scalar(op_node, "after");
-        std::string payload_text = get_scalar(op_node, "payload");
-        std::string class_text = get_scalar(op_node, "class");
-        std::string method_text = get_scalar(op_node, "method");
-        std::string symbol_text = get_scalar(op_node, "symbol");
-
-        auto it_opts = m.find("options");
-        if (it_opts != m.end() && !it_opts->second.is_nil())
-        {
-            const auto &opts = it_opts->second.as_dict();
-            auto it_ind = opts.find("indent");
-            if (it_ind != opts.end())
-            {
-                std::string mode = it_ind->second.as_string();
-                if (mode == "none" || mode == "as-is")
-                {
-                    s.indent_from_marker = false;
-                }
-                else if (mode == "from-marker" || mode == "marker" ||
-                         mode == "auto")
-                {
-                    s.indent_from_marker = true;
-                }
-                else
-                {
-                    throw std::runtime_error(
-                        "YAML patch: unknown indent mode: " + mode);
-                }
-            }
-        }
-
-        if (s.command == "create-file")
-        {
-            if (!payload_text.empty())
-                s.payload = split_scalar_lines(payload_text);
-        }
-        else if (s.command == "delete-file")
-        {
-        }
-        else if (is_text_command(s.command))
-        {
-            if (s.command == "prepend-text" || s.command == "append-text")
-            {
-                if (payload_text.empty())
-                    throw std::runtime_error(
-                        "YAML patch: text op '" + s.command + "' for file '" +
-                        s.filepath + "' requires 'payload'");
-
-                s.payload = split_scalar_lines(payload_text);
-            }
-            else
-            {
-                if (marker_text.empty())
-                    throw std::runtime_error(
-                        "YAML patch: text op '" + s.command + "' for file '" +
-                        s.filepath + "' requires 'marker'");
-
-                s.marker = split_scalar_lines(marker_text);
-
-                if (!before_text.empty())
-                    s.before = split_scalar_lines(before_text);
-                if (!after_text.empty())
-                    s.after = split_scalar_lines(after_text);
-                if (s.command != "delete-text" && !payload_text.empty())
-                    s.payload = split_scalar_lines(payload_text);
-            }
-        }
-        else if (is_symbol_command(s.command))
-        {
-            if (payload_text.empty())
-                throw std::runtime_error("YAML patch: symbol op '" + s.command +
-                                         "' for file '" + s.filepath +
-                                         "' requires 'payload'");
-            s.payload = split_scalar_lines(payload_text);
-
-            if (s.command == "replace-cpp-class" ||
-                s.command == "replace-py-class")
-            {
-                if (class_text.empty())
-                    throw std::runtime_error("YAML patch: op '" + s.command +
-                                             "' requires 'class' key");
-                s.arg1 = class_text;
-            }
-            else if (s.command == "replace-cpp-method" ||
-                     s.command == "replace-py-method")
-            {
-                if (!class_text.empty() && !method_text.empty())
-                {
-                    s.arg1 = class_text;
-                    s.arg2 = method_text;
-                }
-                else if (!symbol_text.empty())
-                {
-                    s.arg1 = symbol_text;
-                }
-                else
-                {
-                    throw std::runtime_error(
-                        "YAML patch: op '" + s.command +
-                        "' requires 'class'+'method' or 'symbol'");
-                }
-            }
-        }
-
-        sections.emplace_back(std::move(s));
+        commands.emplace_back(std::move(cmd));
     }
 
-    return sections;
+    return commands;
 }

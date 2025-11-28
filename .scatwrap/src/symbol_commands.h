@@ -11,8 +11,8 @@
 #include&nbsp;&quot;command.h&quot;<br>
 #include&nbsp;&quot;section.h&quot;<br>
 <br>
-#include&nbsp;&lt;string&gt;<br>
 #include&nbsp;&lt;memory&gt;<br>
+#include&nbsp;&lt;string&gt;<br>
 #include&nbsp;&lt;vector&gt;<br>
 <br>
 void&nbsp;apply_symbol_commands(const&nbsp;std::string&nbsp;&amp;filepath,<br>

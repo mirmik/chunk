@@ -64,6 +64,13 @@ void&nbsp;write_file_bytes(const&nbsp;std::filesystem::path&nbsp;&amp;p,&nbsp;co
 &nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!data.empty())<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out.write(data.data(),&nbsp;static_cast&lt;std::streamsize&gt;(data.size()));<br>
 }<br>
+<br>
+std::string&nbsp;read_all(std::istream&nbsp;&amp;in)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::ostringstream&nbsp;oss;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;oss&nbsp;&lt;&lt;&nbsp;in.rdbuf();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;oss.str();<br>
+}<br>
 <!-- END SCAT CODE -->
 </body>
 </html>
