@@ -34,7 +34,7 @@ operations:
 
 ```yaml
 description: "Краткое описание патча"
-language: python
+language: c++
 operations:
   - path: ...
     op: ...
@@ -359,6 +359,7 @@ operations:
 
 ```yaml
 description: "Обновить реализацию значения в C++ и Python"
+language: python
 
 operations:
   - path: src/foo.cpp

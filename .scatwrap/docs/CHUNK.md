@@ -42,7 +42,7 @@ operations:<br>
 <br>
 ```yaml<br>
 description:&nbsp;&quot;Краткое&nbsp;описание&nbsp;патча&quot;<br>
-language:&nbsp;python<br>
+language:&nbsp;c++<br>
 operations:<br>
 &nbsp;&nbsp;-&nbsp;path:&nbsp;...<br>
 &nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;...<br>
@@ -367,6 +367,7 @@ operations:<br>
 <br>
 ```yaml<br>
 description:&nbsp;&quot;Обновить&nbsp;реализацию&nbsp;значения&nbsp;в&nbsp;C++&nbsp;и&nbsp;Python&quot;<br>
+language:&nbsp;python<br>
 <br>
 operations:<br>
 &nbsp;&nbsp;-&nbsp;path:&nbsp;src/foo.cpp<br>
