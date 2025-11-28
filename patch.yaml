@@ -1,220 +1,145 @@
+description: "Two-pass marker search: first without comment ignoring, then with; plus test"
+language: c++
 operations:
-  - path: src/runner.cpp
+  - path: src/text_commands.cpp
     op: replace_text
-    marker: |
-      #include "runner.h"
+    marker: "find_marker_matches(const std::vector<std::string> &haystack,"
+    payload: "find_marker_matches_ignore_comments(const std::vector<std::string> &haystack,"
 
-      #include "file_io.h"
-      #include "symbol_commands.h"
-      #include "text_commands.h"
-      #include <algorithm>
-      #include <filesystem>
-      #include <map>
-      #include <stdexcept>
-    payload: |
-      #include "runner.h"
-
-      #include "file_io.h"
-      #include "symbol_commands.h"
-      #include "text_commands.h"
-      #include <algorithm>
-      #include <filesystem>
-      #include <map>
-      #include <sstream>
-      #include <stdexcept>
-
-  - path: src/runner.cpp
-    op: replace_text
-    marker: |
-      void apply_sections(const std::vector<Section> &sections)
+  - path: src/text_commands.cpp
+    op: insert_before_text
+    marker: "} // namespace"
+    payload: |-
+      std::vector<MarkerMatch>
+      find_marker_matches_no_comment_ignore(const std::vector<std::string> &haystack,
+                                            const std::vector<std::string> &needle,
+                                            const Section * /*section*/)
       {
-          std::vector<std::string> files;
-          files.reserve(sections.size());
-          for (auto &s : sections)
-              files.push_back(s.filepath);
+          std::vector<MarkerMatch> matches;
 
-          std::sort(files.begin(), files.end());
-          files.erase(std::unique(files.begin(), files.end()), files.end());
-
-          std::map<std::string, Backup> backup;
-
-          for (auto &f : files)
+          std::vector<std::string> pat;
+          pat.reserve(needle.size());
+          for (const auto &s : needle)
           {
-              Backup b;
-              fs::path p = f;
-
-              std::error_code ec;
-              if (fs::exists(p, ec))
-              {
-                  b.existed = true;
-
-                  try
-                  {
-                      b.lines = read_file_lines(p);
-                  }
-                  catch (...)
-                  {
-                      throw std::runtime_error("cannot read original file: " + f);
-                  }
-              }
-              else
-              {
-                  b.existed = false;
-              }
-
-              backup[f] = std::move(b);
+              std::string t = trim(s);
+              if (!t.empty())
+                  pat.push_back(std::move(t));
           }
-          try
+
+          if (pat.empty())
+              return matches;
+
+          std::vector<std::string> hs;
+          std::vector<int>         hs_idx;
+          hs.reserve(haystack.size());
+          hs_idx.reserve(haystack.size());
+          for (int i = 0; i < (int)haystack.size(); ++i)
           {
-              for (auto &s : sections)
+              std::string t = trim(haystack[i]);
+              if (!t.empty())
               {
-                  std::vector<const Section *> single{&s};
-                  apply_for_file(s.filepath, single);
+                  hs.emplace_back(std::move(t));
+                  hs_idx.push_back(i);
               }
           }
-          catch (...)
+
+          if (hs.empty() || pat.size() > hs.size())
+              return matches;
+
+          const std::size_t n = hs.size();
+          const std::size_t m = pat.size();
+
+          for (std::size_t i = 0; i + m <= n; ++i)
           {
-              for (auto &[path, b] : backup)
+              bool ok = true;
+              for (std::size_t j = 0; j < m; ++j)
               {
-                  fs::path p = path;
-                  std::error_code ec;
-                  if (b.existed)
+                  if (hs[i + j] != pat[j])
                   {
-                      try
-                      {
-                          write_file_lines(p, b.lines);
-                      }
-                      catch (...)
-                      {
-                      }
-                  }
-                  else
-                  {
-                      fs::remove(p, ec);
+                      ok = false;
+                      break;
                   }
               }
-
-              throw;
+              if (ok)
+              {
+                  int begin = hs_idx[i];
+                  int end   = hs_idx[i + m - 1];
+                  matches.push_back(MarkerMatch{begin, end});
+              }
           }
+
+          return matches;
       }
-    payload: |
-      void apply_sections(const std::vector<Section> &sections)
+
+      std::vector<MarkerMatch>
+      find_marker_matches(const std::vector<std::string> &haystack,
+                          const std::vector<std::string> &needle,
+                          const Section *section)
       {
-          std::vector<std::string> files;
-          files.reserve(sections.size());
-          for (auto &s : sections)
-              files.push_back(s.filepath);
+          std::vector<MarkerMatch> matches =
+              find_marker_matches_no_comment_ignore(haystack, needle, section);
+          if (!matches.empty())
+              return matches;
 
-          std::sort(files.begin(), files.end());
-          files.erase(std::unique(files.begin(), files.end()), files.end());
+          return find_marker_matches_ignore_comments(haystack, needle, section);
+      }
 
-          std::map<std::string, Backup> backup;
-
-          for (auto &f : files)
+  - path: tests/apply_yaml.cpp
+    op: insert_before_text
+    marker: "// 18. YAML symbol API: replace_cpp_class"
+    payload: |-
+      // 18. Prefer exact match with comments before ignoring them
+      // ============================================================================
+      TEST_CASE("YAML patch: prefer exact C++ marker match before ignoring comments")
+      {
+          fs::path tmp = fs::temp_directory_path() / "yaml_cpp_prefer_exact_with_comments";
+          fs::remove_all(tmp);
+          fs::create_directories(tmp);
+          fs::path f = tmp / "code.cpp";
           {
-              Backup b;
-              fs::path p = f;
-
-              std::error_code ec;
-              if (fs::exists(p, ec))
-              {
-                  b.existed = true;
-
-                  try
-                  {
-                      b.lines = read_file_lines(p);
-                  }
-                  catch (...)
-                  {
-                      throw std::runtime_error("cannot read original file: " + f);
-                  }
-              }
-              else
-              {
-                  b.existed = false;
-              }
-
-              backup[f] = std::move(b);
+              std::ofstream out(f);
+              out << "void foo() {\n"
+                  << "    int x = 1; // foo\n"
+                  << "    int y = 2;\n"
+                  << "}\n"
+                  << "\n"
+                  << "void bar() {\n"
+                  << "    int x = 1;\n"
+                  << "    int y = 2;\n"
+                  << "}\n";
+          }
+          fs::path patch = tmp / "patch.yml";
+          {
+              std::ofstream out(patch);
+              out << "language: cpp\n";
+              out << "operations:\n";
+              out << "  - path: " << f.string() << "\n";
+              out << "    op: replace_text\n";
+              out << "    marker: |\n";
+              out << "      void foo() {\n";
+              out << "        int x = 1; // foo\n";
+              out << "        int y = 2;\n";
+              out << "      }\n";
+              out << "    payload: |\n";
+              out << "      void foo() {\n";
+              out << "        int x = 10; // foo\n";
+              out << "        int y = 20;\n";
+              out << "      }\n";
           }
 
-          const Section *current_section = nullptr;
+          CHECK(run_apply(patch) == 0);
+          auto L = read_lines(f);
+          REQUIRE(!L.empty());
 
-          try
-          {
-              for (auto &s : sections)
-              {
-                  current_section = &s;
-                  std::vector<const Section *> single{&s};
-                  apply_for_file(s.filepath, single);
-              }
-          }
-          catch (const std::exception &e)
-          {
-              for (auto &[path, b] : backup)
-              {
-                  fs::path p = path;
-                  std::error_code ec;
-                  if (b.existed)
-                  {
-                      try
-                      {
-                          write_file_lines(p, b.lines);
-                      }
-                      catch (...)
-                      {
-                      }
-                  }
-                  else
-                  {
-                      fs::remove(p, ec);
-                  }
-              }
+          std::string all;
+          for (auto &s : L)
+              all += s + "\n";
 
-              if (current_section)
-              {
-                  std::ostringstream oss;
-                  oss << e.what();
-                  if (!current_section->comment.empty())
-                      oss << "\nsection comment: " << current_section->comment;
-                  if (!current_section->marker.empty())
-                  {
-                      oss << "\nsection marker preview:\n";
-                      size_t max_preview_lines = 3;
-                      for (size_t i = 0;
-                           i < current_section->marker.size() &&
-                           i < max_preview_lines;
-                           ++i)
-                      {
-                          oss << current_section->marker[i] << "\n";
-                      }
-                  }
-                  throw std::runtime_error(oss.str());
-              }
+          // foo обновился
+          CHECK(all.find("int x = 10; // foo") != std::string::npos);
+          CHECK(all.find("int y = 20;") != std::string::npos);
 
-              throw;
-          }
-          catch (...)
-          {
-              for (auto &[path, b] : backup)
-              {
-                  fs::path p = path;
-                  std::error_code ec;
-                  if (b.existed)
-                  {
-                      try
-                      {
-                          write_file_lines(p, b.lines);
-                      }
-                      catch (...)
-                      {
-                      }
-                  }
-                  else
-                  {
-                      fs::remove(p, ec);
-                  }
-              }
-
-              throw;
-          }
+          // bar остался как был
+          CHECK(all.find("void bar() {") != std::string::npos);
+          CHECK(all.find("int x = 1;\n") != std::string::npos);
       }

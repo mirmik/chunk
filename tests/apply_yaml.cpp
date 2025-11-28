@@ -761,9 +761,66 @@ TEST_CASE("YAML patch: replace_text removes whole block including blank lines")
           CHECK(all.find("class Bar:") != std::string::npos);
       }
 
-// ============================================================================
-// 18. YAML symbol API: replace_cpp_class
-// ============================================================================     
+
+      
+// 18. Prefer exact match with comments before ignoring them
+      // ============================================================================
+      TEST_CASE("YAML patch: prefer exact C++ marker match before ignoring comments")
+      {
+          fs::path tmp = fs::temp_directory_path() / "yaml_cpp_prefer_exact_with_comments";
+          fs::remove_all(tmp);
+          fs::create_directories(tmp);
+          fs::path f = tmp / "code.cpp";
+          {
+              std::ofstream out(f);
+              out << "void foo() {\n"
+                  << "    int x = 1; // foo\n"
+                  << "    int y = 2;\n"
+                  << "}\n"
+                  << "\n"
+                  << "void bar() {\n"
+                  << "    int x = 1;\n"
+                  << "    int y = 2;\n"
+                  << "}\n";
+          }
+          fs::path patch = tmp / "patch.yml";
+          {
+              std::ofstream out(patch);
+              out << "language: cpp\n";
+              out << "operations:\n";
+              out << "  - path: " << f.string() << "\n";
+              out << "    op: replace_text\n";
+              out << "    marker: |\n";
+              out << "      void foo() {\n";
+              out << "        int x = 1; // foo\n";
+              out << "        int y = 2;\n";
+              out << "      }\n";
+              out << "    payload: |\n";
+              out << "      void foo() {\n";
+              out << "        int x = 10; // foo\n";
+              out << "        int y = 20;\n";
+              out << "      }\n";
+          }
+
+          CHECK(run_apply(patch) == 0);
+          auto L = read_lines(f);
+          REQUIRE(!L.empty());
+
+          std::string all;
+          for (auto &s : L)
+              all += s + "\n";
+
+          // foo обновился
+          CHECK(all.find("int x = 10; // foo") != std::string::npos);
+          CHECK(all.find("int y = 20;") != std::string::npos);
+
+          // bar остался как был
+          CHECK(all.find("void bar() {") != std::string::npos);
+          CHECK(all.find("int x = 1;\n") != std::string::npos);
+      }
+
+
+
 TEST_CASE("YAML symbol API: replace_cpp_class replaces only target class")
 {
     fs::path tmp = fs::temp_directory_path() / "yaml_symbol_cpp_class";
