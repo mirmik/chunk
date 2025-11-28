@@ -169,8 +169,8 @@ operations:
 Обязательные поля операции:
 
 * `path`
-* `op: insert_after_text | insert_before_text | replace_text | delete_text | prepend_text | append_text`
-* `marker` — обязателен для маркерных операций (`insert_after_text`, `insert_before_text`, `replace_text`, `delete_text`).
+* `op: insert_text_after | insert_text_before | replace_text | delete_text | prepend_text | append_text`
+* `marker` — обязателен для маркерных операций (`insert_text_after`, `insert_text_before`, `replace_text`, `delete_text`).
 
 Для `prepend_text` и `append_text` поле `marker` не используется: они просто вставляют `payload` в начало или конец файла.
 
@@ -195,14 +195,14 @@ operations:
       int value() const noexcept;
 ```
 
-### 5.2. `insert_after_text`
+### 5.2. `insert_text_after`
 
 Вставить текст сразу **после** маркера:
 
 ```yaml
 operations:
   - path: src/foo.cpp
-    op: insert_after_text
+    op: insert_text_after
     marker: |-
       void Foo::init()
       {
@@ -215,14 +215,14 @@ operations:
       }
 ```
 
-### 5.3. `insert_before_text`
+### 5.3. `insert_text_before`
 
 Вставить текст **перед** маркером:
 
 ```yaml
 operations:
   - path: src/foo.cpp
-    op: insert_before_text
+    op: insert_text_before
     marker: |-
       public:
           void run();

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>docs/CHUNK.md</title>
+  <title>docs/CHUNK_ru.md</title>
 </head>
 <body>
 <!-- BEGIN SCAT CODE -->
@@ -177,8 +177,8 @@ operations:<br>
 Обязательные&nbsp;поля&nbsp;операции:<br>
 <br>
 *&nbsp;`path`<br>
-*&nbsp;`op:&nbsp;insert_after_text&nbsp;|&nbsp;insert_before_text&nbsp;|&nbsp;replace_text&nbsp;|&nbsp;delete_text&nbsp;|&nbsp;prepend_text&nbsp;|&nbsp;append_text`<br>
-*&nbsp;`marker`&nbsp;—&nbsp;обязателен&nbsp;для&nbsp;маркерных&nbsp;операций&nbsp;(`insert_after_text`,&nbsp;`insert_before_text`,&nbsp;`replace_text`,&nbsp;`delete_text`).<br>
+*&nbsp;`op:&nbsp;insert_text_after&nbsp;|&nbsp;insert_text_before&nbsp;|&nbsp;replace_text&nbsp;|&nbsp;delete_text&nbsp;|&nbsp;prepend_text&nbsp;|&nbsp;append_text`<br>
+*&nbsp;`marker`&nbsp;—&nbsp;обязателен&nbsp;для&nbsp;маркерных&nbsp;операций&nbsp;(`insert_text_after`,&nbsp;`insert_text_before`,&nbsp;`replace_text`,&nbsp;`delete_text`).<br>
 <br>
 Для&nbsp;`prepend_text`&nbsp;и&nbsp;`append_text`&nbsp;поле&nbsp;`marker`&nbsp;не&nbsp;используется:&nbsp;они&nbsp;просто&nbsp;вставляют&nbsp;`payload`&nbsp;в&nbsp;начало&nbsp;или&nbsp;конец&nbsp;файла.<br>
 <br>
@@ -203,14 +203,14 @@ operations:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;value()&nbsp;const&nbsp;noexcept;<br>
 ```<br>
 <br>
-###&nbsp;5.2.&nbsp;`insert_after_text`<br>
+###&nbsp;5.2.&nbsp;`insert_text_after`<br>
 <br>
 Вставить&nbsp;текст&nbsp;сразу&nbsp;**после**&nbsp;маркера:<br>
 <br>
 ```yaml<br>
 operations:<br>
 &nbsp;&nbsp;-&nbsp;path:&nbsp;src/foo.cpp<br>
-&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;insert_after_text<br>
+&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;insert_text_after<br>
 &nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|-<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;Foo::init()<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
@@ -223,14 +223,14 @@ operations:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
 ```<br>
 <br>
-###&nbsp;5.3.&nbsp;`insert_before_text`<br>
+###&nbsp;5.3.&nbsp;`insert_text_before`<br>
 <br>
 Вставить&nbsp;текст&nbsp;**перед**&nbsp;маркером:<br>
 <br>
 ```yaml<br>
 operations:<br>
 &nbsp;&nbsp;-&nbsp;path:&nbsp;src/foo.cpp<br>
-&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;insert_before_text<br>
+&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;insert_text_before<br>
 &nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|-<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;run();<br>
