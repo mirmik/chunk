@@ -21,6 +21,14 @@ int&nbsp;main(int&nbsp;argc,&nbsp;char&nbsp;**argv)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;}<br>
 <br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;=&nbsp;2&nbsp;&amp;&amp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(std::strcmp(argv[1],&nbsp;&quot;--version&quot;)&nbsp;==&nbsp;0&nbsp;||<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::strcmp(argv[1],&nbsp;&quot;-V&quot;)&nbsp;==&nbsp;0))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::cout&nbsp;&lt;&lt;&nbsp;&quot;chunk&nbsp;0.1.0\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;apply_chunk_main(argc,&nbsp;argv);<br>
 }<br>
 <!-- END SCAT CODE -->
