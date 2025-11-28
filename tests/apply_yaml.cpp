@@ -655,8 +655,115 @@ TEST_CASE("YAML patch: replace_text removes whole block including blank lines")
 }
 
 // ============================================================================
-// 18. YAML symbol API: replace_cpp_class
+      // 18. C++/Python: marker ignores comments/docstrings
+      // ============================================================================
+      TEST_CASE("YAML patch: C++ marker ignores block comments")
+      {
+          fs::path tmp = fs::temp_directory_path() / "yaml_cpp_block_comment_marker";
+          fs::remove_all(tmp);
+          fs::create_directories(tmp);
+          fs::path f = tmp / "code.cpp";
+          {
+              std::ofstream out(f);
+              out << "void foo() {\n"
+                  << "    int x = 1;\n"
+                  << "    /* begin block\n"
+                  << "       still comment\n"
+                  << "       end */\n"
+                  << "    int y = 2;\n"
+                  << "}\n";
+          }
+          fs::path patch = tmp / "patch.yml";
+          {
+              std::ofstream out(patch);
+              out << "language: cpp\n";
+              out << "operations:\n";
+              out << "  - path: " << f.string() << "\n";
+              out << "    op: replace_text\n";
+              out << "    marker: |\n";
+              out << "      void foo() {\n";
+              out << "        int x = 1;\n";
+              out << "        int y = 2;\n";
+              out << "      }\n";
+              out << "    payload: |\n";
+              out << "      void foo() {\n";
+              out << "        int x = 10;\n";
+              out << "        int y = 20;\n";
+              out << "      }\n";
+          }
+
+          CHECK(run_apply(patch) == 0);
+          auto L = read_lines(f);
+          REQUIRE(!L.empty());
+
+          std::string all;
+          for (auto &s : L)
+              all += s + "\n";
+
+          // новый код на месте
+          CHECK(all.find("int x = 10;") != std::string::npos);
+          CHECK(all.find("int y = 20;") != std::string::npos);
+          // старый блочный коммент исчез вместе со старым телом функции
+          CHECK(all.find("begin block") == std::string::npos);
+      }
+
+      TEST_CASE("YAML patch: Python marker ignores triple-quoted docstrings")
+      {
+          fs::path tmp = fs::temp_directory_path() / "yaml_py_docstring_marker";
+          fs::remove_all(tmp);
+          fs::create_directories(tmp);
+          fs::path f = tmp / "foo.py";
+          {
+              std::ofstream out(f);
+              out << "class Foo:\n"
+                  << "    \"\"\"Class docs\n"
+                  << "    Spanning multiple lines\n"
+                  << "    \"\"\"\n"
+                  << "    def __init__(self):\n"
+                  << "        self.x = 1\n"
+                  << "\n"
+                  << "class Bar:\n"
+                  << "    pass\n";
+          }
+          fs::path patch = tmp / "patch.yml";
+          {
+              std::ofstream out(patch);
+              out << "language: python\n";
+              out << "operations:\n";
+              out << "  - path: " << f.string() << "\n";
+              out << "    op: replace_text\n";
+              out << "    marker: |\n";
+              out << "      class Foo:\n";
+              out << "        def __init__(self):\n";
+              out << "          self.x = 1\n";
+              out << "    payload: |\n";
+              out << "      class Foo:\n";
+              out << "        def __init__(self):\n";
+              out << "          self.x = 2\n";
+              out << "        def answer(self):\n";
+              out << "          return 42\n";
+          }
+
+          CHECK(run_apply(patch) == 0);
+          auto L = read_lines(f);
+          REQUIRE(!L.empty());
+
+          std::string all;
+          for (auto &s : L)
+              all += s + "\n";
+
+          // докстринг и старое тело класса ушли
+          CHECK(all.find("self.x = 1") == std::string::npos);
+          // новое тело на месте
+          CHECK(all.find("self.x = 2") != std::string::npos);
+          CHECK(all.find("def answer(self):") != std::string::npos);
+          // соседний класс не тронули
+          CHECK(all.find("class Bar:") != std::string::npos);
+      }
+
 // ============================================================================
+// 18. YAML symbol API: replace_cpp_class
+// ============================================================================     
 TEST_CASE("YAML symbol API: replace_cpp_class replaces only target class")
 {
     fs::path tmp = fs::temp_directory_path() / "yaml_symbol_cpp_class";

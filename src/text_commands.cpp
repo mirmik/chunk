@@ -64,6 +64,113 @@ PatchLanguage detect_language(const Section *s)
 		return PatchLanguage::Python;
 	return PatchLanguage::Unknown;
 }
+struct CodeNormalizer
+{
+    PatchLanguage lang;
+    bool cpp_in_block_comment = false;
+    bool py_in_triple_string = false;
+    char py_triple_delim = 0;
+
+    explicit CodeNormalizer(PatchLanguage l)
+        : lang(l)
+    {
+    }
+
+    std::string normalize(std::string_view view)
+    {
+        return trim(strip_comments(view));
+    }
+
+private:
+    std::string strip_comments(std::string_view view)
+    {
+        if (view.empty())
+            return std::string();
+        if (lang == PatchLanguage::Cpp)
+            return strip_cpp(view);
+        if (lang == PatchLanguage::Python)
+            return strip_python(view);
+        return std::string(view);
+    }
+
+    std::string strip_cpp(std::string_view view)
+    {
+        const char *data = view.data();
+        std::size_t len = view.size();
+        std::string out;
+        out.reserve(len);
+        std::size_t i = 0;
+        while (i < len)
+        {
+            if (cpp_in_block_comment)
+            {
+                if (i + 1 < len && data[i] == '*' && data[i + 1] == '/')
+                {
+                    cpp_in_block_comment = false;
+                    i += 2;
+                }
+                else
+                {
+                    ++i;
+                }
+                continue;
+            }
+            if (i + 1 < len && data[i] == '/' && data[i + 1] == '/')
+                break;
+            if (i + 1 < len && data[i] == '/' && data[i + 1] == '*')
+            {
+                cpp_in_block_comment = true;
+                i += 2;
+                continue;
+            }
+            out.push_back(data[i]);
+            ++i;
+        }
+        return out;
+    }
+
+    std::string strip_python(std::string_view view)
+    {
+        const char *data = view.data();
+        std::size_t len = view.size();
+        std::string out;
+        out.reserve(len);
+        std::size_t i = 0;
+        while (i < len)
+        {
+            if (py_in_triple_string)
+            {
+                if (i + 2 < len && data[i] == py_triple_delim &&
+                    data[i + 1] == py_triple_delim &&
+                    data[i + 2] == py_triple_delim)
+                {
+                    py_in_triple_string = false;
+                    i += 3;
+                }
+                else
+                {
+                    ++i;
+                }
+                continue;
+            }
+            if (i + 2 < len &&
+                (data[i] == '\'' || data[i] == '\"') &&
+                data[i + 1] == data[i] &&
+                data[i + 2] == data[i])
+            {
+                py_in_triple_string = true;
+                py_triple_delim = data[i];
+                i += 3;
+                continue;
+            }
+            if (data[i] == '#')
+                break;
+            out.push_back(data[i]);
+            ++i;
+        }
+        return out;
+    }
+};
 
 std::string strip_code_comment(std::string_view view, PatchLanguage lang)
 {
@@ -107,31 +214,32 @@ find_marker_matches(const std::vector<std::string> &haystack,
 	std::vector<MarkerMatch> matches;
 
 	PatchLanguage lang = detect_language(section);
+	CodeNormalizer pat_norm(lang);
+	CodeNormalizer hs_norm(lang);
 
 	std::vector<std::string> pat;
 	pat.reserve(needle.size());
 	for (const auto &s : needle)
 	{
-		std::string t = normalize_line_for_match(s, lang);
-		if (!t.empty())
-			pat.push_back(std::move(t));
+	    std::string t = pat_norm.normalize(s);
+	    if (!t.empty())
+	        pat.push_back(std::move(t));
 	}
 
 	if (pat.empty())
-		return matches;
+	    return matches;
 	std::vector<std::string> hs;
 	std::vector<int>         hs_idx;
 	hs.reserve(haystack.size());
 	hs_idx.reserve(haystack.size());
-
 	for (int i = 0; i < (int)haystack.size(); ++i)
 	{
-		std::string t = normalize_line_for_match(haystack[i], lang);
-		if (!t.empty())
-		{
-			hs.emplace_back(std::move(t));
-			hs_idx.push_back(i);
-		}
+	    std::string t = hs_norm.normalize(haystack[i]);
+	    if (!t.empty())
+	    {
+	        hs.emplace_back(std::move(t));
+	        hs_idx.push_back(i);
+	    }
 	}
 
 	if (hs.empty() || pat.size() > hs.size())
