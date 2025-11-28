@@ -17,10 +17,9 @@
 Файл&nbsp;описываем&nbsp;**формат&nbsp;файла&nbsp;и&nbsp;семантику&nbsp;команд**.<br>
 CHUNK&nbsp;использует&nbsp;yaml-lite&nbsp;синтаксис&nbsp;потому&nbsp;что&nbsp;нейросети&nbsp;достаточно&nbsp;стабильно&nbsp;пишут&nbsp;yaml&nbsp;документы&nbsp;(в&nbsp;отличие&nbsp;от&nbsp;unified&nbsp;diff)<br>
 ##&nbsp;Комментарии&nbsp;и&nbsp;символ&nbsp;`#`<br>
-<br>
 yaml-lite,&nbsp;который&nbsp;использует&nbsp;CHUNK,&nbsp;**не&nbsp;поддерживает&nbsp;комментарии&nbsp;YAML**.<br>
 Символ&nbsp;`#`&nbsp;нигде&nbsp;не&nbsp;имеет&nbsp;специального&nbsp;смысла&nbsp;и&nbsp;всегда&nbsp;считается&nbsp;частью&nbsp;строки.<br>
-Для&nbsp;пояснений&nbsp;к&nbsp;патчу&nbsp;используй&nbsp;поле&nbsp;`description`&nbsp;или&nbsp;текст&nbsp;внутри&nbsp;`payload`.<br>
+Для&nbsp;пояснений&nbsp;к&nbsp;патчу&nbsp;используй&nbsp;поле&nbsp;`description`,&nbsp;поле&nbsp;`comment`&nbsp;у&nbsp;операций&nbsp;или&nbsp;текст&nbsp;внутри&nbsp;`payload`.<br>
 <br>
 ---<br>
 <br>
@@ -50,6 +49,18 @@ operations:<br>
 <br>
 *&nbsp;`operations`&nbsp;—&nbsp;массив&nbsp;операций.<br>
 *&nbsp;каждый&nbsp;элемент&nbsp;массива&nbsp;—&nbsp;отдельная&nbsp;операция,&nbsp;причём&nbsp;операции&nbsp;применяются&nbsp;в&nbsp;порядке&nbsp;изложения&nbsp;в&nbsp;документе.<br>
+<br>
+Кроме&nbsp;этого,&nbsp;у&nbsp;каждой&nbsp;операции&nbsp;можно&nbsp;задать&nbsp;необязательное&nbsp;поле&nbsp;`comment`&nbsp;с&nbsp;произвольным&nbsp;описанием:<br>
+<br>
+```yaml<br>
+operations:<br>
+&nbsp;&nbsp;-&nbsp;path:&nbsp;src/foo.cpp<br>
+&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text<br>
+&nbsp;&nbsp;&nbsp;&nbsp;comment:&nbsp;&quot;Локальная&nbsp;заметка&nbsp;к&nbsp;операции&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;...<br>
+```<br>
+<br>
+Поле&nbsp;`comment`&nbsp;не&nbsp;влияет&nbsp;на&nbsp;применение&nbsp;патча&nbsp;и&nbsp;служит&nbsp;только&nbsp;для&nbsp;пояснений.<br>
 <br>
 ---<br>
 <br>
@@ -171,6 +182,7 @@ operations:<br>
 <br>
 *&nbsp;`before`,&nbsp;`after`&nbsp;—&nbsp;опциональный&nbsp;контекст&nbsp;(указывают,&nbsp;что&nbsp;окружает&nbsp;маркер);<br>
 *&nbsp;`payload`&nbsp;—&nbsp;обязателен&nbsp;для&nbsp;всех,&nbsp;кроме&nbsp;`delete_text`;<br>
+*&nbsp;`comment`&nbsp;—&nbsp;опциональная&nbsp;человекочитаемая&nbsp;заметка&nbsp;к&nbsp;операции;<br>
 *&nbsp;`options.indent`&nbsp;—&nbsp;опционально.<br>
 <br>
 ###&nbsp;5.1.&nbsp;`replace_text`<br>
@@ -253,6 +265,7 @@ operations:<br>
 *&nbsp;`path`<br>
 *&nbsp;`op`<br>
 *&nbsp;`payload`&nbsp;—&nbsp;новый&nbsp;код&nbsp;класса/метода;<br>
+*&nbsp;`comment`&nbsp;—&nbsp;опциональная&nbsp;человекочитаемая&nbsp;заметка&nbsp;к&nbsp;операции;<br>
 *&nbsp;`options.indent`&nbsp;—&nbsp;режим&nbsp;отступов.<br>
 <br>
 Цель&nbsp;задаётся&nbsp;либо:<br>
@@ -356,6 +369,7 @@ description:&nbsp;&quot;Обновить&nbsp;реализацию&nbsp;знач
 operations:<br>
 &nbsp;&nbsp;-&nbsp;path:&nbsp;src/foo.cpp<br>
 &nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_cpp_method<br>
+&nbsp;&nbsp;&nbsp;&nbsp;comment:&nbsp;&quot;Обновляем&nbsp;реализацию&nbsp;Foo::value&nbsp;в&nbsp;C++&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;class:&nbsp;Foo<br>
 &nbsp;&nbsp;&nbsp;&nbsp;method:&nbsp;value<br>
 &nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|-<br>
@@ -366,6 +380,7 @@ operations:<br>
 <br>
 &nbsp;&nbsp;-&nbsp;path:&nbsp;src/foo.py<br>
 &nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_py_method<br>
+&nbsp;&nbsp;&nbsp;&nbsp;comment:&nbsp;&quot;Обновляем&nbsp;реализацию&nbsp;Foo.run&nbsp;в&nbsp;Python&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;class:&nbsp;Foo<br>
 &nbsp;&nbsp;&nbsp;&nbsp;method:&nbsp;run<br>
 &nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|-<br>
