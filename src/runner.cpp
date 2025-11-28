@@ -17,7 +17,43 @@ struct Backup
 {
     bool existed = false;
     std::vector<std::string> lines;
+    fs::file_time_type last_write_time;
+    fs::perms permissions = fs::perms::unknown;
+    bool has_last_write_time = false;
+    bool has_permissions    = false;
 };
+
+void restore_backup(const std::string &path, const Backup &b)
+{
+    fs::path p = path;
+    std::error_code ec;
+
+    if (!b.existed)
+    {
+        fs::remove(p, ec);
+        return;
+    }
+
+    try
+    {
+        write_file_lines(p, b.lines);
+
+        if (b.has_permissions)
+        {
+            std::error_code perm_ec;
+            fs::permissions(p, b.permissions, fs::perm_options::replace, perm_ec);
+        }
+
+        if (b.has_last_write_time)
+        {
+            std::error_code time_ec;
+            fs::last_write_time(p, b.last_write_time, time_ec);
+        }
+    }
+    catch (...)
+    {
+    }
+}
 
 void apply_for_file(const std::string &filepath,
                     const std::vector<const Section *> &sections)
@@ -114,6 +150,20 @@ void apply_sections(const std::vector<Section> &sections)
             {
                 throw std::runtime_error("cannot read original file: " + f);
             }
+
+            auto status = fs::status(p, ec);
+            if (!ec)
+            {
+                b.permissions = status.permissions();
+                b.has_permissions = true;
+            }
+
+            auto mtime = fs::last_write_time(p, ec);
+            if (!ec)
+            {
+                b.last_write_time = mtime;
+                b.has_last_write_time = true;
+            }
         }
         else
         {
@@ -138,22 +188,7 @@ void apply_sections(const std::vector<Section> &sections)
     {
         for (auto &[path, b] : backup)
         {
-            fs::path p = path;
-            std::error_code ec;
-            if (b.existed)
-            {
-                try
-                {
-                    write_file_lines(p, b.lines);
-                }
-                catch (...)
-                {
-                }
-            }
-            else
-            {
-                fs::remove(p, ec);
-            }
+            restore_backup(path, b);
         }
 
         if (current_section)
@@ -183,22 +218,7 @@ void apply_sections(const std::vector<Section> &sections)
     {
         for (auto &[path, b] : backup)
         {
-            fs::path p = path;
-            std::error_code ec;
-            if (b.existed)
-            {
-                try
-                {
-                    write_file_lines(p, b.lines);
-                }
-                catch (...)
-                {
-                }
-            }
-            else
-            {
-                fs::remove(p, ec);
-            }
+            restore_backup(path, b);
         }
 
         throw;
