@@ -236,6 +236,86 @@ TEST_CASE(&quot;apply_chunk_main:&nbsp;delete-file&nbsp;then&nbsp;create-file&qu
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(lines[0]&nbsp;==&nbsp;&quot;NEW1&quot;);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(lines[1]&nbsp;==&nbsp;&quot;NEW2&quot;);<br>
 }<br>
+<br>
+TEST_CASE(&quot;apply_chunk_main:&nbsp;marker&nbsp;ignores&nbsp;C++&nbsp;comments&nbsp;when&nbsp;language&nbsp;is&nbsp;set&quot;)<br>
+{<br>
+	fs::path&nbsp;tmp&nbsp;=&nbsp;fs::temp_directory_path()&nbsp;/&nbsp;&quot;chunk_test_marker_cpp_comments&quot;;<br>
+	fs::remove_all(tmp);<br>
+	fs::create_directories(tmp);<br>
+<br>
+	fs::path&nbsp;f&nbsp;=&nbsp;tmp&nbsp;/&nbsp;&quot;code.cpp&quot;;<br>
+	{<br>
+		std::ofstream&nbsp;out(f);<br>
+		out&nbsp;&lt;&lt;&nbsp;&quot;int&nbsp;value()&nbsp;const&nbsp;{\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;x&nbsp;=&nbsp;1;&nbsp;//&nbsp;old&nbsp;value\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;comment&nbsp;only\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;x;&nbsp;//&nbsp;old&nbsp;return\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;}\n&quot;;<br>
+	}<br>
+<br>
+	fs::path&nbsp;patch&nbsp;=&nbsp;tmp&nbsp;/&nbsp;&quot;patch.txt&quot;;<br>
+	{<br>
+		std::ofstream&nbsp;out(patch);<br>
+		out&nbsp;&lt;&lt;&nbsp;&quot;language:&nbsp;c++\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;operations:\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;op:&nbsp;replace_text\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;x&nbsp;=&nbsp;1;\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;x;\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;x&nbsp;=&nbsp;42;\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;x;\n&quot;;<br>
+	}<br>
+<br>
+	int&nbsp;r&nbsp;=&nbsp;run_apply(patch);<br>
+	CHECK(r&nbsp;==&nbsp;0);<br>
+	auto&nbsp;lines&nbsp;=&nbsp;read_lines(f);<br>
+	REQUIRE(lines.size()&nbsp;==&nbsp;4);<br>
+	CHECK(lines[0]&nbsp;==&nbsp;&quot;int&nbsp;value()&nbsp;const&nbsp;{&quot;);<br>
+	CHECK(lines[1]&nbsp;==&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;x&nbsp;=&nbsp;42;&quot;);<br>
+	CHECK(lines[2]&nbsp;==&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;x;&quot;);<br>
+	CHECK(lines[3]&nbsp;==&nbsp;&quot;}&quot;);<br>
+}<br>
+<br>
+TEST_CASE(&quot;apply_chunk_main:&nbsp;marker&nbsp;ignores&nbsp;Python&nbsp;comments&nbsp;when&nbsp;language&nbsp;is&nbsp;set&quot;)<br>
+{<br>
+	fs::path&nbsp;tmp&nbsp;=&nbsp;fs::temp_directory_path()&nbsp;/&nbsp;&quot;chunk_test_marker_python_comments&quot;;<br>
+	fs::remove_all(tmp);<br>
+	fs::create_directories(tmp);<br>
+<br>
+	fs::path&nbsp;f&nbsp;=&nbsp;tmp&nbsp;/&nbsp;&quot;code.py&quot;;<br>
+	{<br>
+		std::ofstream&nbsp;out(f);<br>
+		out&nbsp;&lt;&lt;&nbsp;&quot;def&nbsp;value(x):\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;=&nbsp;x&nbsp;+&nbsp;1&nbsp;&nbsp;#&nbsp;old&nbsp;value\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;comment&nbsp;only\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;y&nbsp;&nbsp;#&nbsp;old&nbsp;return\n&quot;;<br>
+	}<br>
+<br>
+	fs::path&nbsp;patch&nbsp;=&nbsp;tmp&nbsp;/&nbsp;&quot;patch.txt&quot;;<br>
+	{<br>
+		std::ofstream&nbsp;out(patch);<br>
+		out&nbsp;&lt;&lt;&nbsp;&quot;language:&nbsp;python\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;operations:\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;op:&nbsp;replace_text\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;=&nbsp;x&nbsp;+&nbsp;1\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;y\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;=&nbsp;x&nbsp;+&nbsp;2\n&quot;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;y\n&quot;;<br>
+	}<br>
+<br>
+	int&nbsp;r&nbsp;=&nbsp;run_apply(patch);<br>
+	CHECK(r&nbsp;==&nbsp;0);<br>
+	auto&nbsp;lines&nbsp;=&nbsp;read_lines(f);<br>
+	REQUIRE(lines.size()&nbsp;==&nbsp;3);<br>
+	CHECK(lines[0]&nbsp;==&nbsp;&quot;def&nbsp;value(x):&quot;);<br>
+	CHECK(lines[1]&nbsp;==&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;=&nbsp;x&nbsp;+&nbsp;2&quot;);<br>
+	CHECK(lines[2]&nbsp;==&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;y&quot;);<br>
+}<br>
 <!-- END SCAT CODE -->
 </body>
 </html>

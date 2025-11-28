@@ -228,3 +228,83 @@ TEST_CASE("apply_chunk_main: delete-file then create-file")
     CHECK(lines[0] == "NEW1");
     CHECK(lines[1] == "NEW2");
 }
+
+TEST_CASE("apply_chunk_main: marker ignores C++ comments when language is set")
+{
+	fs::path tmp = fs::temp_directory_path() / "chunk_test_marker_cpp_comments";
+	fs::remove_all(tmp);
+	fs::create_directories(tmp);
+
+	fs::path f = tmp / "code.cpp";
+	{
+		std::ofstream out(f);
+		out << "int value() const {\n"
+		       "    int x = 1; // old value\n"
+		       "    // comment only\n"
+		       "    return x; // old return\n"
+		       "}\n";
+	}
+
+	fs::path patch = tmp / "patch.txt";
+	{
+		std::ofstream out(patch);
+		out << "language: c++\n"
+		       "operations:\n"
+		       "  - op: replace_text\n"
+		       "    path: \"" << f.string() << "\"\n"
+		       "    marker: |\n"
+		       "      int x = 1;\n"
+		       "      return x;\n"
+		       "    payload: |\n"
+		       "      int x = 42;\n"
+		       "      return x;\n";
+	}
+
+	int r = run_apply(patch);
+	CHECK(r == 0);
+	auto lines = read_lines(f);
+	REQUIRE(lines.size() == 4);
+	CHECK(lines[0] == "int value() const {");
+	CHECK(lines[1] == "    int x = 42;");
+	CHECK(lines[2] == "    return x;");
+	CHECK(lines[3] == "}");
+}
+
+TEST_CASE("apply_chunk_main: marker ignores Python comments when language is set")
+{
+	fs::path tmp = fs::temp_directory_path() / "chunk_test_marker_python_comments";
+	fs::remove_all(tmp);
+	fs::create_directories(tmp);
+
+	fs::path f = tmp / "code.py";
+	{
+		std::ofstream out(f);
+		out << "def value(x):\n"
+		       "    y = x + 1  # old value\n"
+		       "    # comment only\n"
+		       "    return y  # old return\n";
+	}
+
+	fs::path patch = tmp / "patch.txt";
+	{
+		std::ofstream out(patch);
+		out << "language: python\n"
+		       "operations:\n"
+		       "  - op: replace_text\n"
+		       "    path: \"" << f.string() << "\"\n"
+		       "    marker: |\n"
+		       "      y = x + 1\n"
+		       "      return y\n"
+		       "    payload: |\n"
+		       "      y = x + 2\n"
+		       "      return y\n";
+	}
+
+	int r = run_apply(patch);
+	CHECK(r == 0);
+	auto lines = read_lines(f);
+	REQUIRE(lines.size() == 3);
+	CHECK(lines[0] == "def value(x):");
+	CHECK(lines[1] == "    y = x + 2");
+	CHECK(lines[2] == "    return y");
+}
