@@ -33,7 +33,7 @@ bool&nbsp;read_clipboard(std::string&nbsp;&amp;out)<br>
 {<br>
 #ifdef&nbsp;_WIN32<br>
 &nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;char&nbsp;*commands[]&nbsp;=&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;powershell&nbsp;-command&nbsp;Get-Clipboard&quot;,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;powershell&nbsp;-NoProfile&nbsp;-Command&nbsp;\&quot;[Console]::OutputEncoding&nbsp;=&nbsp;[System.Text.Encoding]::UTF8;&nbsp;Get-Clipboard&nbsp;-Raw\&quot;&quot;,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;};<br>
 #else<br>
 &nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;char&nbsp;*commands[]&nbsp;=&nbsp;{<br>
@@ -108,8 +108,8 @@ int&nbsp;apply_chunk_main(int&nbsp;argc,&nbsp;char&nbsp;**argv)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!read_clipboard(text))<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
 #ifdef&nbsp;_WIN32<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::cerr&nbsp;&lt;&lt;&nbsp;&quot;cannot&nbsp;read&nbsp;patch&nbsp;from&nbsp;clipboard&nbsp;&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;(tried:&nbsp;powershell&nbsp;Get-Clipboard)\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::cerr&nbsp;&lt;&lt;&nbsp;&quot;cannot&nbsp;read&nbsp;patch&nbsp;from&nbsp;clipboard&nbsp;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;(tried:&nbsp;powershell&nbsp;-NoProfile&nbsp;-Command&nbsp;\&quot;[Console]::OutputEncoding&nbsp;=&nbsp;[System.Text.Encoding]::UTF8;&nbsp;Get-Clipboard&nbsp;-Raw\&quot;)\n&quot;;<br>
 #else<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::cerr&nbsp;&lt;&lt;&nbsp;&quot;cannot&nbsp;read&nbsp;patch&nbsp;from&nbsp;clipboard&nbsp;&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;(tried:&nbsp;wl-paste,&nbsp;xclip,&nbsp;xsel,&nbsp;pbpaste)\n&quot;;<br>
