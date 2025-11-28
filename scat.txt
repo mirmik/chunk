@@ -1,6 +1,15 @@
 src/*
-tests/**
+!tests/**
 !tests/doctest/**
+
+src/apply.cpp
+src/apply_yaml.cpp
+src/apply.h
+src/file_io.cpp
+src/file_io.h
+src/help.cpp
+src/help.h
+src/main.cpp
 
 [TREE]
 **
