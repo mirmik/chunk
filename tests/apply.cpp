@@ -112,6 +112,84 @@ TEST_CASE("apply_chunk_main: insert-before-text")
     CHECK(lines[4] == "CCC");
 }
 
+TEST_CASE("apply_chunk_main: insert-text-after synonym")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_insert_text_after";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "a.txt";
+    {
+        std::ofstream out(f);
+        out << "ONE\n"
+               "TWO\n"
+               "THREE\n";
+    }
+
+    fs::path patch = tmp / "patch.txt";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: insert-text-after\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    marker: \"TWO\"\n"
+               "    payload: |\n"
+               "      X\n"
+               "      Y\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    auto lines = read_lines(f);
+    REQUIRE(lines.size() == 5);
+    CHECK(lines[0] == "ONE");
+    CHECK(lines[1] == "TWO");
+    CHECK(lines[2] == "X");
+    CHECK(lines[3] == "Y");
+    CHECK(lines[4] == "THREE");
+}
+
+TEST_CASE("apply_chunk_main: insert_text_before synonym")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_insert_text_before";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "b.txt";
+    {
+        std::ofstream out(f);
+        out << "FIRST\n"
+               "SECOND\n"
+               "THIRD\n";
+    }
+
+    fs::path patch = tmp / "patch.txt";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: insert_text_before\n"
+               "    path: \"" << f.string()
+            << "\"\n"
+               "    marker: \"SECOND\"\n"
+               "    payload: |\n"
+               "      P\n"
+               "      Q\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    auto lines = read_lines(f);
+    REQUIRE(lines.size() == 5);
+    CHECK(lines[0] == "FIRST");
+    CHECK(lines[1] == "P");
+    CHECK(lines[2] == "Q");
+    CHECK(lines[3] == "SECOND");
+    CHECK(lines[4] == "THIRD");
+}
+
 TEST_CASE("apply_chunk_main: replace-text")
 {
     fs::path tmp = fs::temp_directory_path() / "chunk_test_replace_text";
