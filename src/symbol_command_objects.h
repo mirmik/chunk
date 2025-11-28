@@ -23,7 +23,6 @@ namespace symbol_commands_detail
         virtual bool find_region(const std::string &text, Region &r) const = 0;
         virtual std::string not_found_error() const = 0;
         virtual std::string invalid_region_error() const = 0;
-
     };
 
     class ReplaceCppClassCommand : public RegionReplaceCommand
@@ -82,6 +81,5 @@ namespace symbol_commands_detail
         std::string method;
     };
 
-    using CommandFactory =
-        std::function<std::unique_ptr<Command>()>;
+    using CommandFactory = std::function<std::unique_ptr<Command>()>;
 } // namespace symbol_commands_detail

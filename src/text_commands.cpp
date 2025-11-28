@@ -1,6 +1,6 @@
 #include "text_commands.h"
-#include "text_command_objects.h"
 #include "command_parse_helpers.h"
+#include "text_command_objects.h"
 
 #include <cctype>
 #include <cstddef>
@@ -358,7 +358,8 @@ namespace
 
 namespace text_commands_detail
 {
-    SimpleInsertCommand::SimpleInsertCommand(const std::string &name, bool prepend)
+    SimpleInsertCommand::SimpleInsertCommand(const std::string &name,
+                                             bool prepend)
         : Command(name), prepend_mode(prepend)
     {
     }
@@ -373,9 +374,9 @@ namespace text_commands_detail
         section_.payload = command_parse::split_scalar_lines(
             command_parse::get_scalar(tr, "payload"));
         if (section_.payload.empty())
-            throw std::runtime_error(
-                "YAML patch: text op '" + command_name() + "' for file '" +
-                section_.filepath + "' requires 'payload'");
+            throw std::runtime_error("YAML patch: text op '" + command_name() +
+                                     "' for file '" + section_.filepath +
+                                     "' requires 'payload'");
 
         section_.comment = command_parse::get_scalar(tr, "comment");
     }
@@ -383,8 +384,9 @@ namespace text_commands_detail
     void SimpleInsertCommand::execute(std::vector<std::string> &lines)
     {
         if (prepend_mode)
-            lines.insert(
-                lines.begin(), section_.payload.begin(), section_.payload.end());
+            lines.insert(lines.begin(),
+                         section_.payload.begin(),
+                         section_.payload.end());
         else
             lines.insert(
                 lines.end(), section_.payload.begin(), section_.payload.end());
@@ -402,9 +404,8 @@ namespace text_commands_detail
             throw std::runtime_error("YAML patch: op '" + command_name() +
                                      "' requires 'path' key");
 
-        section_.indent_from_marker =
-            command_parse::parse_indent_from_options(
-                tr, section_.indent_from_marker);
+        section_.indent_from_marker = command_parse::parse_indent_from_options(
+            tr, section_.indent_from_marker);
         section_.comment = command_parse::get_scalar(tr, "comment");
 
         std::string marker_text = command_parse::get_scalar(tr, "marker");
@@ -423,9 +424,9 @@ namespace text_commands_detail
         }
 
         if (marker_text.empty())
-            throw std::runtime_error(
-                "YAML patch: text op '" + command_name() + "' for file '" +
-                section_.filepath + "' requires 'marker'");
+            throw std::runtime_error("YAML patch: text op '" + command_name() +
+                                     "' for file '" + section_.filepath +
+                                     "' requires 'marker'");
 
         section_.marker = command_parse::split_scalar_lines(marker_text);
 
@@ -529,8 +530,7 @@ namespace text_commands_detail
                      payload.end());
     }
 
-    ReplaceTextCommand::ReplaceTextCommand()
-        : MarkerTextCommand("replace-text")
+    ReplaceTextCommand::ReplaceTextCommand() : MarkerTextCommand("replace-text")
     {
     }
 
@@ -547,10 +547,7 @@ namespace text_commands_detail
                      payload.end());
     }
 
-    DeleteTextCommand::DeleteTextCommand()
-        : MarkerTextCommand("delete-text")
-    {
-    }
+    DeleteTextCommand::DeleteTextCommand() : MarkerTextCommand("delete-text") {}
 
     void DeleteTextCommand::apply(std::vector<std::string> &lines,
                                   std::size_t begin,
@@ -575,9 +572,15 @@ namespace
         static const std::unordered_map<std::string, CommandFactory> registry =
             {
                 {"prepend-text",
-                 []() { return std::make_unique<SimpleInsertCommand>("prepend-text", true); }},
+                 []() {
+                     return std::make_unique<SimpleInsertCommand>(
+                         "prepend-text", true);
+                 }},
                 {"append-text",
-                 []() { return std::make_unique<SimpleInsertCommand>("append-text", false); }},
+                 []() {
+                     return std::make_unique<SimpleInsertCommand>("append-text",
+                                                                  false);
+                 }},
                 {"insert-after-text",
                  []() { return std::make_unique<InsertAfterTextCommand>(); }},
                 {"insert-before-text",

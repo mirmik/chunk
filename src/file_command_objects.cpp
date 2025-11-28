@@ -8,16 +8,14 @@
 using command_parse::get_scalar;
 using command_parse::split_scalar_lines;
 
-CreateFileCommand::CreateFileCommand()
-    : Command("create-file")
-{
-}
+CreateFileCommand::CreateFileCommand() : Command("create-file") {}
 
 void CreateFileCommand::parse(const nos::trent &tr)
 {
     section_.filepath = get_scalar(tr, "path");
     if (section_.filepath.empty())
-        throw std::runtime_error("YAML patch: op 'create-file' requires 'path' key");
+        throw std::runtime_error(
+            "YAML patch: op 'create-file' requires 'path' key");
 
     section_.payload = split_scalar_lines(get_scalar(tr, "payload"));
 
@@ -29,16 +27,14 @@ void CreateFileCommand::execute(std::vector<std::string> &lines)
     (void)lines;
 }
 
-DeleteFileCommand::DeleteFileCommand()
-    : Command("delete-file")
-{
-}
+DeleteFileCommand::DeleteFileCommand() : Command("delete-file") {}
 
 void DeleteFileCommand::parse(const nos::trent &tr)
 {
     section_.filepath = get_scalar(tr, "path");
     if (section_.filepath.empty())
-        throw std::runtime_error("YAML patch: op 'delete-file' requires 'path' key");
+        throw std::runtime_error(
+            "YAML patch: op 'delete-file' requires 'path' key");
     section_.comment = get_scalar(tr, "comment");
 }
 

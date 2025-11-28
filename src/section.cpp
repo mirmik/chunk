@@ -60,7 +60,8 @@ namespace
         auto it = synonym_map.find(name);
         if (it == synonym_map.end())
         {
-            throw std::runtime_error("YAML patch: unknown operation: " + op_name);
+            throw std::runtime_error("YAML patch: unknown operation: " +
+                                     op_name);
         }
 
         return it->second;

@@ -106,6 +106,5 @@ namespace text_commands_detail
                    const std::vector<std::string> &payload) override;
     };
 
-    using CommandFactory =
-        std::function<std::unique_ptr<Command>()>;
+    using CommandFactory = std::function<std::unique_ptr<Command>()>;
 } // namespace text_commands_detail

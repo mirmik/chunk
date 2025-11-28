@@ -15,12 +15,11 @@
 <br>
 namespace&nbsp;command_parse<br>
 {<br>
-std::string&nbsp;get_scalar(const&nbsp;nos::trent&nbsp;&amp;node,&nbsp;const&nbsp;char&nbsp;*key);<br>
-std::vector&lt;std::string&gt;&nbsp;split_scalar_lines(const&nbsp;std::string&nbsp;&amp;text);<br>
-bool&nbsp;parse_indent_from_options(const&nbsp;nos::trent&nbsp;&amp;node,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;default_value&nbsp;=&nbsp;true);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;get_scalar(const&nbsp;nos::trent&nbsp;&amp;node,&nbsp;const&nbsp;char&nbsp;*key);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;split_scalar_lines(const&nbsp;std::string&nbsp;&amp;text);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;parse_indent_from_options(const&nbsp;nos::trent&nbsp;&amp;node,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;default_value&nbsp;=&nbsp;true);<br>
 }&nbsp;//&nbsp;namespace&nbsp;command_parse<br>
-<br>
 <!-- END SCAT CODE -->
 </body>
 </html>

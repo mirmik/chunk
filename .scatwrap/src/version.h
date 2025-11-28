@@ -10,11 +10,11 @@
 <br>
 namespace&nbsp;chunk<br>
 {<br>
-inline&nbsp;constexpr&nbsp;int&nbsp;version_major&nbsp;=&nbsp;0;<br>
-inline&nbsp;constexpr&nbsp;int&nbsp;version_minor&nbsp;=&nbsp;2;<br>
-inline&nbsp;constexpr&nbsp;int&nbsp;version_patch&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;inline&nbsp;constexpr&nbsp;int&nbsp;version_major&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;inline&nbsp;constexpr&nbsp;int&nbsp;version_minor&nbsp;=&nbsp;2;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;inline&nbsp;constexpr&nbsp;int&nbsp;version_patch&nbsp;=&nbsp;0;<br>
 <br>
-inline&nbsp;constexpr&nbsp;const&nbsp;char&nbsp;*version_string&nbsp;=&nbsp;&quot;0.2.0&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;inline&nbsp;constexpr&nbsp;const&nbsp;char&nbsp;*version_string&nbsp;=&nbsp;&quot;0.2.0&quot;;<br>
 }&nbsp;//&nbsp;namespace&nbsp;chunk<br>
 <br>
 /*&nbsp;CHANGELIST<br>

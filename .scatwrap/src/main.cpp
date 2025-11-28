@@ -8,9 +8,9 @@
 <!-- BEGIN SCAT CODE -->
 #include&nbsp;&quot;apply.h&quot;<br>
 #include&nbsp;&quot;help.h&quot;<br>
+#include&nbsp;&quot;version.h&quot;<br>
 #include&nbsp;&lt;cstring&gt;<br>
 #include&nbsp;&lt;iostream&gt;<br>
-#include&nbsp;&quot;version.h&quot;<br>
 <br>
 int&nbsp;main(int&nbsp;argc,&nbsp;char&nbsp;**argv)<br>
 {<br>

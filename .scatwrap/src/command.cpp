@@ -12,7 +12,6 @@ Command::Command(std::string&nbsp;name)<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;section_.command&nbsp;=&nbsp;std::move(name);<br>
 }<br>
-<br>
 <!-- END SCAT CODE -->
 </body>
 </html>

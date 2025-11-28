@@ -8,10 +8,10 @@
 <!-- BEGIN SCAT CODE -->
 #pragma&nbsp;once<br>
 <br>
+#include&nbsp;&lt;memory&gt;<br>
 #include&nbsp;&lt;sstream&gt;<br>
 #include&nbsp;&lt;string&gt;<br>
 #include&nbsp;&lt;vector&gt;<br>
-#include&nbsp;&lt;memory&gt;<br>
 <br>
 struct&nbsp;Section<br>
 {<br>
@@ -34,7 +34,8 @@ struct&nbsp;Section<br>
 bool&nbsp;is_text_command(const&nbsp;std::string&nbsp;&amp;cmd);<br>
 bool&nbsp;is_symbol_command(const&nbsp;std::string&nbsp;&amp;cmd);<br>
 class&nbsp;Command;<br>
-std::vector&lt;std::unique_ptr&lt;Command&gt;&gt;&nbsp;parse_yaml_patch_text(const&nbsp;std::string&nbsp;&amp;text);<br>
+std::vector&lt;std::unique_ptr&lt;Command&gt;&gt;<br>
+parse_yaml_patch_text(const&nbsp;std::string&nbsp;&amp;text);<br>
 <!-- END SCAT CODE -->
 </body>
 </html>

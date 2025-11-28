@@ -2,7 +2,7 @@
 
 #include "command.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 void apply_sections(const std::vector<std::unique_ptr<Command>> &commands);

@@ -85,17 +85,15 @@ namespace symbol_commands_detail
             throw std::runtime_error("YAML patch: op '" + command_name() +
                                      "' requires 'path' key");
 
-        section_.indent_from_marker =
-            command_parse::parse_indent_from_options(
-                tr, section_.indent_from_marker);
+        section_.indent_from_marker = command_parse::parse_indent_from_options(
+            tr, section_.indent_from_marker);
         section_.comment = command_parse::get_scalar(tr, "comment");
 
         std::string payload_text = command_parse::get_scalar(tr, "payload");
         if (payload_text.empty())
-            throw std::runtime_error("YAML patch: symbol op '" +
-                                     command_name() + "' for file '" +
-                                     section_.filepath +
-                                     "' requires 'payload'");
+            throw std::runtime_error(
+                "YAML patch: symbol op '" + command_name() + "' for file '" +
+                section_.filepath + "' requires 'payload'");
         section_.payload = command_parse::split_scalar_lines(payload_text);
     }
 
@@ -186,9 +184,8 @@ namespace symbol_commands_detail
         }
         else
         {
-            throw std::runtime_error(
-                "YAML patch: op '" + command_name() +
-                "' requires 'class'+'method' or 'symbol'");
+            throw std::runtime_error("YAML patch: op '" + command_name() +
+                                     "' requires 'class'+'method' or 'symbol'");
         }
 
         if (cls.empty() || method.empty())
@@ -278,9 +275,8 @@ namespace symbol_commands_detail
         }
         else
         {
-            throw std::runtime_error(
-                "YAML patch: op '" + command_name() +
-                "' requires 'class'+'method' or 'symbol'");
+            throw std::runtime_error("YAML patch: op '" + command_name() +
+                                     "' requires 'class'+'method' or 'symbol'");
         }
 
         if (cls.empty() || method.empty())

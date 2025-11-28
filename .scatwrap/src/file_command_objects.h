@@ -29,7 +29,6 @@ public:<br>
 };<br>
 <br>
 std::unique_ptr&lt;Command&gt;&nbsp;create_file_command(const&nbsp;std::string&nbsp;&amp;name);<br>
-<br>
 <!-- END SCAT CODE -->
 </body>
 </html>

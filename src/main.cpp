@@ -1,8 +1,8 @@
 #include "apply.h"
 #include "help.h"
+#include "version.h"
 #include <cstring>
 #include <iostream>
-#include "version.h"
 
 int main(int argc, char **argv)
 {

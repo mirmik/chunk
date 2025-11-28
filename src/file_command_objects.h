@@ -21,4 +21,3 @@ public:
 };
 
 std::unique_ptr<Command> create_file_command(const std::string &name);
-

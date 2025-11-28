@@ -31,7 +31,6 @@ namespace&nbsp;symbol_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;bool&nbsp;find_region(const&nbsp;std::string&nbsp;&amp;text,&nbsp;Region&nbsp;&amp;r)&nbsp;const&nbsp;=&nbsp;0;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;std::string&nbsp;not_found_error()&nbsp;const&nbsp;=&nbsp;0;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;std::string&nbsp;invalid_region_error()&nbsp;const&nbsp;=&nbsp;0;<br>
-<br>
 &nbsp;&nbsp;&nbsp;&nbsp;};<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;ReplaceCppClassCommand&nbsp;:&nbsp;public&nbsp;RegionReplaceCommand<br>
@@ -90,8 +89,7 @@ namespace&nbsp;symbol_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;method;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;};<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;using&nbsp;CommandFactory&nbsp;=<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::function&lt;std::unique_ptr&lt;Command&gt;()&gt;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;using&nbsp;CommandFactory&nbsp;=&nbsp;std::function&lt;std::unique_ptr&lt;Command&gt;()&gt;;<br>
 }&nbsp;//&nbsp;namespace&nbsp;symbol_commands_detail<br>
 <!-- END SCAT CODE -->
 </body>

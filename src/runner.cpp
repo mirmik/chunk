@@ -227,8 +227,8 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
                 {
                     oss << "\nsection marker preview:\n";
                     size_t max_preview_lines = 3;
-                    for (size_t i = 0; i < s.marker.size() &&
-                                       i < max_preview_lines;
+                    for (size_t i = 0;
+                         i < s.marker.size() && i < max_preview_lines;
                          ++i)
                     {
                         oss << s.marker[i] << "\n";
