@@ -143,6 +143,7 @@ std::vector<Section> parse_yaml_patch_text(const std::string &text)
 
         s.command = normalize_op_name(it_op->second.as_string());
         s.seq = seq++;
+        s.comment = get_scalar(op_node, "comment");
 
         std::string marker_text  = get_scalar(op_node, "marker");
         std::string before_text  = get_scalar(op_node, "before");

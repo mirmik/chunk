@@ -15,11 +15,12 @@
 <br>
 <br>
 Файл&nbsp;описываем&nbsp;**формат&nbsp;файла&nbsp;и&nbsp;семантику&nbsp;команд**.<br>
-CHUNK&nbsp;использует&nbsp;yaml-lite&nbsp;синтаксис&nbsp;потому&nbsp;что&nbsp;нейросети&nbsp;достаточно&nbsp;стабильно&nbsp;пишут&nbsp;yaml&nbsp;документы&nbsp;(в&nbsp;отличие&nbsp;от&nbsp;unified&nbsp;diff)<br>
+CHUNK&nbsp;использует&nbsp;облегчённый&nbsp;yaml&nbsp;синтаксис&nbsp;потому&nbsp;что&nbsp;нейросети&nbsp;достаточно&nbsp;стабильно&nbsp;пишут&nbsp;yaml&nbsp;документы&nbsp;(в&nbsp;отличие&nbsp;от&nbsp;unified&nbsp;diff)<br>
 ##&nbsp;Комментарии&nbsp;и&nbsp;символ&nbsp;`#`<br>
-yaml-lite,&nbsp;который&nbsp;использует&nbsp;CHUNK,&nbsp;**не&nbsp;поддерживает&nbsp;комментарии&nbsp;YAML**.<br>
-Символ&nbsp;`#`&nbsp;нигде&nbsp;не&nbsp;имеет&nbsp;специального&nbsp;смысла&nbsp;и&nbsp;всегда&nbsp;считается&nbsp;частью&nbsp;строки.<br>
-Для&nbsp;пояснений&nbsp;к&nbsp;патчу&nbsp;используй&nbsp;поле&nbsp;`description`,&nbsp;поле&nbsp;`comment`&nbsp;у&nbsp;операций&nbsp;или&nbsp;текст&nbsp;внутри&nbsp;`payload`.<br>
+Диалект&nbsp;yaml,&nbsp;который&nbsp;использует&nbsp;CHUNK,&nbsp;**не&nbsp;поддерживает&nbsp;комментарии&nbsp;YAML**.<br>
+Это&nbsp;сделано&nbsp;потому,&nbsp;что&nbsp;`#`&nbsp;может&nbsp;присутствовать&nbsp;в&nbsp;python&nbsp;коде,&nbsp;а&nbsp;объяснять&nbsp;кремниевому&nbsp;мозгу,&nbsp;что&nbsp;его&nbsp;надо&nbsp;экранировать&nbsp;-&nbsp;себе&nbsp;дороже.<br>
+Поэтому&nbsp;символ&nbsp;`#`&nbsp;нигде&nbsp;не&nbsp;имеет&nbsp;специального&nbsp;смысла&nbsp;и&nbsp;всегда&nbsp;считается&nbsp;частью&nbsp;строки.&nbsp;<br>
+Для&nbsp;пояснений&nbsp;к&nbsp;патчу&nbsp;в&nbsp;целом&nbsp;используйте&nbsp;поле&nbsp;`description`,&nbsp;а&nbsp;также&nbsp;поле&nbsp;`comment`&nbsp;для&nbsp;коментария&nbsp;каждой&nbsp;операций.<br>
 <br>
 ---<br>
 <br>

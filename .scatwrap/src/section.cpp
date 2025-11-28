@@ -151,6 +151,7 @@ std::vector&lt;Section&gt;&nbsp;parse_yaml_patch_text(const&nbsp;std::string&nbs
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s.command&nbsp;=&nbsp;normalize_op_name(it_op-&gt;second.as_string());<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s.seq&nbsp;=&nbsp;seq++;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s.comment&nbsp;=&nbsp;get_scalar(op_node,&nbsp;&quot;comment&quot;);<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;marker_text&nbsp;&nbsp;=&nbsp;get_scalar(op_node,&nbsp;&quot;marker&quot;);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;before_text&nbsp;&nbsp;=&nbsp;get_scalar(op_node,&nbsp;&quot;before&quot;);<br>

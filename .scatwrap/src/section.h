@@ -22,6 +22,7 @@ struct&nbsp;Section<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;before;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;after;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;seq&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;comment;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;arg1;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;arg2;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;indent_from_marker&nbsp;=&nbsp;true;<br>

@@ -14,6 +14,7 @@ struct Section
     std::vector<std::string> before;
     std::vector<std::string> after;
     int seq = 0;
+    std::string comment;
     std::string arg1;
     std::string arg2;
     bool indent_from_marker = true;
