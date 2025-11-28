@@ -13,6 +13,7 @@ CMakeLists.txt<br>
 scat.txt<br>
 README.md<br>
 CHUNK.md<br>
+docs/*<br>
 <br>
 [TREE]<br>
 **<br>
@@ -22,6 +23,7 @@ CHUNK.md<br>
 scat.txt<br>
 README.md<br>
 CHUNK.md<br>
+docs/*<br>
 <br>
 <br>
 [MAPFORMAT]<br>

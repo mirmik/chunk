@@ -5,6 +5,7 @@ CMakeLists.txt
 scat.txt
 README.md
 CHUNK.md
+docs/*
 
 [TREE]
 **
@@ -14,6 +15,7 @@ CHUNK.md
 scat.txt
 README.md
 CHUNK.md
+docs/*
 
 
 [MAPFORMAT]
