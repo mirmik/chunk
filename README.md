@@ -2,7 +2,7 @@
 
 `chunk` is a small CLI (command-line interface) tool that applies **structured patches** to a source tree.
 
-Patches are written in the **chunk v2** YAML (YAML Ain't Markup Language) format, described in [`docs/CHUNK.md`](CHUNK.md).
+Patches are written in the **chunk v2** YAML (YAML Ain't Markup Language) format, described in [`CHUNK.md`](https://mirmik.github.io/CHUNK.md).
 All operations are applied **transactionally**: on any error, changes are rolled back.
 
 ---
@@ -14,7 +14,7 @@ All operations are applied **transactionally**: on any error, changes are rolled
 - C++ and Python symbol-level operations (replace class or method)
 - Transactional apply with automatic backup and rollback
 
-See [`docs/CHUNK.md`](CHUNK.md) or run:
+See [`CHUNK.md`](https://mirmik.github.io/CHUNK.md) or run:
 
 ```bash
 chunk --help
