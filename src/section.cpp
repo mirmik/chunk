@@ -64,6 +64,8 @@ std::string normalize_op_name(const std::string &op_name)
         name == "delete-file" ||
         name == "replace-text" ||
         name == "delete-text" ||
+        name == "prepend-text" ||
+        name == "append-text" ||
         name == "replace-cpp-class" ||
         name == "replace-cpp-method" ||
         name == "replace-py-class" ||
@@ -87,7 +89,8 @@ std::string normalize_op_name(const std::string &op_name)
 bool is_text_command(const std::string &cmd)
 {
     return cmd == "insert-after-text" || cmd == "insert-before-text" ||
-           cmd == "replace-text" || cmd == "delete-text";
+           cmd == "replace-text" || cmd == "delete-text" ||
+           cmd == "prepend-text" || cmd == "append-text";
 }
 
 bool is_symbol_command(const std::string &cmd)
@@ -198,19 +201,31 @@ std::vector<Section> parse_yaml_patch_text(const std::string &text)
         }
         else if (is_text_command(s.command))
         {
-            if (marker_text.empty())
-                throw std::runtime_error(
-                    "YAML patch: text op '" + s.command +
-                    "' for file '" + s.filepath + "' requires 'marker'");
+            if (s.command == "prepend-text" || s.command == "append-text")
+            {
+                if (payload_text.empty())
+                    throw std::runtime_error(
+                        "YAML patch: text op '" + s.command +
+                        "' for file '" + s.filepath + "' requires 'payload'");
 
-            s.marker = split_scalar_lines(marker_text);
-
-            if (!before_text.empty())
-                s.before = split_scalar_lines(before_text);
-            if (!after_text.empty())
-                s.after = split_scalar_lines(after_text);
-            if (s.command != "delete-text" && !payload_text.empty())
                 s.payload = split_scalar_lines(payload_text);
+            }
+            else
+            {
+                if (marker_text.empty())
+                    throw std::runtime_error(
+                        "YAML patch: text op '" + s.command +
+                        "' for file '" + s.filepath + "' requires 'marker'");
+
+                s.marker = split_scalar_lines(marker_text);
+
+                if (!before_text.empty())
+                    s.before = split_scalar_lines(before_text);
+                if (!after_text.empty())
+                    s.after = split_scalar_lines(after_text);
+                if (s.command != "delete-text" && !payload_text.empty())
+                    s.payload = split_scalar_lines(payload_text);
+            }
         }
         else if (is_symbol_command(s.command))
         {
