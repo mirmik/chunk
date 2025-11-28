@@ -11,7 +11,7 @@
 
 [Формат патчей CHUNK](CHUNK.md)
 
-[Утилита для применения патчей chunk](https://github.com/mirmik/chunk)
+[Утилита chunk для применения патчей](https://github.com/mirmik/chunk)
 
 ---
 
