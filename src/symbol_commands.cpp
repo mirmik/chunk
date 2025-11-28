@@ -1,9 +1,14 @@
 #include "symbol_commands.h"
+#include "symbol_command_objects.h"
 
 #include "symbols.h"
 
+#include <functional>
+#include <memory>
 #include <stdexcept>
 #include <string>
+#include <tuple>
+#include <unordered_map>
 #include <utility>
 
 namespace
@@ -102,134 +107,176 @@ std::pair<std::string, std::string> parse_python_target(const Section &s)
     return {cls, method};
 }
 
-void replace_cpp_class(const Section &s,
-                       const std::string &filepath,
-                       const std::string &text,
-                       std::vector<std::string> &lines)
+} // namespace
+
+namespace symbol_commands_detail
 {
-    if (s.arg1.empty())
+RegionReplaceCommand::RegionReplaceCommand(const Section &s, std::string path)
+    : section(s), filepath(std::move(path))
+{
+}
+
+void RegionReplaceCommand::execute(std::vector<std::string> &lines)
+{
+    std::string text = join_lines(lines);
+    Region r;
+    if (!find_region(text, r))
+        throw std::runtime_error(not_found_error());
+
+    if (r.start_line < 0 || r.end_line < r.start_line ||
+        r.end_line >= static_cast<int>(lines.size()))
+        throw std::runtime_error(invalid_region_error());
+
+    auto begin = lines.begin() + r.start_line;
+    auto end   = lines.begin() + (r.end_line + 1);
+
+    std::string prefix = extract_indent_prefix(lines, r.start_line);
+    std::vector<std::string> payload =
+        apply_indent_prefix(section.payload, prefix, section.indent_from_marker);
+
+    lines.erase(begin, end);
+    lines.insert(lines.begin() + r.start_line,
+                 payload.begin(),
+                 payload.end());
+}
+
+ReplaceCppClassCommand::ReplaceCppClassCommand(const Section &s, std::string path)
+    : RegionReplaceCommand(s, std::move(path))
+{
+    if (section.arg1.empty())
         throw std::runtime_error(
             "replace-cpp-class: missing class name for file: " +
             filepath);
-
-    CppSymbolFinder finder(text);
-    Region r;
-    if (!finder.find_class(s.arg1, r))
-        throw std::runtime_error(
-            "replace-cpp-class: class not found: " + s.arg1 +
-            " in file: " + filepath);
-
-    if (r.start_line < 0 || r.end_line < r.start_line ||
-        r.end_line >= static_cast<int>(lines.size()))
-        throw std::runtime_error("replace-cpp-class: invalid region");
-
-    auto begin = lines.begin() + r.start_line;
-    auto end   = lines.begin() + (r.end_line + 1);
-
-    std::string prefix = extract_indent_prefix(lines, r.start_line);
-    std::vector<std::string> payload =
-        apply_indent_prefix(s.payload, prefix, s.indent_from_marker);
-
-    lines.erase(begin, end);
-    lines.insert(lines.begin() + r.start_line,
-                 payload.begin(),
-                 payload.end());
 }
 
-void replace_cpp_method(const Section &s,
-                        const std::string &filepath,
-                        const std::string &text,
-                        std::vector<std::string> &lines)
+bool ReplaceCppClassCommand::find_region(const std::string &text, Region &r) const
 {
-    auto [cls, method] = parse_cpp_target(s);
-
     CppSymbolFinder finder(text);
-    Region r;
-    if (!finder.find_method(cls, method, r))
-        throw std::runtime_error(
-            "replace-cpp-method: method not found: " + cls +
-            "::" + method + " in file: " + filepath);
-
-    if (r.start_line < 0 || r.end_line < r.start_line ||
-        r.end_line >= static_cast<int>(lines.size()))
-        throw std::runtime_error("replace-cpp-method: invalid region");
-
-    auto begin = lines.begin() + r.start_line;
-    auto end   = lines.begin() + (r.end_line + 1);
-
-    std::string prefix = extract_indent_prefix(lines, r.start_line);
-    std::vector<std::string> payload =
-        apply_indent_prefix(s.payload, prefix, s.indent_from_marker);
-
-    lines.erase(begin, end);
-    lines.insert(lines.begin() + r.start_line,
-                 payload.begin(),
-                 payload.end());
+    return finder.find_class(section.arg1, r);
 }
 
-void replace_py_class(const Section &s,
-                      const std::string &filepath,
-                      const std::string &text,
-                      std::vector<std::string> &lines)
+std::string ReplaceCppClassCommand::not_found_error() const
 {
-    if (s.arg1.empty())
+    return "replace-cpp-class: class not found: " + section.arg1 +
+           " in file: " + filepath;
+}
+
+std::string ReplaceCppClassCommand::invalid_region_error() const
+{
+    return "replace-cpp-class: invalid region";
+}
+
+ReplaceCppMethodCommand::ReplaceCppMethodCommand(const Section &s, std::string path)
+    : RegionReplaceCommand(s, std::move(path))
+{
+    std::tie(cls, method) = parse_cpp_target(s);
+}
+
+bool ReplaceCppMethodCommand::find_region(const std::string &text, Region &r) const
+{
+    CppSymbolFinder finder(text);
+    return finder.find_method(cls, method, r);
+}
+
+std::string ReplaceCppMethodCommand::not_found_error() const
+{
+    return "replace-cpp-method: method not found: " + cls +
+           "::" + method + " in file: " + filepath;
+}
+
+std::string ReplaceCppMethodCommand::invalid_region_error() const
+{
+    return "replace-cpp-method: invalid region";
+}
+
+ReplacePyClassCommand::ReplacePyClassCommand(const Section &s, std::string path)
+    : RegionReplaceCommand(s, std::move(path))
+{
+    if (section.arg1.empty())
         throw std::runtime_error(
             "replace-py-class: missing class name for file: " +
             filepath);
-
-    PythonSymbolFinder finder(text);
-    Region r;
-    if (!finder.find_class(s.arg1, r))
-        throw std::runtime_error(
-            "replace-py-class: class not found: " + s.arg1 +
-            " in file: " + filepath);
-
-    if (r.start_line < 0 || r.end_line < r.start_line ||
-        r.end_line >= static_cast<int>(lines.size()))
-        throw std::runtime_error("replace-py-class: invalid region");
-
-    auto begin = lines.begin() + r.start_line;
-    auto end   = lines.begin() + (r.end_line + 1);
-
-    std::string prefix = extract_indent_prefix(lines, r.start_line);
-    std::vector<std::string> payload =
-        apply_indent_prefix(s.payload, prefix, s.indent_from_marker);
-
-    lines.erase(begin, end);
-    lines.insert(lines.begin() + r.start_line,
-                 payload.begin(),
-                 payload.end());
 }
 
-void replace_py_method(const Section &s,
-                       const std::string &filepath,
-                       const std::string &text,
-                       std::vector<std::string> &lines)
+bool ReplacePyClassCommand::find_region(const std::string &text, Region &r) const
 {
-    auto [cls, method] = parse_python_target(s);
-
     PythonSymbolFinder finder(text);
-    Region r;
-    if (!finder.find_method(cls, method, r))
+    return finder.find_class(section.arg1, r);
+}
+
+std::string ReplacePyClassCommand::not_found_error() const
+{
+    return "replace-py-class: class not found: " + section.arg1 +
+           " in file: " + filepath;
+}
+
+std::string ReplacePyClassCommand::invalid_region_error() const
+{
+    return "replace-py-class: invalid region";
+}
+
+ReplacePyMethodCommand::ReplacePyMethodCommand(const Section &s, std::string path)
+    : RegionReplaceCommand(s, std::move(path))
+{
+    std::tie(cls, method) = parse_python_target(s);
+}
+
+bool ReplacePyMethodCommand::find_region(const std::string &text, Region &r) const
+{
+    PythonSymbolFinder finder(text);
+    return finder.find_method(cls, method, r);
+}
+
+std::string ReplacePyMethodCommand::not_found_error() const
+{
+    return "replace-py-method: method not found: " + cls + "." +
+           method + " in file: " + filepath;
+}
+
+std::string ReplacePyMethodCommand::invalid_region_error() const
+{
+    return "replace-py-method: invalid region";
+}
+} // namespace symbol_commands_detail
+
+namespace
+{
+const std::unordered_map<std::string, symbol_commands_detail::SymbolCommandFactory> &
+symbol_command_registry()
+{
+    using namespace symbol_commands_detail;
+
+    static const std::unordered_map<std::string, SymbolCommandFactory> registry = {
+        {"replace-cpp-class",
+         [](const Section &s, const std::string &filepath) {
+             return std::make_unique<ReplaceCppClassCommand>(s, filepath);
+         }},
+        {"replace-cpp-method",
+         [](const Section &s, const std::string &filepath) {
+             return std::make_unique<ReplaceCppMethodCommand>(s, filepath);
+         }},
+        {"replace-py-class",
+         [](const Section &s, const std::string &filepath) {
+             return std::make_unique<ReplacePyClassCommand>(s, filepath);
+         }},
+        {"replace-py-method",
+         [](const Section &s, const std::string &filepath) {
+             return std::make_unique<ReplacePyMethodCommand>(s, filepath);
+         }},
+    };
+
+    return registry;
+}
+
+std::unique_ptr<symbol_commands_detail::SymbolCommand>
+create_symbol_command(const Section &section, const std::string &filepath)
+{
+    const auto &registry = symbol_command_registry();
+    auto it = registry.find(section.command);
+    if (it == registry.end())
         throw std::runtime_error(
-            "replace-py-method: method not found: " + cls + "." +
-            method + " in file: " + filepath);
-
-    if (r.start_line < 0 || r.end_line < r.start_line ||
-        r.end_line >= static_cast<int>(lines.size()))
-        throw std::runtime_error("replace-py-method: invalid region");
-
-    auto begin = lines.begin() + r.start_line;
-    auto end   = lines.begin() + (r.end_line + 1);
-
-    std::string prefix = extract_indent_prefix(lines, r.start_line);
-    std::vector<std::string> payload =
-        apply_indent_prefix(s.payload, prefix, s.indent_from_marker);
-
-    lines.erase(begin, end);
-    lines.insert(lines.begin() + r.start_line,
-                 payload.begin(),
-                 payload.end());
+            "apply_symbol_commands: unknown command: " + section.command);
+    return it->second(section, filepath);
 }
 } // namespace
 
@@ -239,30 +286,7 @@ void apply_symbol_commands(const std::string &filepath,
 {
     for (const Section *s : sections)
     {
-        std::string text = join_lines(lines);
-
-        if (s->command == "replace-cpp-class")
-        {
-            replace_cpp_class(*s, filepath, text, lines);
-            continue;
-        }
-        if (s->command == "replace-cpp-method")
-        {
-            replace_cpp_method(*s, filepath, text, lines);
-            continue;
-        }
-        if (s->command == "replace-py-class")
-        {
-            replace_py_class(*s, filepath, text, lines);
-            continue;
-        }
-        if (s->command == "replace-py-method")
-        {
-            replace_py_method(*s, filepath, text, lines);
-            continue;
-        }
-
-        throw std::runtime_error(
-            "apply_symbol_commands: unknown command: " + s->command);
+        auto cmd = create_symbol_command(*s, filepath);
+        cmd->execute(lines);
     }
 }

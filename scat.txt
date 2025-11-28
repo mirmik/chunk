@@ -1,22 +1,25 @@
 src/*
-#tests/**
+tests/**
 !tests/doctest/**
-#CMakeLists.txt
-#scat.txt
-#README.md
-#CHUNK.md
-#docs/*
 
 [TREE]
 **
+!**/*.o
+!**/*.d
 !CMakeFiles/**
 !.github/**
 !.git/**
-scat.txt
-README.md
-CHUNK.md
-docs/*
-
+!CMakeCache.txt
+!CMakeFiles*
+!CTest*
+!.scatwrap/**
+!build/**
+!Testing/**
+!chunk
+!chunk_tests
+!cmake_install.cmake
+!install_manifest.txt
+!patch.yaml
 
 [MAPFORMAT]
 ------------------------------

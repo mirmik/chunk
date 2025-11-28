@@ -1,13 +1,15 @@
 #include "text_commands.h"
+#include "text_command_objects.h"
 
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include "text_commands.h"
-#include <stdexcept>
-#include <string>
-#include <string_view>
 #include <cctype>
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
 
 namespace
 {
@@ -353,6 +355,205 @@ int find_best_marker_match(const std::vector<std::string> &lines,
 
     return strict.front();
 }
+
+} // namespace
+
+namespace text_commands_detail
+{
+SimpleInsertCommand::SimpleInsertCommand(const Section &s, bool prepend)
+    : section(s), prepend_mode(prepend)
+{
+}
+
+void SimpleInsertCommand::execute(std::vector<std::string> &lines)
+{
+    if (prepend_mode)
+        lines.insert(lines.begin(), section.payload.begin(), section.payload.end());
+    else
+        lines.insert(lines.end(), section.payload.begin(), section.payload.end());
+}
+
+MarkerTextCommand::MarkerTextCommand(const Section &s, std::string path)
+    : section(s), filepath(std::move(path))
+{
+}
+
+void MarkerTextCommand::execute(std::vector<std::string> &lines)
+{
+    if (section.marker.empty())
+        throw std::runtime_error("empty marker in text command for file: " +
+                                filepath);
+
+    std::vector<MarkerMatch> matches =
+        find_marker_matches(lines, section.marker, &section);
+    if (matches.empty())
+        throw std::runtime_error(
+            "text marker not found for file: " + filepath +
+            "\ncommand: " + section.command + "\n");
+
+    int mindex = find_best_marker_match(lines, &section, matches);
+    if (mindex < 0)
+        throw std::runtime_error("cannot locate marker uniquely");
+
+    const MarkerMatch &mm = matches[static_cast<std::size_t>(mindex)];
+    if (mm.begin < 0 || mm.end < mm.begin ||
+        mm.end >= static_cast<int>(lines.size()))
+        throw std::runtime_error("internal error: invalid marker match range");
+
+    std::size_t begin = static_cast<std::size_t>(mm.begin);
+    std::size_t end   = static_cast<std::size_t>(mm.end);
+
+    std::vector<std::string> payload = prepare_payload(lines, begin);
+    apply(lines, begin, end, payload);
+}
+
+std::vector<std::string>
+MarkerTextCommand::prepare_payload(const std::vector<std::string> &lines,
+                                   std::size_t begin) const
+{
+    if (!should_indent_payload() || !section.indent_from_marker)
+        return section.payload;
+
+    std::string prefix;
+    if (begin < lines.size())
+    {
+        const std::string &marker_line = lines[begin];
+        std::size_t j = 0;
+        while (j < marker_line.size() &&
+               (marker_line[j] == ' ' || marker_line[j] == '\t'))
+            ++j;
+        prefix.assign(marker_line, 0, j);
+    }
+
+    std::vector<std::string> adjusted;
+    adjusted.reserve(section.payload.size());
+    for (const auto &ln : section.payload)
+    {
+        if (ln.empty())
+            adjusted.push_back(ln);
+        else
+            adjusted.push_back(prefix + ln);
+    }
+    return adjusted;
+}
+
+InsertAfterTextCommand::InsertAfterTextCommand(const Section &s, std::string path)
+    : MarkerTextCommand(s, std::move(path))
+{
+}
+
+void InsertAfterTextCommand::apply(std::vector<std::string> &lines,
+                                   std::size_t begin,
+                                   std::size_t end,
+                                   const std::vector<std::string> &payload)
+{
+    (void)begin;
+    std::size_t pos = end + 1;
+    lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(pos),
+                 payload.begin(),
+                 payload.end());
+}
+
+InsertBeforeTextCommand::InsertBeforeTextCommand(const Section &s, std::string path)
+    : MarkerTextCommand(s, std::move(path))
+{
+}
+
+void InsertBeforeTextCommand::apply(std::vector<std::string> &lines,
+                                    std::size_t begin,
+                                    std::size_t /*end*/,
+                                    const std::vector<std::string> &payload)
+{
+    lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(begin),
+                 payload.begin(),
+                 payload.end());
+}
+
+ReplaceTextCommand::ReplaceTextCommand(const Section &s, std::string path)
+    : MarkerTextCommand(s, std::move(path))
+{
+}
+
+void ReplaceTextCommand::apply(std::vector<std::string> &lines,
+                               std::size_t begin,
+                               std::size_t end,
+                               const std::vector<std::string> &payload)
+{
+    auto it_begin = lines.begin() +
+                    static_cast<std::ptrdiff_t>(begin);
+    auto it_end   = lines.begin() +
+                    static_cast<std::ptrdiff_t>(end + 1);
+    lines.erase(it_begin, it_end);
+    lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(begin),
+                 payload.begin(),
+                 payload.end());
+}
+
+DeleteTextCommand::DeleteTextCommand(const Section &s, std::string path)
+    : MarkerTextCommand(s, std::move(path))
+{
+}
+
+void DeleteTextCommand::apply(std::vector<std::string> &lines,
+                              std::size_t begin,
+                              std::size_t end,
+                              const std::vector<std::string> &payload)
+{
+    (void)payload;
+    auto it_begin = lines.begin() +
+                    static_cast<std::ptrdiff_t>(begin);
+    auto it_end   = lines.begin() +
+                    static_cast<std::ptrdiff_t>(end + 1);
+    lines.erase(it_begin, it_end);
+}
+} // namespace text_commands_detail
+
+namespace
+{
+const std::unordered_map<std::string, text_commands_detail::TextCommandFactory> &
+text_command_registry()
+{
+    using namespace text_commands_detail;
+
+    static const std::unordered_map<std::string, TextCommandFactory> registry = {
+        {"prepend-text",
+         [](const Section &s, const std::string &) {
+             return std::make_unique<SimpleInsertCommand>(s, true);
+         }},
+        {"append-text",
+         [](const Section &s, const std::string &) {
+             return std::make_unique<SimpleInsertCommand>(s, false);
+         }},
+        {"insert-after-text",
+         [](const Section &s, const std::string &filepath) {
+             return std::make_unique<InsertAfterTextCommand>(s, filepath);
+         }},
+        {"insert-before-text",
+         [](const Section &s, const std::string &filepath) {
+             return std::make_unique<InsertBeforeTextCommand>(s, filepath);
+         }},
+        {"replace-text",
+         [](const Section &s, const std::string &filepath) {
+             return std::make_unique<ReplaceTextCommand>(s, filepath);
+         }},
+        {"delete-text",
+         [](const Section &s, const std::string &filepath) {
+             return std::make_unique<DeleteTextCommand>(s, filepath);
+         }},
+    };
+
+    return registry;
+}
+
+std::unique_ptr<text_commands_detail::TextCommand>
+create_text_command(const Section &section, const std::string &filepath)
+{
+    const auto &registry = text_command_registry();
+    auto it = registry.find(section.command);
+    if (it == registry.end())
+        throw std::runtime_error("unknown text command: " + section.command);
+    return it->second(section, filepath);
+}
 } // namespace
 
 void apply_text_commands(const std::string &filepath,
@@ -361,105 +562,7 @@ void apply_text_commands(const std::string &filepath,
 {
     for (const Section *s : sections)
     {
-        if (s->command == "prepend-text")
-        {
-            lines.insert(lines.begin(), s->payload.begin(), s->payload.end());
-            continue;
-        }
-        else if (s->command == "append-text")
-        {
-            lines.insert(lines.end(), s->payload.begin(), s->payload.end());
-            continue;
-        }
-
-        if (s->marker.empty())
-            throw std::runtime_error("empty marker in text command for file: " +
-                                    filepath);
-
-        std::vector<MarkerMatch> matches = find_marker_matches(lines, s->marker, s);
-        if (matches.empty())
-            throw std::runtime_error(
-                "text marker not found for file: " + filepath +
-                "\ncommand: " + s->command + "\n");
-
-        int mindex = find_best_marker_match(lines, s, matches);
-        if (mindex < 0)
-            throw std::runtime_error("cannot locate marker uniquely");
-
-        const MarkerMatch &mm = matches[static_cast<std::size_t>(mindex)];
-        if (mm.begin < 0 || mm.end < mm.begin ||
-            mm.end >= static_cast<int>(lines.size()))
-            throw std::runtime_error("internal error: invalid marker match range");
-
-        std::size_t begin = static_cast<std::size_t>(mm.begin);
-        std::size_t end   = static_cast<std::size_t>(mm.end);
-        std::size_t span  = end - begin + 1;
-
-        std::vector<std::string> payload = s->payload;
-        if (s->indent_from_marker &&
-            (s->command == "insert-after-text" ||
-             s->command == "insert-before-text" ||
-             s->command == "replace-text"))
-        {
-            std::string prefix;
-            if (begin < lines.size())
-            {
-                const std::string &marker_line = lines[begin];
-                std::size_t j = 0;
-                while (j < marker_line.size() &&
-                       (marker_line[j] == ' ' || marker_line[j] == '\t'))
-                    ++j;
-                prefix.assign(marker_line, 0, j);
-            }
-
-            std::vector<std::string> adjusted;
-            adjusted.reserve(payload.size());
-            for (const auto &ln : payload)
-            {
-                if (ln.empty())
-                    adjusted.push_back(ln);
-                else
-                    adjusted.push_back(prefix + ln);
-            }
-            payload.swap(adjusted);
-        }
-
-        if (s->command == "insert-after-text")
-        {
-            std::size_t pos = end + 1;
-            lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(pos),
-                         payload.begin(),
-                         payload.end());
-        }
-        else if (s->command == "insert-before-text")
-        {
-            std::size_t pos = begin;
-            lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(pos),
-                         payload.begin(),
-                         payload.end());
-        }
-        else if (s->command == "replace-text")
-        {
-            auto it_begin = lines.begin() +
-                            static_cast<std::ptrdiff_t>(begin);
-            auto it_end   = it_begin +
-                            static_cast<std::ptrdiff_t>(span);
-            lines.erase(it_begin, it_end);
-            lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(begin),
-                         payload.begin(),
-                         payload.end());
-        }
-        else if (s->command == "delete-text")
-        {
-            auto it_begin = lines.begin() +
-                            static_cast<std::ptrdiff_t>(begin);
-            auto it_end   = it_begin +
-                            static_cast<std::ptrdiff_t>(span);
-            lines.erase(it_begin, it_end);
-        }
-        else
-        {
-            throw std::runtime_error("unknown text command: " + s->command);
-        }
+        auto cmd = create_text_command(*s, filepath);
+        cmd->execute(lines);
     }
 }
