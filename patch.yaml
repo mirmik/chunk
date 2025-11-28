@@ -1,0 +1,220 @@
+operations:
+  - path: src/runner.cpp
+    op: replace_text
+    marker: |
+      #include "runner.h"
+
+      #include "file_io.h"
+      #include "symbol_commands.h"
+      #include "text_commands.h"
+      #include <algorithm>
+      #include <filesystem>
+      #include <map>
+      #include <stdexcept>
+    payload: |
+      #include "runner.h"
+
+      #include "file_io.h"
+      #include "symbol_commands.h"
+      #include "text_commands.h"
+      #include <algorithm>
+      #include <filesystem>
+      #include <map>
+      #include <sstream>
+      #include <stdexcept>
+
+  - path: src/runner.cpp
+    op: replace_text
+    marker: |
+      void apply_sections(const std::vector<Section> &sections)
+      {
+          std::vector<std::string> files;
+          files.reserve(sections.size());
+          for (auto &s : sections)
+              files.push_back(s.filepath);
+
+          std::sort(files.begin(), files.end());
+          files.erase(std::unique(files.begin(), files.end()), files.end());
+
+          std::map<std::string, Backup> backup;
+
+          for (auto &f : files)
+          {
+              Backup b;
+              fs::path p = f;
+
+              std::error_code ec;
+              if (fs::exists(p, ec))
+              {
+                  b.existed = true;
+
+                  try
+                  {
+                      b.lines = read_file_lines(p);
+                  }
+                  catch (...)
+                  {
+                      throw std::runtime_error("cannot read original file: " + f);
+                  }
+              }
+              else
+              {
+                  b.existed = false;
+              }
+
+              backup[f] = std::move(b);
+          }
+          try
+          {
+              for (auto &s : sections)
+              {
+                  std::vector<const Section *> single{&s};
+                  apply_for_file(s.filepath, single);
+              }
+          }
+          catch (...)
+          {
+              for (auto &[path, b] : backup)
+              {
+                  fs::path p = path;
+                  std::error_code ec;
+                  if (b.existed)
+                  {
+                      try
+                      {
+                          write_file_lines(p, b.lines);
+                      }
+                      catch (...)
+                      {
+                      }
+                  }
+                  else
+                  {
+                      fs::remove(p, ec);
+                  }
+              }
+
+              throw;
+          }
+      }
+    payload: |
+      void apply_sections(const std::vector<Section> &sections)
+      {
+          std::vector<std::string> files;
+          files.reserve(sections.size());
+          for (auto &s : sections)
+              files.push_back(s.filepath);
+
+          std::sort(files.begin(), files.end());
+          files.erase(std::unique(files.begin(), files.end()), files.end());
+
+          std::map<std::string, Backup> backup;
+
+          for (auto &f : files)
+          {
+              Backup b;
+              fs::path p = f;
+
+              std::error_code ec;
+              if (fs::exists(p, ec))
+              {
+                  b.existed = true;
+
+                  try
+                  {
+                      b.lines = read_file_lines(p);
+                  }
+                  catch (...)
+                  {
+                      throw std::runtime_error("cannot read original file: " + f);
+                  }
+              }
+              else
+              {
+                  b.existed = false;
+              }
+
+              backup[f] = std::move(b);
+          }
+
+          const Section *current_section = nullptr;
+
+          try
+          {
+              for (auto &s : sections)
+              {
+                  current_section = &s;
+                  std::vector<const Section *> single{&s};
+                  apply_for_file(s.filepath, single);
+              }
+          }
+          catch (const std::exception &e)
+          {
+              for (auto &[path, b] : backup)
+              {
+                  fs::path p = path;
+                  std::error_code ec;
+                  if (b.existed)
+                  {
+                      try
+                      {
+                          write_file_lines(p, b.lines);
+                      }
+                      catch (...)
+                      {
+                      }
+                  }
+                  else
+                  {
+                      fs::remove(p, ec);
+                  }
+              }
+
+              if (current_section)
+              {
+                  std::ostringstream oss;
+                  oss << e.what();
+                  if (!current_section->comment.empty())
+                      oss << "\nsection comment: " << current_section->comment;
+                  if (!current_section->marker.empty())
+                  {
+                      oss << "\nsection marker preview:\n";
+                      size_t max_preview_lines = 3;
+                      for (size_t i = 0;
+                           i < current_section->marker.size() &&
+                           i < max_preview_lines;
+                           ++i)
+                      {
+                          oss << current_section->marker[i] << "\n";
+                      }
+                  }
+                  throw std::runtime_error(oss.str());
+              }
+
+              throw;
+          }
+          catch (...)
+          {
+              for (auto &[path, b] : backup)
+              {
+                  fs::path p = path;
+                  std::error_code ec;
+                  if (b.existed)
+                  {
+                      try
+                      {
+                          write_file_lines(p, b.lines);
+                      }
+                      catch (...)
+                      {
+                      }
+                  }
+                  else
+                  {
+                      fs::remove(p, ec);
+                  }
+              }
+
+              throw;
+          }
+      }
