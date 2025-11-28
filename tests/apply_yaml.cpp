@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <chrono>
+#include <sstream>
 #include <yaml/string_ext.h>
 
 namespace fs = std::filesystem;
@@ -32,6 +33,28 @@ static int run_apply(const fs::path &patch)
 
     return apply_chunk_main((int)argv.size(), argv.data());
 }
+
+class ScopedStreamSilence
+{
+public:
+    ScopedStreamSilence()
+        : old_cout(std::cout.rdbuf()), old_cerr(std::cerr.rdbuf())
+    {
+        std::cout.rdbuf(sink.rdbuf());
+        std::cerr.rdbuf(sink.rdbuf());
+    }
+
+    ~ScopedStreamSilence()
+    {
+        std::cout.rdbuf(old_cout);
+        std::cerr.rdbuf(old_cerr);
+    }
+
+private:
+    std::ostringstream sink;
+    std::streambuf *old_cout;
+    std::streambuf *old_cerr;
+};
 
     static int run_apply_stdin(const std::string &patch_text)
     {
@@ -522,6 +545,7 @@ TEST_CASE("YAML patch: missing marker for text op fails and keeps file intact")
         out << "      X\n";
     }
 
+    ScopedStreamSilence silence;
     CHECK(run_apply(patch) != 0);
 
     auto L = read_lines(f);
@@ -560,6 +584,7 @@ TEST_CASE("YAML patch: unknown indent mode causes failure and rollback")
         out << "      indent: weird-mode\n";
     }
 
+    ScopedStreamSilence silence;
     CHECK(run_apply(patch) != 0);
 
     auto L = read_lines(f);
@@ -573,6 +598,7 @@ TEST_CASE("YAML patch: unknown indent mode causes failure and rollback")
 // ============================================================================
 TEST_CASE("YAML patch: rollback restores metadata")
 {
+    ScopedStreamSilence silence;
     fs::path tmp = fs::temp_directory_path() / "yaml_patch_rollback_metadata";
     fs::remove_all(tmp);
     fs::create_directories(tmp);
