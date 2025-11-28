@@ -169,8 +169,10 @@ operations:
 Обязательные поля операции:
 
 * `path`
-* `op: insert_after_text | insert_before_text | replace_text | delete_text`
-* `marker`
+* `op: insert_after_text | insert_before_text | replace_text | delete_text | prepend_text | append_text`
+* `marker` — обязателен для маркерных операций (`insert_after_text`, `insert_before_text`, `replace_text`, `delete_text`).
+
+Для `prepend_text` и `append_text` поле `marker` не используется: они просто вставляют `payload` в начало или конец файла.
 
 Дополнительные:
 
@@ -239,6 +241,31 @@ operations:
     op: delete_text
     marker: |-
       #include "debug.h"
+```
+### 5.5. `prepend_text`
+
+Вставить текст в начало файла без указания маркера:
+
+```yaml
+operations:
+  - path: src/foo.cpp
+    op: prepend_text
+    payload: |-
+      // Этот блок будет вставлен в самое начало файла.
+      // ...
+```
+
+### 5.6. `append_text`
+
+Вставить текст в конец файла без указания маркера:
+
+```yaml
+operations:
+  - path: src/foo.cpp
+    op: append_text
+    payload: |-
+      // Этот блок будет добавлен в самый конец файла.
+      // ...
 ```
 
 ---

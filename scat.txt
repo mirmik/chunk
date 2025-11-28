@@ -10,6 +10,7 @@ src/file_io.h
 src/help.cpp
 src/help.h
 src/main.cpp
+docs/*
 
 [TREE]
 **
