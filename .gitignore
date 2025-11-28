@@ -15,6 +15,8 @@ compile_commands.json
 install_manifest.txt
 x64/
 
+chunk_tests.dir/
+
 # Visual Studio / VSCode / CLion
 *.sln
 *.vcxproj
