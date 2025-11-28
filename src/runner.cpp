@@ -16,7 +16,7 @@ namespace
 struct Backup
 {
     bool existed = false;
-    std::vector<std::string> lines;
+    std::string data;
     fs::file_time_type last_write_time;
     fs::perms permissions = fs::perms::unknown;
     bool has_last_write_time = false;
@@ -36,7 +36,7 @@ void restore_backup(const std::string &path, const Backup &b)
 
     try
     {
-        write_file_lines(p, b.lines);
+        write_file_bytes(p, b.data);
 
         if (b.has_permissions)
         {
@@ -144,7 +144,7 @@ void apply_sections(const std::vector<Section> &sections)
 
             try
             {
-                b.lines = read_file_lines(p);
+                b.data = read_file_bytes(p);
             }
             catch (...)
             {
