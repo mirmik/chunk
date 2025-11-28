@@ -41,7 +41,8 @@ void&nbsp;print_chunk_help()<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;xsel&nbsp;-b\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;pbpaste\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;On&nbsp;Windows&nbsp;it&nbsp;uses:\n&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;powershell&nbsp;-NoProfile&nbsp;-Command&nbsp;\&quot;[Console]::OutputEncoding&nbsp;=&nbsp;[System.Text.Encoding]::UTF8;&nbsp;Get-Clipboard&nbsp;-Raw\&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;powershell&nbsp;-NoProfile&nbsp;-Command&nbsp;\&quot;[Console]::OutputEncoding&nbsp;=&nbsp;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;[System.Text.Encoding]::UTF8;&nbsp;Get-Clipboard&nbsp;-Raw\&quot;\n&quot;;<br>
 }<br>
 <!-- END SCAT CODE -->
 </body>

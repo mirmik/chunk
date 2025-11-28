@@ -8,15 +8,15 @@
 <!-- BEGIN SCAT CODE -->
 #pragma&nbsp;once<br>
 <br>
+#include&nbsp;&lt;sstream&gt;<br>
 #include&nbsp;&lt;string&gt;<br>
 #include&nbsp;&lt;vector&gt;<br>
-#include&nbsp;&lt;sstream&gt;<br>
 <br>
 struct&nbsp;Section<br>
 {<br>
-	std::string&nbsp;filepath;<br>
-	std::string&nbsp;command;<br>
-	std::string&nbsp;language;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;filepath;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;command;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;language;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;a&nbsp;=&nbsp;-1;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;b&nbsp;=&nbsp;-1;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;payload;<br>

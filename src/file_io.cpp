@@ -47,14 +47,12 @@ std::string read_file_bytes(const std::filesystem::path &p)
     return data;
 }
 
-void write_file_bytes(const std::filesystem::path &p,
-                      const std::string &data)
+void write_file_bytes(const std::filesystem::path &p, const std::string &data)
 {
     std::ofstream out(p, std::ios::binary | std::ios::trunc);
     if (!out)
         throw std::runtime_error("cannot write file: " + p.string());
 
     if (!data.empty())
-        out.write(data.data(),
-                  static_cast<std::streamsize>(data.size()));
+        out.write(data.data(), static_cast<std::streamsize>(data.size()));
 }

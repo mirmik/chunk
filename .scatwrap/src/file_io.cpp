@@ -55,16 +55,14 @@ std::string&nbsp;read_file_bytes(const&nbsp;std::filesystem::path&nbsp;&amp;p)<b
 &nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;data;<br>
 }<br>
 <br>
-void&nbsp;write_file_bytes(const&nbsp;std::filesystem::path&nbsp;&amp;p,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;data)<br>
+void&nbsp;write_file_bytes(const&nbsp;std::filesystem::path&nbsp;&amp;p,&nbsp;const&nbsp;std::string&nbsp;&amp;data)<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(p,&nbsp;std::ios::binary&nbsp;|&nbsp;std::ios::trunc);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!out)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;cannot&nbsp;write&nbsp;file:&nbsp;&quot;&nbsp;+&nbsp;p.string());<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!data.empty())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out.write(data.data(),<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;static_cast&lt;std::streamsize&gt;(data.size()));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out.write(data.data(),&nbsp;static_cast&lt;std::streamsize&gt;(data.size()));<br>
 }<br>
 <!-- END SCAT CODE -->
 </body>

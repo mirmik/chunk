@@ -3,9 +3,9 @@
 #include "runner.h"
 #include "section.h"
 
-#include <cstring>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -15,157 +15,160 @@
 namespace
 {
 
-std::string read_all(std::istream &in)
-{
-    std::ostringstream oss;
-    oss << in.rdbuf();
-    return oss.str();
-}
+    std::string read_all(std::istream &in)
+    {
+        std::ostringstream oss;
+        oss << in.rdbuf();
+        return oss.str();
+    }
 
-struct ClipboardReader
-{
-    const char *name;           // человекочитаемое имя
-    const char *command;        // команда для popen/_popen
-    bool (*is_available)();     // опциональная проверка среды, nullptr если не нужна
-};
+    struct ClipboardReader
+    {
+        const char *name;    // человекочитаемое имя
+        const char *command; // команда для popen/_popen
+        bool (*is_available)(); // опциональная проверка среды, nullptr если не
+                                // нужна
+    };
 
 #ifdef _WIN32
 
-static const ClipboardReader kClipboardReaders[] = {
-    {
-        "powershell-GetClipboard",
-        "powershell -NoProfile -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard -Raw\"",
-        nullptr,
-    },
-};
+    static const ClipboardReader kClipboardReaders[] = {
+        {
+            "powershell-GetClipboard",
+            "powershell -NoProfile -Command \"[Console]::OutputEncoding = "
+            "[System.Text.Encoding]::UTF8; Get-Clipboard -Raw\"",
+            nullptr,
+        },
+    };
 
 #else
 
-static bool has_wayland_monitor()
-{
-    const char *env = std::getenv("WAYLAND_MONITOR");
-    return env && *env;
-}
+    static bool has_wayland_monitor()
+    {
+        const char *env = std::getenv("WAYLAND_MONITOR");
+        return env && *env;
+    }
 
-static const ClipboardReader kClipboardReaders[] = {
-    {"wl-paste", "wl-paste", &has_wayland_monitor},
-    {"xclip",    "xclip -selection clipboard -o", nullptr},
-    {"xsel",     "xsel -b", nullptr},
-    {"pbpaste",  "pbpaste", nullptr},
-};
+    static const ClipboardReader kClipboardReaders[] = {
+        {"wl-paste", "wl-paste", &has_wayland_monitor},
+        {"xclip", "xclip -selection clipboard -o", nullptr},
+        {"xsel", "xsel -b", nullptr},
+        {"pbpaste", "pbpaste", nullptr},
+    };
 
 #endif
 
-static bool run_clipboard_reader(const ClipboardReader &reader,
-                                 std::string &out,
-                                 bool verbose)
-{
-    if (reader.is_available && !reader.is_available())
+    static bool run_clipboard_reader(const ClipboardReader &reader,
+                                     std::string &out,
+                                     bool verbose)
     {
+        if (reader.is_available && !reader.is_available())
+        {
+            if (verbose)
+            {
+                std::cerr << "chunk: clipboard: skipping '" << reader.name
+                          << "' (not available in current environment)\n";
+            }
+            return false;
+        }
+
         if (verbose)
         {
-            std::cerr << "chunk: clipboard: skipping '" << reader.name
-                      << "' (not available in current environment)\n";
+            std::cerr << "chunk: clipboard: trying '" << reader.name << "'\n";
         }
-        return false;
-    }
-
-    if (verbose)
-    {
-        std::cerr << "chunk: clipboard: trying '" << reader.name << "'\n";
-    }
 
 #ifdef _WIN32
-    FILE *pipe = _popen(reader.command, "r");
+        FILE *pipe = _popen(reader.command, "r");
 #else
-    FILE *pipe = popen(reader.command, "r");
+        FILE *pipe = popen(reader.command, "r");
 #endif
-    if (!pipe)
-    {
-        if (verbose)
+        if (!pipe)
         {
-            std::cerr << "chunk: clipboard: failed to start '"
-                      << reader.name << "'\n";
+            if (verbose)
+            {
+                std::cerr << "chunk: clipboard: failed to start '"
+                          << reader.name << "'\n";
+            }
+            return false;
         }
-        return false;
-    }
 
-    std::string result;
-    char buffer[4096];
+        std::string result;
+        char buffer[4096];
 
-    while (true)
-    {
-        std::size_t n = std::fread(buffer, 1, sizeof(buffer), pipe);
-        if (n == 0)
-            break;
-        result.append(buffer, n);
-    }
+        while (true)
+        {
+            std::size_t n = std::fread(buffer, 1, sizeof(buffer), pipe);
+            if (n == 0)
+                break;
+            result.append(buffer, n);
+        }
 
 #ifdef _WIN32
-    int rc = _pclose(pipe);
+        int rc = _pclose(pipe);
 #else
-    int rc = pclose(pipe);
+        int rc = pclose(pipe);
 #endif
 
-    if (rc != 0)
-    {
+        if (rc != 0)
+        {
+            if (verbose)
+            {
+                std::cerr << "chunk: clipboard: '" << reader.name
+                          << "' exited with code " << rc << "\n";
+            }
+            return false;
+        }
+
+        if (result.empty())
+        {
+            if (verbose)
+            {
+                std::cerr << "chunk: clipboard: '" << reader.name
+                          << "' returned empty data\n";
+            }
+            return false;
+        }
+
+        out = std::move(result);
+
         if (verbose)
         {
-            std::cerr << "chunk: clipboard: '" << reader.name
-                      << "' exited with code " << rc << "\n";
+            std::cerr << "chunk: clipboard: '" << reader.name << "' succeeded ("
+                      << out.size() << " bytes)\n";
         }
-        return false;
+
+        return true;
     }
 
-    if (result.empty())
+    bool read_clipboard(std::string &out, bool verbose)
     {
+        out.clear();
+
+        const std::size_t count =
+            sizeof(kClipboardReaders) / sizeof(kClipboardReaders[0]);
+
+        if (count == 0)
+        {
+            if (verbose)
+                std::cerr
+                    << "chunk: clipboard: no clipboard readers configured\n";
+            return false;
+        }
+
+        for (std::size_t i = 0; i < count; ++i)
+        {
+            const ClipboardReader &reader = kClipboardReaders[i];
+            if (run_clipboard_reader(reader, out, verbose))
+                return true;
+        }
+
         if (verbose)
         {
-            std::cerr << "chunk: clipboard: '" << reader.name
-                      << "' returned empty data\n";
+            std::cerr << "chunk: clipboard: all clipboard commands failed\n";
         }
+
         return false;
     }
-
-    out = std::move(result);
-
-    if (verbose)
-    {
-        std::cerr << "chunk: clipboard: '" << reader.name
-                  << "' succeeded (" << out.size() << " bytes)\n";
-    }
-
-    return true;
-}
-
-bool read_clipboard(std::string &out, bool verbose)
-{
-    out.clear();
-
-    const std::size_t count =
-        sizeof(kClipboardReaders) / sizeof(kClipboardReaders[0]);
-
-    if (count == 0)
-    {
-        if (verbose)
-            std::cerr << "chunk: clipboard: no clipboard readers configured\n";
-        return false;
-    }
-
-    for (std::size_t i = 0; i < count; ++i)
-    {
-        const ClipboardReader &reader = kClipboardReaders[i];
-        if (run_clipboard_reader(reader, out, verbose))
-            return true;
-    }
-
-    if (verbose)
-    {
-        std::cerr << "chunk: clipboard: all clipboard commands failed\n";
-    }
-
-    return false;
-}
 
 } // namespace
 
@@ -207,8 +210,7 @@ int apply_chunk_main(int argc, char **argv)
         }
     }
 
-    if ((use_stdin && use_clipboard) ||
-        (use_stdin && filename) ||
+    if ((use_stdin && use_clipboard) || (use_stdin && filename) ||
         (use_clipboard && filename))
     {
         std::cerr << "chunk: conflicting input options\n";
@@ -233,7 +235,8 @@ int apply_chunk_main(int argc, char **argv)
     {
         if (!filename)
         {
-            std::cerr << "chunk: missing input (patch file, --stdin or --paste)\n";
+            std::cerr
+                << "chunk: missing input (patch file, --stdin or --paste)\n";
             return 1;
         }
 
