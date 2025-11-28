@@ -7,6 +7,8 @@
 
 А почему? А потому, что unified diff нейросеть генерирует - такое себе...
 
+---
+
 [Формат патчей CHUNK](CHUNK.md)
 
 [Утилита для применения патчей chunk](https://github.com/mirmik/chunk)
