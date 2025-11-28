@@ -38,10 +38,11 @@ operations:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;...<br>
 ````<br>
 <br>
-Опционально&nbsp;можно&nbsp;добавить&nbsp;описание:<br>
+Также&nbsp;опционально,&nbsp;но&nbsp;весьма&nbsp;желательно&nbsp;добавить&nbsp;описание&nbsp;description&nbsp;и&nbsp;название&nbsp;языка&nbsp;программирования&nbsp;language&nbsp;(поддерживаются&nbsp;python&nbsp;и&nbsp;c++):<br>
 <br>
 ```yaml<br>
 description:&nbsp;&quot;Краткое&nbsp;описание&nbsp;патча&quot;<br>
+language:&nbsp;python<br>
 operations:<br>
 &nbsp;&nbsp;-&nbsp;path:&nbsp;...<br>
 &nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;...<br>
@@ -65,7 +66,7 @@ operations:<br>
 <br>
 ---<br>
 <br>
-##&nbsp;2.&nbsp;Маркеры&nbsp;и&nbsp;whitespace<br>
+##&nbsp;2.&nbsp;Маркеры,&nbsp;whitespace,&nbsp;игнорирование&nbsp;комментариев.<br>
 <br>
 Для&nbsp;текстовых&nbsp;команд&nbsp;используются&nbsp;поля:<br>
 <br>
@@ -78,7 +79,7 @@ operations:<br>
 <br>
 **Поиск&nbsp;маркера:**<br>
 <br>
-При&nbsp;поиске&nbsp;маркера&nbsp;мы&nbsp;**игнорируем&nbsp;различия&nbsp;в&nbsp;отступах,&nbsp;хвостовых&nbsp;пробелах&nbsp;и&nbsp;количестве&nbsp;пустых&nbsp;строк**,&nbsp;чтобы&nbsp;патчи&nbsp;не&nbsp;ломались&nbsp;из-за&nbsp;форматирования&nbsp;различных&nbsp;версий&nbsp;ide&nbsp;и&nbsp;вэбпросмотрщиков,&nbsp;в&nbsp;том&nbsp;числе&nbsp;используемых&nbsp;нейросетями&nbsp;при&nbsp;просмотре&nbsp;интернет&nbsp;ссылок.<br>
+При&nbsp;поиске&nbsp;маркера&nbsp;мы&nbsp;**игнорируем&nbsp;различия&nbsp;в&nbsp;отступах,&nbsp;хвостовых&nbsp;пробелах&nbsp;и&nbsp;количестве&nbsp;пустых&nbsp;строк**,&nbsp;чтобы&nbsp;патчи&nbsp;не&nbsp;ломались&nbsp;из-за&nbsp;форматирования&nbsp;различных&nbsp;версий&nbsp;ide&nbsp;и&nbsp;вэбпросмотрщиков,&nbsp;в&nbsp;том&nbsp;числе&nbsp;используемых&nbsp;нейросетями&nbsp;при&nbsp;просмотре&nbsp;интернет&nbsp;ссылок.&nbsp;Также&nbsp;**игнорируются&nbsp;комментарии&nbsp;на&nbsp;том&nbsp;языке&nbsp;программирования,&nbsp;что&nbsp;был&nbsp;передан&nbsp;в&nbsp;language**.&nbsp;Это&nbsp;сделано&nbsp;потому,&nbsp;что&nbsp;нейросеть&nbsp;любит&nbsp;глотать&nbsp;коментарии&nbsp;при&nbsp;переписывании&nbsp;текста&nbsp;маркера.<br>
 <br>
 Правила&nbsp;обработки&nbsp;маркера:<br>
 *&nbsp;удаляются&nbsp;пробелы&nbsp;и&nbsp;табы&nbsp;в&nbsp;начале&nbsp;и&nbsp;в&nbsp;конце&nbsp;строки;<br>
