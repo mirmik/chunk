@@ -12,6 +12,7 @@
 #include "commands/replace_py_class.hpp"
 #include "commands/replace_py_method.hpp"
 #include "commands/replace_text.hpp"
+#include "commands/replace_c_style_block.hpp"
 #include <functional>
 #include <unordered_map>
 
@@ -36,7 +37,8 @@ symbol_command_registry()
          []() { return std::make_unique<ReplacePyClassCommand>(); }},
         {"replace-py-method",
          []() { return std::make_unique<ReplacePyMethodCommand>(); }},
-
+        {"replace-c-style-block",
+         []() { return std::make_unique<ReplaceCStyleBlockCommand>(); }},
         {"prepend-text",
          []() { return std::make_unique<PrependTextCommand>(); }},
         {"append-text",
