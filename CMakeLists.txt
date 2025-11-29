@@ -29,6 +29,14 @@ file(GLOB CHUNK_CORE_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/commands/*.cpp
 )
 
+file(GLOB CHUNK_HEADERS CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/languages/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/commands/*.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/commands/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/yaml/*.h
+)
+
 add_executable(chunk
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app/main.cpp
     ${CHUNK_CORE_SOURCES}
