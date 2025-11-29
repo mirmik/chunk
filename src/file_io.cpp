@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <stdexcept>
+#include <sstream>
 
 std::vector<std::string> read_file_lines(const std::filesystem::path &p)
 {

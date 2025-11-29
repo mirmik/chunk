@@ -10,6 +10,7 @@
 <br>
 #include&nbsp;&lt;fstream&gt;<br>
 #include&nbsp;&lt;stdexcept&gt;<br>
+#include&nbsp;&lt;sstream&gt;<br>
 <br>
 std::vector&lt;std::string&gt;&nbsp;read_file_lines(const&nbsp;std::filesystem::path&nbsp;&amp;p)<br>
 {<br>
