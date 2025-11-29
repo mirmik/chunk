@@ -5,7 +5,7 @@
 #include "commands/text_utils.h"
 #include "commands/symbol_utils.h"
 #include "languages/symbols.h"
-
+#include "apply.h"
 #include <ostream>
 
 // Common base for text commands that operate around markers
@@ -50,10 +50,14 @@ public:
     {
         using namespace text_utils;
 
+        if (chunk_verbose_logging_enabled())
+            debug_file_text_ = join_lines(lines);
+        else
+            debug_file_text_.clear();
+
         if (marker_.empty())
             throw std::runtime_error("empty marker in text command for file: " +
                                      filepath_);
-
         PatchLanguage lang = detect_language(language_);
         std::vector<MarkerMatch> matches =
             find_marker_matches(lines, marker_, lang);
@@ -61,7 +65,6 @@ public:
             throw std::runtime_error("text marker not found for file: " +
                                      filepath_ + "\ncommand: " +
                                      command_name() + "\n");
-
         int mindex =
             find_best_marker_match(lines, lang, before_, after_, matches);
         if (mindex < 0)
@@ -72,7 +75,6 @@ public:
             mm.end >= static_cast<int>(lines.size()))
             throw std::runtime_error(
                 "internal error: invalid marker match range");
-
         std::size_t begin = static_cast<std::size_t>(mm.begin);
         std::size_t end = static_cast<std::size_t>(mm.end);
 
@@ -92,6 +94,108 @@ public:
             {
                 os << marker_[i] << "\n";
             }
+        }
+
+        if (!chunk_verbose_logging_enabled())
+            return;
+
+        if (debug_file_text_.empty() || marker_.empty())
+            return;
+
+        std::string marker_text = join_lines(marker_);
+        if (marker_text.empty())
+            return;
+
+        const std::string &file_text = debug_file_text_;
+        std::size_t best_pos = std::string::npos;
+        std::size_t best_len = 0;
+
+        if (!file_text.empty())
+        {
+            for (std::size_t i = 0; i < file_text.size(); ++i)
+            {
+                std::size_t j = 0;
+                while (i + j < file_text.size() && j < marker_text.size() &&
+                       file_text[i + j] == marker_text[j])
+                {
+                    ++j;
+                }
+                if (j > best_len)
+                {
+                    best_len = j;
+                    best_pos = i;
+                    if (best_len == marker_text.size())
+                        break;
+                }
+            }
+        }
+
+        if (best_pos == std::string::npos)
+            return;
+
+        os << "\nverbose marker diagnostics:\n";
+        os << "  best marker prefix match length: " << best_len
+           << " of " << marker_text.size() << " bytes\n";
+
+        std::size_t mismatch_file_pos = best_pos + best_len;
+        std::size_t mismatch_marker_pos = best_len;
+
+        std::size_t line = 1;
+        std::size_t column = 1;
+        for (std::size_t i = 0; i < mismatch_file_pos && i < file_text.size(); ++i)
+        {
+            if (file_text[i] == '\n')
+            {
+                ++line;
+                column = 1;
+            }
+            else
+            {
+                ++column;
+            }
+        }
+
+        os << "  file position: offset " << mismatch_file_pos
+           << ", line " << line << ", column " << column << "\n";
+
+        auto hex_of = [](unsigned char c) -> std::string {
+            char buf[3];
+            unsigned char hi = static_cast<unsigned char>((c >> 4) & 0x0F);
+            unsigned char lo = static_cast<unsigned char>(c & 0x0F);
+            buf[0] = static_cast<char>(hi < 10 ? ('0' + hi) : ('A' + (hi - 10)));
+            buf[1] = static_cast<char>(lo < 10 ? ('0' + lo) : ('A' + (lo - 10)));
+            buf[2] = '\0';
+            return std::string(buf, 2);
+        };
+
+        if (mismatch_file_pos < file_text.size())
+        {
+            unsigned char fc =
+                static_cast<unsigned char>(file_text[mismatch_file_pos]);
+            os << "  file mismatch byte (hex): 0x" << hex_of(fc) << "\n";
+        }
+
+        if (mismatch_marker_pos < marker_text.size())
+        {
+            unsigned char mc =
+                static_cast<unsigned char>(marker_text[mismatch_marker_pos]);
+            os << "  marker byte (hex):        0x" << hex_of(mc) << "\n";
+        }
+
+        const std::size_t max_tail = 32;
+        if (mismatch_file_pos < file_text.size())
+        {
+            std::size_t available = file_text.size() - mismatch_file_pos;
+            std::size_t len = available < max_tail ? available : max_tail;
+
+            os << "  file tail (hex):";
+            for (std::size_t i = 0; i < len; ++i)
+            {
+                unsigned char c =
+                    static_cast<unsigned char>(file_text[mismatch_file_pos + i]);
+                os << " " << hex_of(c);
+            }
+            os << "\n";
         }
     }
 
@@ -135,6 +239,7 @@ private:
         return adjusted;
     }
 
+    std::string debug_file_text_;
     virtual void apply(std::vector<std::string> &lines,
                        std::size_t begin,
                        std::size_t end,

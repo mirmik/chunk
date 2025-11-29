@@ -13,6 +13,15 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+namespace
+{
+    bool g_chunk_verbose_logging = false;
+}
+
+bool chunk_verbose_logging_enabled()
+{
+    return g_chunk_verbose_logging;
+}
 
 std::tuple<std::string, std::string> get_script(bool use_stdin,
                                                 bool use_clipboard,
@@ -88,6 +97,7 @@ int apply_chunk_main(int argc, char **argv)
         }
     }
 
+    g_chunk_verbose_logging = verbose;
     if ((use_stdin && use_clipboard) || (use_stdin && filename) ||
         (use_clipboard && filename))
     {

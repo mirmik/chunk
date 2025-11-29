@@ -21,6 +21,15 @@
 #include&nbsp;&lt;sstream&gt;<br>
 #include&nbsp;&lt;stdexcept&gt;<br>
 #include&nbsp;&lt;string&gt;<br>
+namespace<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;g_chunk_verbose_logging&nbsp;=&nbsp;false;<br>
+}<br>
+<br>
+bool&nbsp;chunk_verbose_logging_enabled()<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;g_chunk_verbose_logging;<br>
+}<br>
 <br>
 std::tuple&lt;std::string,&nbsp;std::string&gt;&nbsp;get_script(bool&nbsp;use_stdin,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;use_clipboard,<br>
@@ -96,6 +105,7 @@ int&nbsp;apply_chunk_main(int&nbsp;argc,&nbsp;char&nbsp;**argv)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;}<br>
 <br>
+&nbsp;&nbsp;&nbsp;&nbsp;g_chunk_verbose_logging&nbsp;=&nbsp;verbose;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;((use_stdin&nbsp;&amp;&amp;&nbsp;use_clipboard)&nbsp;||&nbsp;(use_stdin&nbsp;&amp;&amp;&nbsp;filename)&nbsp;||<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(use_clipboard&nbsp;&amp;&amp;&nbsp;filename))<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
