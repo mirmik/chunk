@@ -53,27 +53,11 @@ symbol_command_registry()
     return registry;
 }
 
-std::unique_ptr<Command> create_command(const Section &section,
-                                        const std::string &filepath)
-{
-    const auto &registry = symbol_command_registry();
-    auto it = registry.find(section.command);
-    if (it == registry.end())
-        throw std::runtime_error("apply_commands: unknown command: " +
-                                 section.command);
-    auto cmd = it->second();
-    cmd->load_section(section);
-    (void)filepath;
-    return cmd;
-}
-
 std::unique_ptr<Command> make_command(const std::string &name)
 {
-    Section s;
-    s.command = name;
-    auto command = create_command(s, std::string());
-    if (command)
-        return command;
-
-    throw std::runtime_error("YAML patch: unknown operation: " + name);
+    const auto &registry = symbol_command_registry();
+    auto it = registry.find(name);
+    if (it == registry.end())
+        throw std::runtime_error("YAML patch: unknown operation: " + name);
+    return it->second();
 }

@@ -102,8 +102,6 @@ parse_yaml_patch_text(const std::string &text)
     std::vector<std::unique_ptr<Command>> commands;
     commands.reserve(ops.size());
 
-    int seq = 0;
-
     for (const trent &op_node : ops)
     {
         if (!op_node.is_dict())
@@ -119,7 +117,6 @@ parse_yaml_patch_text(const std::string &text)
         std::string op_name = normalize_op_name(it_op->second.as_string());
         auto cmd = make_command(op_name);
         cmd->set_patch_language(patch_language);
-        cmd->set_sequence(seq++);
         cmd->parse(op_node);
 
         commands.emplace_back(std::move(cmd));

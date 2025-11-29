@@ -10,10 +10,11 @@ public:
 
     void parse(const nos::trent &tr) override
     {
-        section_.filepath = command_parse::get_scalar(tr, "path");
-        if (section_.filepath.empty())
-            throw std::runtime_error("YAML patch: op 'delete-file' requires 'path' key");
-        section_.comment = command_parse::get_scalar(tr, "comment");
+        filepath_ = command_parse::get_scalar(tr, "path");
+        if (filepath_.empty())
+            throw std::runtime_error(
+                "YAML patch: op 'delete-file' requires 'path' key");
+        comment_ = command_parse::get_scalar(tr, "comment");
     }
 
     void execute(std::vector<std::string> &lines) override

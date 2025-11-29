@@ -10,23 +10,27 @@ public:
 
     void parse(const nos::trent &tr) override
     {
-        section_.filepath = command_parse::get_scalar(tr, "path");
-        if (section_.filepath.empty())
-            throw std::runtime_error("YAML patch: op 'create-file' requires 'path' key");
+        filepath_ = command_parse::get_scalar(tr, "path");
+        if (filepath_.empty())
+            throw std::runtime_error(
+                "YAML patch: op 'create-file' requires 'path' key");
 
-        section_.payload = command_parse::split_scalar_lines(
-            command_parse::get_scalar(tr, "payload"));
-        if (section_.payload.empty())
+        std::string payload_text = command_parse::get_scalar(tr, "payload");
+        payload_ = command_parse::split_scalar_lines(payload_text);
+        if (payload_.empty())
             throw std::runtime_error(
                 "YAML patch: text op 'create-file' for file '" +
-                section_.filepath + "' requires 'payload'");
+                filepath_ + "' requires 'payload'");
 
-        section_.comment = command_parse::get_scalar(tr, "comment");
+        comment_ = command_parse::get_scalar(tr, "comment");
     }
 
     void execute(std::vector<std::string> &lines) override
     {
-        (void)lines;
+        lines = payload_;
     }
+
+private:
+    std::vector<std::string> payload_;
 };
 

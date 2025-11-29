@@ -1,4 +1,5 @@
 #include "commands/text_utils.h"
+#include <stdexcept>
 
 namespace text_utils
 {
@@ -26,14 +27,11 @@ std::string trim(std::string_view view)
 }
 
 
-PatchLanguage detect_language(const Section *s)
+PatchLanguage detect_language(const std::string &language)
 {
-    if (!s)
+    if (language.empty())
         return PatchLanguage::Unknown;
-    std::string lang = s->language;
-    if (lang.empty())
-        return PatchLanguage::Unknown;
-
+    std::string lang = language;
     for (char &ch : lang)
         ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
 
@@ -54,11 +52,9 @@ std::string normalize_line_for_match(std::string_view view,
 std::vector<MarkerMatch>
 find_marker_matches(const std::vector<std::string> &haystack,
                     const std::vector<std::string> &needle,
-                    const Section *section)
+                    PatchLanguage lang)
 {
     std::vector<MarkerMatch> matches;
-
-    PatchLanguage lang = detect_language(section);
     CodeNormalizer pat_norm(lang);
     CodeNormalizer hs_norm(lang);
 
@@ -115,15 +111,16 @@ find_marker_matches(const std::vector<std::string> &haystack,
 }
 
 int find_best_marker_match(const std::vector<std::string> &lines,
-                                  const Section *s,
-                                  const std::vector<MarkerMatch> &candidates)
+                           PatchLanguage lang,
+                           const std::vector<std::string> &before,
+                           const std::vector<std::string> &after,
+                           const std::vector<MarkerMatch> &candidates)
 {
     if (candidates.empty())
         return -1;
-    if (s->before.empty() && s->after.empty())
+    if (before.empty() && after.empty())
         return 0;
 
-    PatchLanguage lang = detect_language(s);
     auto match_eq = [&](const std::string &a, const std::string &b) {
         return normalize_line_for_match(a, lang) ==
                normalize_line_for_match(b, lang);
@@ -138,9 +135,9 @@ int find_best_marker_match(const std::vector<std::string> &lines,
         int end = mm.end;
         bool ok = true;
 
-        if (!s->before.empty())
+        if (!before.empty())
         {
-            int need = static_cast<int>(s->before.size());
+            int need = static_cast<int>(before.size());
             if (pos < need)
             {
                 ok = false;
@@ -150,7 +147,7 @@ int find_best_marker_match(const std::vector<std::string> &lines,
                 for (int i = 0; i < need; ++i)
                 {
                     const std::string &want =
-                        s->before[static_cast<std::size_t>(need - 1 - i)];
+                        before[static_cast<std::size_t>(need - 1 - i)];
                     const std::string &got =
                         lines[static_cast<std::size_t>(pos - 1 - i)];
                     if (!match_eq(got, want))
@@ -162,10 +159,10 @@ int find_best_marker_match(const std::vector<std::string> &lines,
             }
         }
 
-        if (ok && !s->after.empty())
+        if (ok && !after.empty())
         {
             int start = end + 1;
-            int need = static_cast<int>(s->after.size());
+            int need = static_cast<int>(after.size());
             if (start < 0 || start + need > static_cast<int>(lines.size()))
             {
                 ok = false;
@@ -175,7 +172,7 @@ int find_best_marker_match(const std::vector<std::string> &lines,
                 for (int i = 0; i < need; ++i)
                 {
                     const std::string &want =
-                        s->after[static_cast<std::size_t>(i)];
+                        after[static_cast<std::size_t>(i)];
                     const std::string &got =
                         lines[static_cast<std::size_t>(start + i)];
                     if (!match_eq(got, want))

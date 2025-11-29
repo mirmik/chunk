@@ -110,8 +110,6 @@ parse_yaml_patch_text(const&nbsp;std::string&nbsp;&amp;text)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::unique_ptr&lt;Command&gt;&gt;&nbsp;commands;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;commands.reserve(ops.size());<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;seq&nbsp;=&nbsp;0;<br>
-<br>
 &nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(const&nbsp;trent&nbsp;&amp;op_node&nbsp;:&nbsp;ops)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!op_node.is_dict())<br>
@@ -127,7 +125,6 @@ parse_yaml_patch_text(const&nbsp;std::string&nbsp;&amp;text)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;op_name&nbsp;=&nbsp;normalize_op_name(it_op-&gt;second.as_string());<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;cmd&nbsp;=&nbsp;make_command(op_name);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmd-&gt;set_patch_language(patch_language);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmd-&gt;set_sequence(seq++);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmd-&gt;parse(op_node);<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;commands.emplace_back(std::move(cmd));<br>

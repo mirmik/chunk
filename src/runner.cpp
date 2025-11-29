@@ -169,13 +169,6 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
             FileState &state = it->second;
             const std::string &name = current_command->command_name();
 
-            if (name == "create-file")
-            {
-                state.exists_now = true;
-                state.lines = current_command->data().payload;
-                continue;
-            }
-
             if (name == "delete-file")
             {
                 if (!state.exists_now)
@@ -199,20 +192,9 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
 
         if (current_command)
         {
-            const Section &s = current_command->data();
-            if (!s.comment.empty())
-                oss << "\nsection comment: " << s.comment;
-            if (!s.marker.empty())
-            {
-                oss << "\nsection marker preview:\n";
-                size_t max_preview_lines = 3;
-                for (size_t i = 0;
-                     i < s.marker.size() && i < max_preview_lines;
-                     ++i)
-                {
-                    oss << s.marker[i] << "\n";
-                }
-            }
+            if (!current_command->comment().empty())
+                oss << "\nsection comment: " << current_command->comment();
+            current_command->append_debug_info(oss);
         }
 
         throw std::runtime_error(oss.str());
@@ -226,6 +208,8 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
 
         throw std::runtime_error(oss.str());
     }
+
+    // Этап 2: коммитим изменения на диск. Если что-то пошло не так — откатываем.
 
     // Этап 2: коммитим изменения на диск. Если что-то пошло не так — откатываем.
     std::vector<std::string> rollback_errors;

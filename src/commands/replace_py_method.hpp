@@ -53,7 +53,7 @@ protected:
     std::string not_found_error() const override
     {
         return "replace-py-method: method not found: " + cls + "." + method +
-               " in file: " + section_.filepath;
+               " in file: " + filepath_;
     }
 
     std::string invalid_region_error() const override

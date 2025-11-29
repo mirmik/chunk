@@ -1,7 +1,5 @@
 #pragma once
 
-#include "command.h"
-
 #include <cctype>
 #include <string>
 #include <string_view>
@@ -26,7 +24,7 @@ enum class PatchLanguage
 
 std::string trim(std::string_view view);
 
-PatchLanguage detect_language(const Section *s);
+PatchLanguage detect_language(const std::string &language);
 
 struct CodeNormalizer
 {
@@ -138,15 +136,17 @@ private:
 
 
 std::string normalize_line_for_match(std::string_view view,
-                                            PatchLanguage lang);
+                                     PatchLanguage lang);
 
 std::vector<MarkerMatch>
 find_marker_matches(const std::vector<std::string> &haystack,
                     const std::vector<std::string> &needle,
-                    const Section *section);
+                    PatchLanguage lang);
 
 int find_best_marker_match(const std::vector<std::string> &lines,
-                                  const Section *s,
-                                  const std::vector<MarkerMatch> &candidates);
+                           PatchLanguage lang,
+                           const std::vector<std::string> &before,
+                           const std::vector<std::string> &after,
+                           const std::vector<MarkerMatch> &candidates);
 } // namespace text_utils
 

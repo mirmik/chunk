@@ -6,6 +6,8 @@
 #include "commands/symbol_utils.h"
 #include "symbols.h"
 
+#include <ostream>
+
 // Common base for text commands that operate around markers
 class MarkerTextCommand : public Command
 {
@@ -14,69 +16,62 @@ public:
 
     void parse(const nos::trent &tr) override
     {
-        section_.filepath = command_parse::get_scalar(tr, "path");
-        if (section_.filepath.empty())
+        filepath_ = command_parse::get_scalar(tr, "path");
+        if (filepath_.empty())
             throw std::runtime_error("YAML patch: op '" + command_name() +
                                      "' requires 'path' key");
 
-        section_.indent_from_marker =
+        indent_from_marker_ =
             command_parse::parse_indent_from_options(
-                tr, section_.indent_from_marker);
-        section_.comment = command_parse::get_scalar(tr, "comment");
+                tr, indent_from_marker_);
+        comment_ = command_parse::get_scalar(tr, "comment");
 
         std::string marker_text = command_parse::get_scalar(tr, "marker");
         std::string before_text = command_parse::get_scalar(tr, "before");
         std::string after_text = command_parse::get_scalar(tr, "after");
         std::string payload_text = command_parse::get_scalar(tr, "payload");
 
-        if (command_name() == "prepend-text" || command_name() == "append-text")
-        {
-            if (payload_text.empty())
-                throw std::runtime_error(
-                    "YAML patch: text op '" + command_name() + "' for file '" +
-                    section_.filepath + "' requires 'payload'");
-            section_.payload = command_parse::split_scalar_lines(payload_text);
-            return;
-        }
-
         if (marker_text.empty())
             throw std::runtime_error(
                 "YAML patch: text op '" + command_name() + "' for file '" +
-                section_.filepath + "' requires 'marker'");
+                filepath_ + "' requires 'marker'");
 
-        section_.marker = command_parse::split_scalar_lines(marker_text);
+        marker_ = command_parse::split_scalar_lines(marker_text);
 
         if (!before_text.empty())
-            section_.before = command_parse::split_scalar_lines(before_text);
+            before_ = command_parse::split_scalar_lines(before_text);
         if (!after_text.empty())
-            section_.after = command_parse::split_scalar_lines(after_text);
+            after_ = command_parse::split_scalar_lines(after_text);
         if (command_name() != "delete-text" && !payload_text.empty())
-            section_.payload = command_parse::split_scalar_lines(payload_text);
+            payload_ = command_parse::split_scalar_lines(payload_text);
     }
 
     void execute(std::vector<std::string> &lines) override
     {
         using namespace text_utils;
 
-        if (section_.marker.empty())
+        if (marker_.empty())
             throw std::runtime_error("empty marker in text command for file: " +
-                                     section_.filepath);
+                                     filepath_);
 
+        PatchLanguage lang = detect_language(language_);
         std::vector<MarkerMatch> matches =
-            find_marker_matches(lines, section_.marker, &section_);
+            find_marker_matches(lines, marker_, lang);
         if (matches.empty())
             throw std::runtime_error("text marker not found for file: " +
-                                     section_.filepath + "\ncommand: " +
-                                     section_.command + "\n");
+                                     filepath_ + "\ncommand: " +
+                                     command_name() + "\n");
 
-        int mindex = find_best_marker_match(lines, &section_, matches);
+        int mindex =
+            find_best_marker_match(lines, lang, before_, after_, matches);
         if (mindex < 0)
             throw std::runtime_error("cannot locate marker uniquely");
 
         const MarkerMatch &mm = matches[static_cast<std::size_t>(mindex)];
         if (mm.begin < 0 || mm.end < mm.begin ||
             mm.end >= static_cast<int>(lines.size()))
-            throw std::runtime_error("internal error: invalid marker match range");
+            throw std::runtime_error(
+                "internal error: invalid marker match range");
 
         std::size_t begin = static_cast<std::size_t>(mm.begin);
         std::size_t end = static_cast<std::size_t>(mm.end);
@@ -85,16 +80,37 @@ public:
         apply(lines, begin, end, payload);
     }
 
+    void append_debug_info(std::ostream &os) const override
+    {
+        if (!marker_.empty())
+        {
+            os << "\nsection marker preview:\n";
+            std::size_t max_preview_lines = 3;
+            for (std::size_t i = 0;
+                 i < marker_.size() && i < max_preview_lines;
+                 ++i)
+            {
+                os << marker_[i] << "\n";
+            }
+        }
+    }
+
 protected:
     virtual bool should_indent_payload() const { return false; }
+
+    bool indent_from_marker_ = true;
+    std::vector<std::string> marker_;
+    std::vector<std::string> before_;
+    std::vector<std::string> after_;
+    std::vector<std::string> payload_;
 
 private:
     std::vector<std::string>
     prepare_payload(const std::vector<std::string> &lines,
                     std::size_t begin) const
     {
-        if (!should_indent_payload() || !section_.indent_from_marker)
-            return section_.payload;
+        if (!should_indent_payload() || !indent_from_marker_)
+            return payload_;
 
         std::string prefix;
         if (begin < lines.size())
@@ -108,8 +124,8 @@ private:
         }
 
         std::vector<std::string> adjusted;
-        adjusted.reserve(section_.payload.size());
-        for (const auto &ln : section_.payload)
+        adjusted.reserve(payload_.size());
+        for (const auto &ln : payload_)
         {
             if (ln.empty())
                 adjusted.push_back(ln);
@@ -133,23 +149,22 @@ public:
 
     void parse(const nos::trent &tr) override
     {
-        section_.filepath = command_parse::get_scalar(tr, "path");
-        if (section_.filepath.empty())
+        filepath_ = command_parse::get_scalar(tr, "path");
+        if (filepath_.empty())
             throw std::runtime_error("YAML patch: op '" + command_name() +
                                      "' requires 'path' key");
 
-        section_.indent_from_marker =
+        indent_from_symbol_ =
             command_parse::parse_indent_from_options(
-                tr, section_.indent_from_marker);
-        section_.comment = command_parse::get_scalar(tr, "comment");
+                tr, indent_from_symbol_);
+        comment_ = command_parse::get_scalar(tr, "comment");
 
         std::string payload_text = command_parse::get_scalar(tr, "payload");
         if (payload_text.empty())
             throw std::runtime_error("YAML patch: symbol op '" +
                                      command_name() + "' for file '" +
-                                     section_.filepath +
-                                     "' requires 'payload'");
-        section_.payload = command_parse::split_scalar_lines(payload_text);
+                                     filepath_ + "' requires 'payload'");
+        payload_ = command_parse::split_scalar_lines(payload_text);
     }
 
     void execute(std::vector<std::string> &lines) override
@@ -167,14 +182,19 @@ public:
         auto end = lines.begin() + (r.end_line + 1);
 
         std::string prefix = extract_indent_prefix(lines, r.start_line);
-        std::vector<std::string> payload = apply_indent_prefix(
-            section_.payload, prefix, section_.indent_from_marker);
+        std::vector<std::string> payload =
+            apply_indent_prefix(payload_, prefix, indent_from_symbol_);
 
         lines.erase(begin, end);
-        lines.insert(lines.begin() + r.start_line, payload.begin(), payload.end());
+        lines.insert(lines.begin() + r.start_line,
+                     payload.begin(),
+                     payload.end());
     }
 
 protected:
+    bool indent_from_symbol_ = true;
+    std::vector<std::string> payload_;
+
     virtual bool find_region(const std::string &text, Region &r) const = 0;
     virtual std::string not_found_error() const = 0;
     virtual std::string invalid_region_error() const = 0;

@@ -3,25 +3,9 @@
 #include "parser.h"
 #include "yaml/trent.h"
 
+#include <iosfwd>
 #include <string>
 #include <vector>
-
-struct Section
-{
-    std::string filepath;
-    std::string command;
-    std::string language;
-    std::vector<std::string> payload;
-    std::vector<std::string> marker;
-    std::vector<std::string> before;
-    std::vector<std::string> after;
-    int seq = 0;
-    std::string comment;
-    std::string arg1;
-    std::string arg2;
-    bool indent_from_marker = true;
-};
-
 
 class Command
 {
@@ -32,14 +16,20 @@ public:
     virtual void parse(const nos::trent &tr) = 0;
     virtual void execute(std::vector<std::string> &lines) = 0;
 
-    const std::string &filepath() const { return section_.filepath; }
-    const std::string &command_name() const { return section_.command; }
-    const Section &data() const { return section_; }
+    const std::string &filepath() const { return filepath_; }
+    const std::string &command_name() const { return name_; }
 
-    void set_patch_language(const std::string &lang) { section_.language = lang; }
-    void set_sequence(int seq) { section_.seq = seq; }
-    void load_section(const Section &s) { section_ = s; }
+    const std::string &comment() const { return comment_; }
+    const std::string &language() const { return language_; }
+
+    void set_patch_language(const std::string &lang) { language_ = lang; }
+
+    // Optional hook for additional debug info (e.g. marker preview).
+    virtual void append_debug_info(std::ostream &os) const;
 
 protected:
-    Section section_;
+    std::string filepath_;
+    std::string name_;
+    std::string language_;
+    std::string comment_;
 };
