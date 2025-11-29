@@ -23,6 +23,7 @@
 &nbsp;&nbsp;&nbsp;*&nbsp;Используй&nbsp;**пробелы**&nbsp;для&nbsp;отступов&nbsp;(не&nbsp;табы).<br>
 &nbsp;&nbsp;&nbsp;*&nbsp;Рекомендуемый&nbsp;отступ&nbsp;—&nbsp;**2&nbsp;пробела**.<br>
 &nbsp;&nbsp;&nbsp;*&nbsp;Ключи&nbsp;и&nbsp;значения&nbsp;—&nbsp;обычный&nbsp;YAML&nbsp;1.2.<br>
+&nbsp;&nbsp;&nbsp;*&nbsp;Обязательно&nbsp;проверяй&nbsp;корректность&nbsp;отступов.<br>
 <br>
 3.&nbsp;**Без&nbsp;комментариев.**<br>
 &nbsp;&nbsp;&nbsp;Не&nbsp;используй&nbsp;строки,&nbsp;начинающиеся&nbsp;с&nbsp;`#`.<br>
