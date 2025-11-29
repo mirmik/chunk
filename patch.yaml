@@ -1,145 +1,856 @@
-description: "Two-pass marker search: first without comment ignoring, then with; plus test"
-language: c++
+description: "Добавляем команду replace_cpp_function для замены свободных C++ функций"
+language: "ru"
 operations:
-  - path: src/text_commands.cpp
-    op: replace_text
-    marker: "find_marker_matches(const std::vector<std::string> &haystack,"
-    payload: "find_marker_matches_ignore_comments(const std::vector<std::string> &haystack,"
+  - op: create_file
+    path: src/commands/replace_cpp_function.hpp
+    payload: |
+      #pragma once
+      #include "command_base.hpp"
+      #include "commands/symbol_utils.h"
+      #include "languages/symbols.h"
 
-  - path: src/text_commands.cpp
-    op: insert_before_text
-    marker: "} // namespace"
-    payload: |-
-      std::vector<MarkerMatch>
-      find_marker_matches_no_comment_ignore(const std::vector<std::string> &haystack,
-                                            const std::vector<std::string> &needle,
-                                            const Section * /*section*/)
+      class ReplaceCppFunctionCommand : public RegionReplaceCommand
       {
-          std::vector<MarkerMatch> matches;
+      public:
+          ReplaceCppFunctionCommand() : RegionReplaceCommand("replace-cpp-function") {}
 
-          std::vector<std::string> pat;
-          pat.reserve(needle.size());
-          for (const auto &s : needle)
+          void parse(const nos::trent &tr) override
           {
-              std::string t = trim(s);
-              if (!t.empty())
-                  pat.push_back(std::move(t));
-          }
+              RegionReplaceCommand::parse(tr);
+              std::string function_text = command_parse::get_scalar(tr, "function");
+              std::string symbol_text = command_parse::get_scalar(tr, "symbol");
 
-          if (pat.empty())
-              return matches;
-
-          std::vector<std::string> hs;
-          std::vector<int>         hs_idx;
-          hs.reserve(haystack.size());
-          hs_idx.reserve(haystack.size());
-          for (int i = 0; i < (int)haystack.size(); ++i)
-          {
-              std::string t = trim(haystack[i]);
-              if (!t.empty())
+              if (!function_text.empty())
               {
-                  hs.emplace_back(std::move(t));
-                  hs_idx.push_back(i);
+                  function = function_text;
+              }
+              else if (!symbol_text.empty())
+              {
+                  auto pos = symbol_text.rfind("::");
+                  if (pos == std::string::npos)
+                  {
+                      function = symbol_text;
+                  }
+                  else
+                  {
+                      function = symbol_text.substr(pos + 2);
+                  }
+              }
+              else
+              {
+                  throw std::runtime_error(
+                      "YAML patch: op '" + command_name() +
+                      "' requires 'function' or 'symbol'");
+              }
+
+              if (function.empty())
+              {
+                  throw std::runtime_error(
+                      "replace-cpp-function: empty function name");
               }
           }
 
-          if (hs.empty() || pat.size() > hs.size())
-              return matches;
-
-          const std::size_t n = hs.size();
-          const std::size_t m = pat.size();
-
-          for (std::size_t i = 0; i + m <= n; ++i)
+      protected:
+          bool find_region(const std::string &text, Region &r) const override
           {
-              bool ok = true;
-              for (std::size_t j = 0; j < m; ++j)
+              CppSymbolFinder finder(text);
+              return finder.find_function(function, r);
+          }
+
+          std::string not_found_error() const override
+          {
+              return "replace-cpp-function: function not found: " + function +
+                     " in file: " + filepath_;
+          }
+
+          std::string invalid_region_error() const override
+          {
+              return "replace-cpp-function: invalid region";
+          }
+
+      private:
+          std::string function;
+      };
+
+  - op: insert_after_text
+    path: src/languages/symbols.h
+    marker: |
+      //   * искать методы внутри класса (по имени)
+      class CppSymbolFinder
+      {
+      public:
+    payload: |
+        //   * искать методы внутри класса (по имени)
+        class CppSymbolFinder
+        {
+        public:
+            // text around here stays the same
+            bool find_class(const std::string &class_name, Region &out) const;
+            // Находит метод внутри класса (по имени).
+            // Ищет только внутри тела class/struct class_name.
+            // Возвращает диапазон строк от начала объявления/определения
+            // до ';' или закрывающей '}'.
+            bool find_method(const std::string &class_name,
+                             const std::string &method_name,
+                             Region &out) const;
+            // Находит свободную функцию (глобальную или в namespace) по имени.
+            // Возвращает диапазон строк от начала объявления/определения
+            // до ';' или конца тела функции.
+            bool find_function(const std::string &function_name,
+                               Region &out) const;
+        private:
+
+  - op: replace_text
+    path: src/languages/symbols.cpp
+    marker: |
+      bool CppSymbolFinder::find_method(const std::string &class_name,
+                                        const std::string &method_name,
+                                        Region &out) const
+      {
+          ClassRange cr;
+          if (!find_class_internal(class_name, cr))
+              return false;
+
+          const std::size_t begin = cr.body_start_token + 1;
+          const std::size_t end = cr.body_end_token;
+          const std::size_t n = m_tokens.size();
+
+          if (begin >= n || begin >= end)
+              return false;
+          // Ищем внутри тела класса
+          for (std::size_t i = begin; i < end; ++i)
+          {
+              const Token &t = m_tokens[i];
+              if (t.kind != Token::Identifier)
+                  continue;
+              if (t.text != method_name)
+                  continue;
+
+              // После имени должен идти '('
+              std::size_t j = i + 1;
+              if (j >= end || m_tokens[j].text != "(")
+                  continue;
+              // Определяем начало объявления:
+              // идём назад до ближайшего ';', '{' или '}'.
+              std::size_t start_tok = begin;
+              for (std::size_t k = i; k > begin; --k)
               {
-                  if (hs[i + j] != pat[j])
+                  const std::string &s = m_tokens[k].text;
+                  if (s == ";" || s == "{" || s == "}")
                   {
-                      ok = false;
+                      start_tok = k + 1;
                       break;
                   }
               }
-              if (ok)
+              // 1) Пропускаем параметры (балансируем скобки)
+              std::size_t pos = j;
+              int paren_depth = 0;
+              for (; pos < end; ++pos)
               {
-                  int begin = hs_idx[i];
-                  int end   = hs_idx[i + m - 1];
-                  matches.push_back(MarkerMatch{begin, end});
+                  const std::string &s = m_tokens[pos].text;
+                  if (s == "(")
+                  {
+                      ++paren_depth;
+                  }
+                  else if (s == ")")
+                  {
+                      --paren_depth;
+                      if (paren_depth == 0)
+                      {
+                          ++pos; // идём на токен после ')'
+                          break;
+                      }
+                  }
               }
+              if (paren_depth != 0)
+                  continue; // сломанная сигнатура
+              // 2) Ищем ';' или '{' (начало тела)
+              std::size_t end_tok = start_tok;
+              int brace_depth = 0;
+
+              for (; pos < end; ++pos)
+              {
+                  const std::string &s = m_tokens[pos].text;
+
+                  if (s == ";")
+                  {
+                      end_tok = pos;
+                      break;
+                  }
+                  if (s == "{")
+                  {
+                      brace_depth = 1;
+                      end_tok = pos;
+                      ++pos;
+                      for (; pos < end; ++pos)
+                      {
+                          const std::string &sb = m_tokens[pos].text;
+                          if (sb == "{")
+                              ++brace_depth;
+                          else if (sb == "}")
+                          {
+                              --brace_depth;
+                              if (brace_depth == 0)
+                              {
+                                  end_tok = pos;
+                                  break;
+                              }
+                          }
+                      }
+                      break;
+                  }
+              }
+              if (end_tok < start_tok)
+                  continue;
+
+              int start_line_token = m_tokens[start_tok].line;
+              int method_line = t.line;
+
+              // Не вываливаемся на строку с access-specifier'ом (public:)
+              out.start_line =
+                  (start_line_token < method_line) ? method_line : start_line_token;
+
+              out.end_line = m_tokens[end_tok].line;
+              return true;
           }
 
-          return matches;
+          return false;
       }
-
-      std::vector<MarkerMatch>
-      find_marker_matches(const std::vector<std::string> &haystack,
-                          const std::vector<std::string> &needle,
-                          const Section *section)
+    payload: |
+      bool CppSymbolFinder::find_method(const std::string &class_name,
+                                        const std::string &method_name,
+                                        Region &out) const
       {
-          std::vector<MarkerMatch> matches =
-              find_marker_matches_no_comment_ignore(haystack, needle, section);
-          if (!matches.empty())
-              return matches;
+          ClassRange cr;
+          if (!find_class_internal(class_name, cr))
+              return false;
 
-          return find_marker_matches_ignore_comments(haystack, needle, section);
+          const std::size_t begin = cr.body_start_token + 1;
+          const std::size_t end = cr.body_end_token;
+          const std::size_t n = m_tokens.size();
+
+          if (begin >= n || begin >= end)
+              return false;
+          // Ищем внутри тела класса
+          for (std::size_t i = begin; i < end; ++i)
+          {
+              const Token &t = m_tokens[i];
+              if (t.kind != Token::Identifier)
+                  continue;
+              if (t.text != method_name)
+                  continue;
+
+              // После имени должен идти '('
+              std::size_t j = i + 1;
+              if (j >= end || m_tokens[j].text != "(")
+                  continue;
+              // Определяем начало объявления:
+              // идём назад до ближайшего ';', '{' или '}'.
+              std::size_t start_tok = begin;
+              for (std::size_t k = i; k > begin; --k)
+              {
+                  const std::string &s = m_tokens[k].text;
+                  if (s == ";" || s == "{" || s == "}")
+                  {
+                      start_tok = k + 1;
+                      break;
+                  }
+              }
+              // 1) Пропускаем параметры (балансируем скобки)
+              std::size_t pos = j;
+              int paren_depth = 0;
+              for (; pos < end; ++pos)
+              {
+                  const std::string &s = m_tokens[pos].text;
+                  if (s == "(")
+                  {
+                      ++paren_depth;
+                  }
+                  else if (s == ")")
+                  {
+                      --paren_depth;
+                      if (paren_depth == 0)
+                      {
+                          ++pos; // идём на токен после ')'
+                          break;
+                      }
+                  }
+              }
+              if (paren_depth != 0)
+                  continue; // сломанная сигнатура
+              // 2) Ищем ';' или '{' (начало тела)
+              std::size_t end_tok = start_tok;
+              int brace_depth = 0;
+
+              for (; pos < end; ++pos)
+              {
+                  const std::string &s = m_tokens[pos].text;
+
+                  if (s == ";")
+                  {
+                      end_tok = pos;
+                      break;
+                  }
+                  if (s == "{")
+                  {
+                      brace_depth = 1;
+                      end_tok = pos;
+                      ++pos;
+                      for (; pos < end; ++pos)
+                      {
+                          const std::string &sb = m_tokens[pos].text;
+                          if (sb == "{")
+                              ++brace_depth;
+                          else if (sb == "}")
+                          {
+                              --brace_depth;
+                              if (brace_depth == 0)
+                              {
+                                  end_tok = pos;
+                                  break;
+                              }
+                          }
+                      }
+                      break;
+                  }
+              }
+              if (end_tok < start_tok)
+                  continue;
+
+              int start_line_token = m_tokens[start_tok].line;
+              int method_line = t.line;
+
+              // Не вываливаемся на строку с access-specifier'ом (public:)
+              out.start_line =
+                  (start_line_token < method_line) ? method_line : start_line_token;
+
+              out.end_line = m_tokens[end_tok].line;
+              return true;
+          }
+
+          return false;
       }
 
-  - path: tests/apply_yaml.cpp
-    op: insert_before_text
-    marker: "// 18. YAML symbol API: replace_cpp_class"
-    payload: |-
-      // 18. Prefer exact match with comments before ignoring them
+      bool CppSymbolFinder::find_function(const std::string &function_name,
+                                          Region &out) const
+      {
+          const std::size_t n = m_tokens.size();
+          if (n == 0)
+              return false;
+
+          for (std::size_t i = 0; i < n; ++i)
+          {
+              const Token &t = m_tokens[i];
+              if (t.kind != Token::Identifier)
+                  continue;
+              if (t.text != function_name)
+                  continue;
+
+              std::size_t j = i + 1;
+              if (j >= n || m_tokens[j].text != "(")
+                  continue;
+
+              std::size_t start_tok = 0;
+              for (std::size_t k = i; k > 0; --k)
+              {
+                  const std::string &s = m_tokens[k].text;
+                  if (s == ";" || s == "{" || s == "}")
+                  {
+                      start_tok = k + 1;
+                      break;
+                  }
+              }
+
+              std::size_t pos = j;
+              int paren_depth = 0;
+              for (; pos < n; ++pos)
+              {
+                  const std::string &s = m_tokens[pos].text;
+                  if (s == "(")
+                  {
+                      ++paren_depth;
+                  }
+                  else if (s == ")")
+                  {
+                      --paren_depth;
+                      if (paren_depth == 0)
+                      {
+                          ++pos; // токен после ')'
+                          break;
+                      }
+                  }
+              }
+              if (paren_depth != 0)
+                  continue;
+
+              std::size_t end_tok = start_tok;
+              int brace_depth = 0;
+
+              for (; pos < n; ++pos)
+              {
+                  const std::string &s = m_tokens[pos].text;
+                  if (s == ";")
+                  {
+                      // декларация без тела — пропускаем
+                      brace_depth = 0;
+                      break;
+                  }
+                  if (s == "{")
+                  {
+                      brace_depth = 1;
+                      end_tok = pos;
+                      ++pos;
+                      for (; pos < n; ++pos)
+                      {
+                          const std::string &sb = m_tokens[pos].text;
+                          if (sb == "{")
+                              ++brace_depth;
+                          else if (sb == "}")
+                          {
+                              --brace_depth;
+                              if (brace_depth == 0)
+                              {
+                                  end_tok = pos;
+                                  break;
+                              }
+                          }
+                      }
+                      break;
+                  }
+              }
+
+              if (brace_depth == 0)
+                  continue;
+              if (end_tok < start_tok || end_tok >= n)
+                  continue;
+
+              out.start_line = m_tokens[start_tok].line;
+              out.end_line = m_tokens[end_tok].line;
+              return true;
+          }
+
+          return false;
+      }
+
+  - op: replace_text
+    path: src/parser.cpp
+    marker: |
+      static std::unordered_map<std::string, std::vector<std::string>> synonyms = {
+          {"insert-after-text", {"insert-after-text", "insert-text-after"}},
+          {"insert-before-text", {"insert-before-text", "insert-text-before"}},
+          {"replace-text", {"replace-text"}},
+          {"delete-text", {"delete-text"}},
+          {"prepend-text", {"prepend-text"}},
+          {"append-text", {"append-text"}},
+          {"create-file", {"create-file"}},
+          {"delete-file", {"delete-file"}},
+          {"replace-cpp-class", {"replace-cpp-class"}},
+          {"replace-cpp-method", {"replace-cpp-method"}},
+          {"replace-py-class", {"replace-py-class"}},
+          {"replace-py-method", {"replace-py-method"}},
+      };
+    payload: |
+      static std::unordered_map<std::string, std::vector<std::string>> synonyms = {
+          {"insert-after-text", {"insert-after-text", "insert-text-after"}},
+          {"insert-before-text", {"insert-before-text", "insert-text-before"}},
+          {"replace-text", {"replace-text"}},
+          {"delete-text", {"delete-text"}},
+          {"prepend-text", {"prepend-text"}},
+          {"append-text", {"append-text"}},
+          {"create-file", {"create-file"}},
+          {"delete-file", {"delete-file"}},
+          {"replace-cpp-class", {"replace-cpp-class"}},
+          {"replace-cpp-method", {"replace-cpp-method"}},
+          {"replace-cpp-function", {"replace-cpp-function"}},
+          {"replace-py-class", {"replace-py-class"}},
+          {"replace-py-method", {"replace-py-method"}},
+      };
+
+  - op: replace_text
+    path: src/command_fabric.cpp
+    marker: |
+      #include "command_fabric.h"
+      #include "commands/append_text.hpp"
+      #include "commands/create_file.hpp"
+      #include "commands/delete_file.hpp"
+      #include "commands/delete_text.hpp"
+      #include "commands/insert_after_text.hpp"
+      #include "commands/insert_before_text.hpp"
+      #include "commands/prepend_text.hpp"
+      #include "commands/replace_cpp_class.hpp"
+      #include "commands/replace_cpp_method.hpp"
+      #include "commands/replace_py_class.hpp"
+      #include "commands/replace_py_method.hpp"
+      #include "commands/replace_text.hpp"
+      #include <functional>
+      #include <unordered_map>
+    payload: |
+      #include "command_fabric.h"
+      #include "commands/append_text.hpp"
+      #include "commands/create_file.hpp"
+      #include "commands/delete_file.hpp"
+      #include "commands/delete_text.hpp"
+      #include "commands/insert_after_text.hpp"
+      #include "commands/insert_before_text.hpp"
+      #include "commands/prepend_text.hpp"
+      #include "commands/replace_cpp_class.hpp"
+      #include "commands/replace_cpp_method.hpp"
+      #include "commands/replace_cpp_function.hpp"
+      #include "commands/replace_py_class.hpp"
+      #include "commands/replace_py_method.hpp"
+      #include "commands/replace_text.hpp"
+      #include <functional>
+      #include <unordered_map>
+
+  - op: replace_text
+    path: src/command_fabric.cpp
+    marker: |
+      const std::unordered_map<std::string, commands_detail::CommandFactory> &
+      symbol_command_registry()
+      {
+          using namespace commands_detail;
+          static const std::unordered_map<std::string, CommandFactory> registry = {
+              {"replace-cpp-class",
+               []() { return std::make_unique<ReplaceCppClassCommand>(); }},
+              {"replace-cpp-method",
+               []() { return std::make_unique<ReplaceCppMethodCommand>(); }},
+              {"replace-py-class",
+               []() { return std::make_unique<ReplacePyClassCommand>(); }},
+              {"replace-py-method",
+               []() { return std::make_unique<ReplacePyMethodCommand>(); }},
+              {"prepend-text",
+               []() { return std::make_unique<PrependTextCommand>(); }},
+              {"append-text",
+               []() { return std::make_unique<AppendTextCommand>(); }},
+              {"insert-after-text",
+               []() { return std::make_unique<InsertAfterTextCommand>(); }},
+              {"insert-before-text",
+               []() { return std::make_unique<InsertBeforeTextCommand>(); }},
+              {"replace-text",
+               []() { return std::make_unique<ReplaceTextCommand>(); }},
+              {"delete-text", []() { return std::make_unique<DeleteTextCommand>(); }},
+              {"create-file", []() { return std::make_unique<CreateFileCommand>(); }},
+              {"delete-file", []() { return std::make_unique<DeleteFileCommand>(); }},
+          };
+
+          return registry;
+      }
+    payload: |
+      const std::unordered_map<std::string, commands_detail::CommandFactory> &
+      symbol_command_registry()
+      {
+          using namespace commands_detail;
+          static const std::unordered_map<std::string, CommandFactory> registry = {
+              {"replace-cpp-class",
+               []() { return std::make_unique<ReplaceCppClassCommand>(); }},
+              {"replace-cpp-method",
+               []() { return std::make_unique<ReplaceCppMethodCommand>(); }},
+              {"replace-cpp-function",
+               []() { return std::make_unique<ReplaceCppFunctionCommand>(); }},
+              {"replace-py-class",
+               []() { return std::make_unique<ReplacePyClassCommand>(); }},
+              {"replace-py-method",
+               []() { return std::make_unique<ReplacePyMethodCommand>(); }},
+              {"prepend-text",
+               []() { return std::make_unique<PrependTextCommand>(); }},
+              {"append-text",
+               []() { return std::make_unique<AppendTextCommand>(); }},
+              {"insert-after-text",
+               []() { return std::make_unique<InsertAfterTextCommand>(); }},
+              {"insert-before-text",
+               []() { return std::make_unique<InsertBeforeTextCommand>(); }},
+              {"replace-text",
+               []() { return std::make_unique<ReplaceTextCommand>(); }},
+              {"delete-text", []() { return std::make_unique<DeleteTextCommand>(); }},
+              {"create-file", []() { return std::make_unique<CreateFileCommand>(); }},
+              {"delete-file", []() { return std::make_unique<DeleteFileCommand>(); }},
+          };
+
+          return registry;
+      }
+
+  - op: insert_after_text
+    path: tests/apply_symbols.cpp
+    marker: |
       // ============================================================================
-      TEST_CASE("YAML patch: prefer exact C++ marker match before ignoring comments")
+      // C++: replace-cpp-class
+      // ============================================================================
+      TEST_CASE("symbol API: replace-cpp-class replaces only target class")
       {
-          fs::path tmp = fs::temp_directory_path() / "yaml_cpp_prefer_exact_with_comments";
+          fs::path tmp = fs::temp_directory_path() / "symbol_cpp_class";
           fs::remove_all(tmp);
           fs::create_directories(tmp);
-          fs::path f = tmp / "code.cpp";
+          fs::path f = tmp / "foo.cpp";
           {
               std::ofstream out(f);
-              out << "void foo() {\n"
-                  << "    int x = 1; // foo\n"
-                  << "    int y = 2;\n"
-                  << "}\n"
-                  << "\n"
-                  << "void bar() {\n"
-                  << "    int x = 1;\n"
-                  << "    int y = 2;\n"
-                  << "}\n";
+              out << "#include <string>\n"
+                     "\n"
+                     "class Foo {\n"
+                     "public:\n"
+                     "    int x() const;\n"
+                     "};\n"
+                     "\n"
+                     "class Bar {\n"
+                     "public:\n"
+                     "    void ping();\n"
+                     "};\n";
           }
-          fs::path patch = tmp / "patch.yml";
+          fs::path patch = tmp / "patch_class.txt";
           {
               std::ofstream out(patch);
-              out << "language: cpp\n";
-              out << "operations:\n";
-              out << "  - path: " << f.string() << "\n";
-              out << "    op: replace_text\n";
-              out << "    marker: |\n";
-              out << "      void foo() {\n";
-              out << "        int x = 1; // foo\n";
-              out << "        int y = 2;\n";
-              out << "      }\n";
-              out << "    payload: |\n";
-              out << "      void foo() {\n";
-              out << "        int x = 10; // foo\n";
-              out << "        int y = 20;\n";
-              out << "      }\n";
+              out << "operations:\n"
+                     "  - op: replace_cpp_class\n"
+                     "    path: \"" << f.string()
+                 << "\"\n"
+                     "    class: \"Foo\"\n"
+                     "    payload: |\n"
+                     "      class Foo {\n"
+                     "      public:\n"
+                     "          int y() const { return 42; }\n"
+                     "      };\n";
+          }
+          CHECK(run_apply(patch) == 0);
+
+          auto L = read_lines(f);
+          REQUIRE(L.size() >= 8);
+
+          CHECK(L[0] == "#include <string>");
+          CHECK(L[1] == "");
+          CHECK(L[2] == "class Foo {");
+          CHECK(L[3] == "public:");
+          CHECK(L[4] == "    int y() const { return 42; }");
+          CHECK(L[5] == "};");
+          CHECK(L[6] == "");
+          CHECK(L[7] == "class Bar {");
+      }
+    payload: |
+      // ============================================================================
+      // C++: replace-cpp-class
+      // ============================================================================
+      TEST_CASE("symbol API: replace-cpp-class replaces only target class")
+      {
+          fs::path tmp = fs::temp_directory_path() / "symbol_cpp_class";
+          fs::remove_all(tmp);
+          fs::create_directories(tmp);
+          fs::path f = tmp / "foo.cpp";
+          {
+              std::ofstream out(f);
+              out << "#include <string>\n"
+                     "\n"
+                     "class Foo {\n"
+                     "public:\n"
+                     "    int x() const;\n"
+                     "};\n"
+                     "\n"
+                     "class Bar {\n"
+                     "public:\n"
+                     "    void ping();\n"
+                     "};\n";
+          }
+          fs::path patch = tmp / "patch_class.txt";
+          {
+              std::ofstream out(patch);
+              out << "operations:\n"
+                     "  - op: replace_cpp_class\n"
+                     "    path: \"" << f.string()
+                 << "\"\n"
+                     "    class: \"Foo\"\n"
+                     "    payload: |\n"
+                     "      class Foo {\n"
+                     "      public:\n"
+                     "          int y() const { return 42; }\n"
+                     "      };\n";
+          }
+          CHECK(run_apply(patch) == 0);
+
+          auto L = read_lines(f);
+          REQUIRE(L.size() >= 8);
+
+          CHECK(L[0] == "#include <string>");
+          CHECK(L[1] == "");
+          CHECK(L[2] == "class Foo {");
+          CHECK(L[3] == "public:");
+          CHECK(L[4] == "    int y() const { return 42; }");
+          CHECK(L[5] == "};");
+          CHECK(L[6] == "");
+          CHECK(L[7] == "class Bar {");
+      }
+      // ============================================================================
+      // C++: replace-cpp-function
+      // ============================================================================
+      TEST_CASE("symbol API: replace-cpp-function replaces only target function")
+      {
+          fs::path tmp = fs::temp_directory_path() / "symbol_cpp_function";
+          fs::remove_all(tmp);
+          fs::create_directories(tmp);
+          fs::path f = tmp / "foo.cpp";
+          {
+              std::ofstream out(f);
+              out << "#include <string>\n"
+                     "\n"
+                     "int add(int a, int b)\n"
+                     "{\n"
+                     "    return a + b;\n"
+                     "}\n"
+                     "\n"
+                     "int mul(int a, int b)\n"
+                     "{\n"
+                     "    return a * b;\n"
+                     "}\n";
+          }
+          fs::path patch = tmp / "patch_function.txt";
+          {
+              std::ofstream out(patch);
+              out << "operations:\n"
+                     "  - op: replace_cpp_function\n"
+                     "    path: \"" << f.string()
+                 << "\"\n"
+                     "    function: \"add\"\n"
+                     "    payload: |\n"
+                     "      int add(int a, int b)\n"
+                     "      {\n"
+                     "          return a + b + 1;\n"
+                     "      }\n";
+          }
+          CHECK(run_apply(patch) == 0);
+
+          auto L = read_lines(f);
+          REQUIRE(L.size() >= 8);
+
+          bool found_add = false;
+          bool found_mul = false;
+          for (const auto &line : L)
+          {
+              if (line.find("int add") != std::string::npos)
+                  found_add = true;
+              if (line.find("return a + b + 1;") != std::string::npos)
+                  found_add = true;
+              if (line.find("int mul") != std::string::npos)
+                  found_mul = true;
+              if (line.find("return a * b;") != std::string::npos)
+                  found_mul = true;
           }
 
-          CHECK(run_apply(patch) == 0);
-          auto L = read_lines(f);
-          REQUIRE(!L.empty());
-
-          std::string all;
-          for (auto &s : L)
-              all += s + "\n";
-
-          // foo обновился
-          CHECK(all.find("int x = 10; // foo") != std::string::npos);
-          CHECK(all.find("int y = 20;") != std::string::npos);
-
-          // bar остался как был
-          CHECK(all.find("void bar() {") != std::string::npos);
-          CHECK(all.find("int x = 1;\n") != std::string::npos);
+          CHECK(found_add);
+          CHECK(found_mul);
       }
+
+  - op: replace_text
+    path: docs/CHUNK_ru.ROBOTS.md
+    marker: |
+      ### 2.3. Языковые операции (структурное API для кода)
+
+      Используются для работы с сущностями языков C++ и Python.
+      Применяй их **вместо `replace_text`**, когда нужно менять классы или методы.
+
+      * `replace_cpp_class` — заменить определение класса в C++-файле.
+      * `replace_cpp_method` — заменить определение метода (функции-члена) в C++-классе.
+      * `replace_py_class` — заменить определение класса в Python-файле.
+      * `replace_py_method` — заменить определение метода в Python-классе.
+      **Важно:**
+      Не придумывай новых команд. Используй только перечисленные выше значения `op`.
+    payload: |
+      ### 2.3. Языковые операции (структурное API для кода)
+
+      Используются для работы с сущностями языков C++ и Python.
+      Применяй их **вместо `replace_text`**, когда нужно менять классы или методы.
+
+      * `replace_cpp_class` — заменить определение класса в C++-файле.
+      * `replace_cpp_method` — заменить определение метода (функции-члена) в C++-классе.
+      * `replace_cpp_function` — заменить определение свободной функции в C++-файле.
+      * `replace_py_class` — заменить определение класса в Python-файле.
+      * `replace_py_method` — заменить определение метода в Python-классе.
+      **Важно:**
+      Не придумывай новых команд. Используй только перечисленные выше значения `op`.
+
+  - op: replace_text
+    path: docs/CHUNK_ru.ROBOTS.md
+    marker: |
+      #### 4.3.2. `replace_cpp_method`
+
+      Заменить определение C++-метода внутри класса.
+
+      **Поля (минимально):**
+
+      * `op: "replace_cpp_method"`
+      * `path` — путь к файлу, содержащему реализацию метода.
+      * `class` — имя класса.
+      * `method` — имя метода.
+      * `payload` — новое полное определение метода (с сигнатурой и телом).
+
+      **Пример:**
+      ```yaml
+      - op: replace_cpp_method
+        path: src/foo.cpp
+        class: Foo
+        method: value
+        payload: |
+          int Foo::value() const {
+              return value_ * 2;
+          }
+      ```
+    payload: |
+      #### 4.3.2. `replace_cpp_method`
+
+      Заменить определение C++-метода внутри класса.
+
+      **Поля (минимально):**
+
+      * `op: "replace_cpp_method"`
+      * `path` — путь к файлу, содержащему реализацию метода.
+      * `class` — имя класса.
+      * `method` — имя метода.
+      * `payload` — новое полное определение метода (с сигнатурой и телом).
+
+      **Пример:**
+      ```yaml
+      - op: replace_cpp_method
+        path: src/foo.cpp
+        class: Foo
+        method: value
+        payload: |
+          int Foo::value() const {
+              return value_ * 2;
+          }
+      ```
+
+      #### 4.3.3. `replace_cpp_function`
+
+      Заменить определение свободной C++-функции (не метода).
+
+      **Поля (минимально):**
+
+      * `op: "replace_cpp_function"`
+      * `path` — путь к C++-файлу (`.h`, `.hpp`, `.cpp` и так далее).
+      * `function` — имя функции.
+      * `payload` — новое полное определение функции (с сигнатурой и телом).
+
+      Также допустима короткая форма через `symbol`, где можно указать `ns::func`:
+
+      * `symbol` — полное имя функции (например, `util::hash`).
+
+      **Примеры:**
+
+      Классическая форма:
+      ```yaml
+      - op: replace_cpp_function
+        path: src/math.cpp
+        function: add
+        payload: |
+          int add(int a, int b)
+          {
+              return a + b + 1;
+          }
+      ```
+
+      Короткая форма через `symbol`:
+      ```yaml
+      - op: replace_cpp_function
+        path: src/math.cpp
+        symbol: util::hash
+        payload: |
+          std::size_t util::hash(std::string_view s)
+          {
+              // ...
+          }
+      ```

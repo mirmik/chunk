@@ -1115,3 +1115,33 @@ TEST_CASE("YAML symbol API: replace_py_method with class & method")
     CHECK(all.find("def other(self):") != std::string::npos);
     CHECK(all.find("return 2") != std::string::npos);
 }
+// ============================================================================
+// 22. UTF-8: Cyrillic marker and payload
+// ============================================================================
+TEST_CASE("YAML patch: UTF-8 Cyrillic marker and payload")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_patch_cyrillic";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+    fs::path f = tmp / "file.txt";
+    {
+        std::ofstream out(f);
+        out << "привет\n"
+            << "мир\n";
+    }
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n";
+        out << "  - path: " << f.string() << "\n";
+        out << "    op: replace_text\n";
+        out << "    marker: \"привет\"\n";
+        out << "    payload: \"здравствуй\"\n";
+    }
+
+    CHECK(run_apply(patch) == 0);
+    auto L = read_lines(f);
+    REQUIRE(L.size() == 2);
+    CHECK(L[0] == "здравствуй");
+    CHECK(L[1] == "мир");
+}
