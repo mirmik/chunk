@@ -5,6 +5,8 @@
 
 #include "clipboard.h"
 #include "file_io.h"
+#include "command.h"
+#include <map>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -16,6 +18,91 @@
 namespace
 {
     bool g_chunk_verbose_logging = false;
+
+    void print_dry_run_summary(const std::vector<std::unique_ptr<Command>> &commands)
+    {
+        std::map<std::string, std::vector<const Command *>> by_file;
+        std::size_t total_inserted = 0;
+        std::size_t total_removed = 0;
+        std::size_t total_success = 0;
+        std::size_t total_failed = 0;
+
+        for (const auto &cmd_ptr : commands)
+        {
+            const Command *cmd = cmd_ptr.get();
+            const std::string &path = cmd->filepath();
+            const std::string key = path.empty() ? std::string("<no path>") : path;
+            by_file[key].push_back(cmd);
+
+            if (cmd->status() == Command::Status::Success)
+            {
+                ++total_success;
+                total_inserted += cmd->chars_inserted();
+                total_removed += cmd->chars_removed();
+            }
+            else if (cmd->status() == Command::Status::Failed)
+            {
+                ++total_failed;
+            }
+        }
+
+        std::cout << "DRY-RAN summary (no changes were written to disk)\n";
+
+        for (const auto &entry : by_file)
+        {
+            const std::string &path = entry.first;
+            const auto &list = entry.second;
+
+            std::cout << "\nFile: " << path << "\n";
+            for (const Command *cmd : list)
+            {
+                std::cout << "  - [";
+
+                switch (cmd->status())
+                {
+                case Command::Status::Success:
+                    std::cout << "OK";
+                    break;
+                case Command::Status::Failed:
+                    std::cout << "FAIL";
+                    break;
+                default:
+                    std::cout << "SKIP";
+                    break;
+                }
+
+                std::cout << "] " << cmd->command_name();
+
+                if (!cmd->comment().empty())
+                    std::cout << "  # " << cmd->comment();
+
+                if (cmd->status() == Command::Status::Success)
+                {
+                    std::size_t ins = cmd->chars_inserted();
+                    std::size_t rem = cmd->chars_removed();
+                    std::cout << " (+" << ins << " chars";
+                    if (rem > 0)
+                        std::cout << ", -" << rem << " chars";
+                    std::cout << ")";
+                }
+                else if (cmd->status() == Command::Status::Failed)
+                {
+                    const std::string &msg = cmd->error_message();
+                    if (!msg.empty())
+                        std::cout << " (error: " << msg << ")";
+                }
+
+                std::cout << "\n";
+            }
+        }
+
+        std::cout << "\nTotals: commands: " << commands.size()
+                  << ", successful: " << total_success
+                  << ", failed: " << total_failed
+                  << ", chars inserted: " << total_inserted
+                  << ", chars removed: " << total_removed
+                  << "\n";
+    }
 }
 
 bool chunk_verbose_logging_enabled()
@@ -67,13 +154,15 @@ int apply_chunk_main(int argc, char **argv)
                   << "  chunk <patchfile>\n"
                   << "  chunk --stdin\n"
                   << "  chunk --paste\n"
-                  << "  chunk --paste --verbose\n";
+                  << "  chunk --paste --verbose\n"
+                  << "  chunk --dry-ran <patchfile>\n";
         return 1;
     }
 
     bool verbose = false;
     bool use_stdin = false;
     bool use_clipboard = false;
+    bool dry_run = false;
     const char *filename = nullptr;
 
     for (int i = 1; i < argc; ++i)
@@ -90,6 +179,10 @@ int apply_chunk_main(int argc, char **argv)
         else if (std::strcmp(arg, "--paste") == 0)
         {
             use_clipboard = true;
+        }
+        else if (std::strcmp(arg, "--dry-ran") == 0)
+        {
+            dry_run = true;
         }
         else if (!filename)
         {
@@ -123,7 +216,12 @@ int apply_chunk_main(int argc, char **argv)
     try
     {
         auto commands = parse_yaml_patch_text(text);
-        apply_sections(commands);
+        ApplyOptions options;
+        options.dry_run = dry_run;
+        options.ignore_failures = dry_run;
+        apply_sections(commands, options);
+        if (dry_run)
+            print_dry_run_summary(commands);
     }
     catch (const std::exception &e)
     {

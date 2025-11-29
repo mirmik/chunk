@@ -13,7 +13,14 @@
 #include&nbsp;&lt;memory&gt;<br>
 #include&nbsp;&lt;vector&gt;<br>
 <br>
-void&nbsp;apply_sections(const&nbsp;std::vector&lt;std::unique_ptr&lt;Command&gt;&gt;&nbsp;&amp;commands);<br>
+struct&nbsp;ApplyOptions<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;dry_run&nbsp;=&nbsp;false;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;ignore_failures&nbsp;=&nbsp;false;<br>
+};<br>
+<br>
+void&nbsp;apply_sections(const&nbsp;std::vector&lt;std::unique_ptr&lt;Command&gt;&gt;&nbsp;&amp;commands,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;ApplyOptions&nbsp;&amp;options&nbsp;=&nbsp;{});<br>
 <!-- END SCAT CODE -->
 </body>
 </html>

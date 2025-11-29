@@ -87,7 +87,8 @@ namespace
     }
 } // namespace
 
-void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
+void apply_sections(const std::vector<std::unique_ptr<Command>> &commands,
+                    const ApplyOptions &options)
 {
     // Собираем список файлов, которые затрагивает патч.
     std::map<std::string, FileState> files;
@@ -165,7 +166,6 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
             auto it = files.find(path);
             if (it == files.end())
                 throw std::runtime_error("internal error: no file state");
-
             FileState &state = it->second;
             const std::string &name = current_command->command_name();
             if (name == "delete-file")
@@ -174,22 +174,29 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
                 if (!state.exists_now)
                 {
                     current_command->mark_failed("delete-file: file does not exist");
-                    throw std::runtime_error(current_command->error_message());
+                    if (!options.ignore_failures)
+                        throw std::runtime_error(current_command->error_message());
+                    continue;
                 }
+                std::size_t before_size = Command::count_total_chars(state.lines);
                 state.exists_now = false;
                 state.lines.clear();
+                current_command->record_effect(before_size, 0);
                 current_command->mark_success();
                 continue;
             }
-
             if (!state.exists_now)
                 state.lines.clear();
             current_command->run(state.lines);
             if (current_command->status() == Command::Status::Failed)
             {
-                throw std::runtime_error(current_command->error_message());
+                if (!options.ignore_failures)
+                    throw std::runtime_error(current_command->error_message());
             }
-            state.exists_now = true;
+            else
+            {
+                state.exists_now = true;
+            }
         }
     }
     catch (const std::exception &e)
@@ -216,6 +223,8 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
         throw std::runtime_error(oss.str());
     }
 
+    if (options.dry_run)
+        return;
     // Этап 2: коммитим изменения на диск. Если что-то пошло не так — откатываем.
     std::vector<std::string> rollback_errors;
 
