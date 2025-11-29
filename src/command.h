@@ -12,7 +12,6 @@ class Command
 public:
     explicit Command(std::string name);
     virtual ~Command() = default;
-    virtual ~Command() = default;
 
     enum class Status
     {
@@ -47,7 +46,6 @@ protected:
     std::string filepath_;
     std::string name_;
     std::string language_;
-    std::string comment_;
     std::string comment_;
     Status status_ = Status::NotRun;
     std::string error_message_;

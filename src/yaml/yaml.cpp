@@ -94,10 +94,55 @@ namespace nos
 
             inline std::string strip_comment(const std::string &text)
             {
-                // yaml-lite в CHUNK не поддерживает комментарии.
-                // Символ '#' всегда считается частью значения.
-                // Функция оставлена для совместимости с существующим кодом.
-                return text;
+                bool in_single = false;
+                bool in_double = false;
+                std::string result;
+                result.reserve(text.size());
+
+                for (size_t i = 0; i < text.size(); ++i)
+                {
+                    char ch = text[i];
+
+                    if (ch == '"' && !in_single)
+                    {
+                        in_double = !in_double;
+                        result.push_back(ch);
+                        continue;
+                    }
+
+                    if (ch == '\'' && !in_double)
+                    {
+                        if (in_single && i + 1 < text.size() && text[i + 1] == '\'')
+                        {
+                            result.push_back(ch);
+                            result.push_back(text[i + 1]);
+                            ++i;
+                            continue;
+                        }
+                        in_single = !in_single;
+                        result.push_back(ch);
+                        continue;
+                    }
+
+                    if (in_double && ch == '\\' && i + 1 < text.size())
+                    {
+                        result.push_back(ch);
+                        result.push_back(text[i + 1]);
+                        ++i;
+                        continue;
+                    }
+
+                    if (!in_single && !in_double && ch == '#')
+                    {
+                        if (i == 0 ||
+                            std::isspace(static_cast<unsigned char>(text[i - 1])))
+                            break;
+                    }
+
+                    result.push_back(ch);
+                }
+
+                return result;
             }
 
             inline bool needs_quotes(const std::string &s)
@@ -405,6 +450,75 @@ namespace nos
             {
                 std::vector<line> lines;
                 size_t index = 0;
+                bool in_block_scalar = false;
+                int block_indent = 0;
+
+                static size_t find_block_indicator(const std::string &text,
+                                                   size_t start_pos)
+                {
+                    bool in_single = false;
+                    bool in_double = false;
+
+                    for (size_t i = start_pos; i < text.size(); ++i)
+                    {
+                        char ch = text[i];
+                        if (ch == '"' && !in_single)
+                        {
+                            in_double = !in_double;
+                            continue;
+                        }
+                        if (ch == '\'' && !in_double)
+                        {
+                            if (in_single && i + 1 < text.size() &&
+                                text[i + 1] == '\'')
+                            {
+                                ++i;
+                                continue;
+                            }
+                            in_single = !in_single;
+                            continue;
+                        }
+                        if (!in_single && !in_double && (ch == '|' || ch == '>'))
+                            return i;
+                        if (in_double && ch == '\\')
+                            ++i;
+                    }
+                    return std::string::npos;
+                }
+
+                static int compute_block_indent(const std::string &text,
+                                                size_t indicator_pos,
+                                                int indent)
+                {
+                    int explicit_indent = 0;
+                    size_t pos = indicator_pos + 1;
+
+                    while (pos < text.size())
+                    {
+                        char ch = text[pos];
+                        if (ch == '+' || ch == '-')
+                        {
+                            ++pos;
+                            continue;
+                        }
+                        if (std::isdigit(static_cast<unsigned char>(ch)))
+                        {
+                            explicit_indent = explicit_indent * 10 + (ch - '0');
+                            ++pos;
+                            continue;
+                        }
+                        if (ch == ' ' || ch == '\t')
+                        {
+                            ++pos;
+                            continue;
+                        }
+                        break;
+                    }
+
+                    if (explicit_indent > 0)
+                        return indent + explicit_indent;
+                    return indent + 1;
+                }
 
                 void add_line(std::string line_text, size_t line_no)
                 {
@@ -417,11 +531,60 @@ namespace nos
                         ++pos;
                     }
 
-                    std::string no_comment = strip_comment(line_text);
+                    bool is_block_content = false;
+                    size_t non_ws = line_text.find_first_not_of(" \t\r");
+                    if (in_block_scalar)
+                    {
+                        if (indent >= block_indent || non_ws == std::string::npos)
+                        {
+                            is_block_content = true;
+                        }
+                        else
+                        {
+                            in_block_scalar = false;
+                        }
+                    }
+
+                    std::string no_comment =
+                        is_block_content ? line_text : strip_comment(line_text);
                     std::string trimmed = trim(no_comment);
 
                     lines.push_back(
                         {indent, line_text, no_comment, trimmed, line_no});
+
+                    if (!in_block_scalar)
+                    {
+                        size_t value_pos = std::string::npos;
+
+                        size_t colon = find_unescaped_colon(no_comment);
+                        if (colon != std::string::npos)
+                        {
+                            value_pos =
+                                no_comment.find_first_not_of(" \t", colon + 1);
+                        }
+                        else if (non_ws != std::string::npos &&
+                                 no_comment[non_ws] == '-')
+                        {
+                            value_pos =
+                                no_comment.find_first_not_of(" \t", non_ws + 1);
+                        }
+                        else
+                        {
+                            value_pos = non_ws;
+                        }
+
+                        if (value_pos != std::string::npos)
+                        {
+                            size_t indicator_pos =
+                                find_block_indicator(no_comment, value_pos);
+                            if (indicator_pos != std::string::npos)
+                            {
+                                in_block_scalar = true;
+                                block_indent = compute_block_indent(
+                                    no_comment, indicator_pos, indent);
+                            }
+                        }
+                    }
                 }
 
                 static size_t find_unescaped_colon(const std::string &text)

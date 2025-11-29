@@ -165,6 +165,28 @@ TEST_CASE("YAML parser treats colon without whitespace as plain scalar")
     CHECK(dict.at("text").as_string() == "foo:bar");
 }
 
+TEST_CASE("YAML parser handles YAML comments and hashes inside scalars")
+{
+    const char *src =
+        "# top-level comment\n"
+        "value: data # trailing comment\n"
+        "list:\n"
+        "  - item # comment after item\n"
+        "quoted: \"text # inside\"\n"
+        "single: 'hash #here'\n"
+        "block: |\n"
+        "  line with # hash\n"
+        "  # leading hash\n";
+
+    auto dict = nos::yaml::parse(src).as_dict();
+    CHECK(dict.at("value").as_string() == "data");
+    CHECK(dict.at("list").as_list().at(0).as_string() == "item");
+    CHECK(dict.at("quoted").as_string() == "text # inside");
+    CHECK(dict.at("single").as_string() == "hash #here");
+    CHECK(dict.at("block").as_string() ==
+          "line with # hash\n# leading hash\n");
+}
+
 TEST_CASE("YAML parser errors on bad indentation with location")
 {
     const char *src =
