@@ -18,6 +18,7 @@
 ---<br>
 <br>
 [Формат&nbsp;патчей&nbsp;CHUNK&nbsp;(Русский)](CHUNK_ru.md)<br>
+<br>
 [Формат&nbsp;патчей&nbsp;CHUNK&nbsp;(Русский,&nbsp;вариант,&nbsp;адаптированный&nbsp;для&nbsp;робота)](CHUNK_ru.ROBOTS.md)<br>
 <br>
 [Утилита&nbsp;chunk&nbsp;для&nbsp;применения&nbsp;патчей](https://github.com/mirmik/chunk)<br>

@@ -10,6 +10,7 @@
 ---
 
 [Формат патчей CHUNK (Русский)](CHUNK_ru.md)
+
 [Формат патчей CHUNK (Русский, вариант, адаптированный для робота)](CHUNK_ru.ROBOTS.md)
 
 [Утилита chunk для применения патчей](https://github.com/mirmik/chunk)
