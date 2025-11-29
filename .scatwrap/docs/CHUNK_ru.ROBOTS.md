@@ -23,7 +23,6 @@
 &nbsp;&nbsp;&nbsp;*&nbsp;Используй&nbsp;**пробелы**&nbsp;для&nbsp;отступов&nbsp;(не&nbsp;табы).<br>
 &nbsp;&nbsp;&nbsp;*&nbsp;Рекомендуемый&nbsp;отступ&nbsp;—&nbsp;**2&nbsp;пробела**.<br>
 &nbsp;&nbsp;&nbsp;*&nbsp;Ключи&nbsp;и&nbsp;значения&nbsp;—&nbsp;обычный&nbsp;YAML&nbsp;1.2.<br>
-&nbsp;&nbsp;&nbsp;*&nbsp;Обязательно&nbsp;проверяй&nbsp;корректность&nbsp;отступов.<br>
 <br>
 3.&nbsp;**Без&nbsp;комментариев.**<br>
 &nbsp;&nbsp;&nbsp;Не&nbsp;используй&nbsp;строки,&nbsp;начинающиеся&nbsp;с&nbsp;`#`.<br>
@@ -462,10 +461,17 @@ operations:<br>
 3.&nbsp;Нельзя&nbsp;менять&nbsp;структуру&nbsp;верхнего&nbsp;уровня&nbsp;(`description`,&nbsp;`language`,&nbsp;`operations`).<br>
 4.&nbsp;Нельзя&nbsp;забывать&nbsp;обязательные&nbsp;поля&nbsp;для&nbsp;выбранной&nbsp;команды.<br>
 5.&nbsp;Нельзя&nbsp;использовать&nbsp;комментарии&nbsp;`#`&nbsp;внутри&nbsp;YAML.<br>
+6.&nbsp;Запрещается&nbsp;переставлять&nbsp;слова&nbsp;в&nbsp;естественном&nbsp;тексте.<br>
 <br>
 ---<br>
 <br>
-##&nbsp;6.&nbsp;Рекомендуемая&nbsp;базовая&nbsp;форма&nbsp;ответа<br>
+##&nbsp;6&nbsp;Будь&nbsp;аккуратен<br>
+1.&nbsp;Обязательно&nbsp;проверяй&nbsp;корректность&nbsp;отступов.<br>
+2.&nbsp;При&nbsp;редактировании&nbsp;документации&nbsp;пиши&nbsp;маркеры&nbsp;абсолютно&nbsp;точно,&nbsp;в&nbsp;соответствии&nbsp;с&nbsp;исходным&nbsp;текстом.&nbsp;Переставлять&nbsp;слова&nbsp;в&nbsp;маркере&nbsp;запрещается.<br>
+<br>
+---<br>
+<br>
+##&nbsp;7.&nbsp;Рекомендуемая&nbsp;базовая&nbsp;форма&nbsp;ответа<br>
 <br>
 Когда&nbsp;от&nbsp;тебя&nbsp;требуется&nbsp;сгенерировать&nbsp;патч&nbsp;CHUNK,&nbsp;отвечай&nbsp;**ровно&nbsp;в&nbsp;таком&nbsp;виде**&nbsp;(пример&nbsp;skeleton):<br>
 <br>

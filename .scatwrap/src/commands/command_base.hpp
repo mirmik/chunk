@@ -116,6 +116,7 @@ public:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;file_text&nbsp;=&nbsp;debug_file_text_;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;best_pos&nbsp;=&nbsp;std::string::npos;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;best_len&nbsp;=&nbsp;0;<br>
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!file_text.empty())<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(std::size_t&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;file_text.size();&nbsp;++i)<br>
@@ -165,6 +166,7 @@ public:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++column;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;os&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;file&nbsp;position:&nbsp;offset&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;mismatch_file_pos<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;,&nbsp;line&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;line&nbsp;&lt;&lt;&nbsp;&quot;,&nbsp;column&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;column&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
 <br>
@@ -216,16 +218,21 @@ public:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;pos)&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(text.empty()&nbsp;||&nbsp;pos&nbsp;&gt;=&nbsp;text.size())<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<br>
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;start&nbsp;=&nbsp;pos;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(start&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;text[start&nbsp;-&nbsp;1]&nbsp;!=&nbsp;'\n'&nbsp;&amp;&amp;&nbsp;text[start&nbsp;-&nbsp;1]&nbsp;!=&nbsp;'\r')<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--start;<br>
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;end&nbsp;=&nbsp;pos;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(end&nbsp;&lt;&nbsp;text.size()&nbsp;&amp;&amp;&nbsp;text[end]&nbsp;!=&nbsp;'\n'&nbsp;&amp;&amp;&nbsp;text[end]&nbsp;!=&nbsp;'\r')<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++end;<br>
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;line_str&nbsp;=&nbsp;text.substr(start,&nbsp;end&nbsp;-&nbsp;start);<br>
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;os&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;label&nbsp;&lt;&lt;&nbsp;&quot;:\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;os&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;line_str&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;os&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&quot;;<br>
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;caret_pos&nbsp;=&nbsp;pos&nbsp;-&nbsp;start;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(std::size_t&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;caret_pos&nbsp;&amp;&amp;&nbsp;i&nbsp;&lt;&nbsp;line_str.size();&nbsp;++i)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>

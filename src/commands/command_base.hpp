@@ -108,6 +108,7 @@ public:
         const std::string &file_text = debug_file_text_;
         std::size_t best_pos = std::string::npos;
         std::size_t best_len = 0;
+
         if (!file_text.empty())
         {
             for (std::size_t i = 0; i < file_text.size(); ++i)
@@ -157,6 +158,7 @@ public:
                 ++column;
             }
         }
+
         os << "  file position: offset " << mismatch_file_pos
            << ", line " << line << ", column " << column << "\n";
 
@@ -208,16 +210,21 @@ public:
                                    std::size_t pos) {
             if (text.empty() || pos >= text.size())
                 return;
+
             std::size_t start = pos;
             while (start > 0 && text[start - 1] != '\n' && text[start - 1] != '\r')
                 --start;
+
             std::size_t end = pos;
             while (end < text.size() && text[end] != '\n' && text[end] != '\r')
                 ++end;
+
             std::string line_str = text.substr(start, end - start);
+
             os << "  " << label << ":\n";
             os << "    " << line_str << "\n";
             os << "    ";
+
             std::size_t caret_pos = pos - start;
             for (std::size_t i = 0; i < caret_pos && i < line_str.size(); ++i)
             {
