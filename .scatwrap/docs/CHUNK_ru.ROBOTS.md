@@ -25,7 +25,7 @@
 &nbsp;&nbsp;&nbsp;*&nbsp;Ключи&nbsp;и&nbsp;значения&nbsp;—&nbsp;обычный&nbsp;YAML&nbsp;1.2.<br>
 <br>
 3.&nbsp;**Формат&nbsp;комментариев.**.<br>
-&nbsp;&nbsp;&nbsp;Комментарии&nbsp;к&nbsp;патчу&nbsp;в&nbsp;целом&nbsp;и&nbsp;отдельным&nbsp;операциям&nbsp;выполняй&nbsp;с&nbsp;помощью&nbsp;специальных&nbsp;полей,&nbsp;`description`&nbsp;для&nbsp;патча&nbsp;в&nbsp;целом&nbsp;и&nbsp;`comment`&nbsp;для&nbsp;отдельной&nbsp;операции.&nbsp;Не&nbsp;используй&nbsp;`#`&nbsp;как&nbsp;yaml-комментарий&nbsp;для&nbsp;пояснений&nbsp;назначения&nbsp;операций&nbsp;патча.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;Комментарии&nbsp;к&nbsp;патчу&nbsp;в&nbsp;целом&nbsp;и&nbsp;отдельным&nbsp;операциям&nbsp;выполняй&nbsp;с&nbsp;помощью&nbsp;специальных&nbsp;полей,&nbsp;`description`&nbsp;для&nbsp;патча&nbsp;в&nbsp;целом&nbsp;и&nbsp;`comment`&nbsp;для&nbsp;отдельной&nbsp;операции.&nbsp;YAML-комментарии&nbsp;допускаются,&nbsp;но&nbsp;они&nbsp;не&nbsp;заменяют&nbsp;эти&nbsp;поля.<br>
 <br>
 4.&nbsp;**Только&nbsp;описанные&nbsp;поля.**<br>
 <br>
@@ -577,9 +577,8 @@ operations:<br>
 2.&nbsp;Нельзя&nbsp;придумывать&nbsp;свои&nbsp;команды&nbsp;(`op`)&nbsp;или&nbsp;поля.<br>
 3.&nbsp;Нельзя&nbsp;менять&nbsp;структуру&nbsp;верхнего&nbsp;уровня&nbsp;(`description`,&nbsp;`language`,&nbsp;`operations`).<br>
 4.&nbsp;Нельзя&nbsp;забывать&nbsp;обязательные&nbsp;поля&nbsp;для&nbsp;выбранной&nbsp;команды.<br>
-5.&nbsp;Нельзя&nbsp;использовать&nbsp;комментарии&nbsp;`#`&nbsp;внутри&nbsp;YAML-документа&nbsp;CHUNK.<br>
-6.&nbsp;Запрещается&nbsp;переставлять&nbsp;слова&nbsp;в&nbsp;естественном&nbsp;тексте.<br>
-7.&nbsp;Оставлять&nbsp;метки&nbsp;вроде&nbsp;`::contentReference[oaicite:0]{index=0}`&nbsp;в&nbsp;теле&nbsp;документа.<br>
+5.&nbsp;Запрещается&nbsp;переставлять&nbsp;слова&nbsp;в&nbsp;естественном&nbsp;тексте.<br>
+6.&nbsp;Оставлять&nbsp;метки&nbsp;вроде&nbsp;`::contentReference[oaicite:0]{index=0}`&nbsp;в&nbsp;теле&nbsp;документа.<br>
 <br>
 ---<br>
 <br>

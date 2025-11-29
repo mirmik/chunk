@@ -20,7 +20,6 @@ class&nbsp;Command<br>
 public:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;explicit&nbsp;Command(std::string&nbsp;name);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;~Command()&nbsp;=&nbsp;default;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;~Command()&nbsp;=&nbsp;default;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;enum&nbsp;class&nbsp;Status<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
@@ -55,7 +54,6 @@ protected:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;filepath_;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;name_;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;language_;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;comment_;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;comment_;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Status&nbsp;status_&nbsp;=&nbsp;Status::NotRun;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;error_message_;<br>
