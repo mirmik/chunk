@@ -27,6 +27,7 @@ namespace
         std::size_t total_removed = 0;
         std::size_t total_success = 0;
         std::size_t total_failed = 0;
+
         for (const auto &cmd_ptr : commands)
         {
             const Command *cmd = cmd_ptr.get();
@@ -36,8 +37,8 @@ namespace
             if (cmd->status() == Command::Status::Success)
             {
                 ++total_success;
-                total_inserted += cmd->chars_inserted();
-                total_removed += cmd->chars_removed();
+                total_inserted += cmd->lines_inserted();
+                total_removed += cmd->lines_removed();
             }
             else if (cmd->status() == Command::Status::Failed)
             {
@@ -54,11 +55,15 @@ namespace
             std::cout << "Patch summary (changes were written to disk)\n";
         }
 
+        const char *GREEN = "\033[32m";
+        const char *RED = "\033[31m";
+        const char *YELLOW = "\033[33m";
+        const char *RESET = "\033[0m";
+
         for (const auto &entry : by_file)
         {
             const std::string &path = entry.first;
             const auto &list = entry.second;
-
             std::cout << "\nFile: " << path << "\n";
             for (const Command *cmd : list)
             {
@@ -66,27 +71,67 @@ namespace
                 switch (cmd->status())
                 {
                 case Command::Status::Success:
-                    std::cout << "OK";
+                    std::cout << GREEN << "OK" << RESET;
                     break;
                 case Command::Status::Failed:
-                    std::cout << "FAIL";
+                    std::cout << RED << "FAIL" << RESET;
                     break;
                 default:
-                    std::cout << "SKIP";
+                    std::cout << YELLOW << "SKIP" << RESET;
                     break;
                 }
-
                 std::cout << "] " << cmd->command_name();
                 if (!cmd->comment().empty())
                     std::cout << "  # " << cmd->comment();
+
                 if (cmd->status() == Command::Status::Success)
                 {
-                    std::size_t ins = cmd->chars_inserted();
-                    std::size_t rem = cmd->chars_removed();
-                    std::cout << " (+" << ins << " chars";
-                    if (rem > 0)
-                        std::cout << ", -" << rem << " chars";
-                    std::cout << ")";
+                    std::size_t ins = cmd->lines_inserted();
+                    std::size_t rem = cmd->lines_removed();
+                    bool has_region = cmd->has_effect_region();
+
+                    if (ins == 0 && rem == 0)
+                    {
+                        std::cout << " (no changes)";
+                    }
+                    else if (!has_region)
+                    {
+                        std::cout << " (";
+                        if (ins > 0)
+                            std::cout << "+" << ins << " lines";
+                        if (rem > 0)
+                        {
+                            if (ins > 0)
+                                std::cout << ", ";
+                            std::cout << "-" << rem << " lines";
+                        }
+                        std::cout << ")";
+                    }
+                    else
+                    {
+                        std::size_t from = cmd->effect_start_line();
+                        std::size_t to = cmd->effect_end_line();
+
+                        if (ins > 0 && rem > 0)
+                        {
+                            std::cout << " (replaced lines " << from << "-" << to
+                                      << " with " << ins << " lines)";
+                        }
+                        else if (rem > 0)
+                        {
+                            std::cout << " (removed " << rem << " lines at ";
+                            if (from == to)
+                                std::cout << "line " << from;
+                            else
+                                std::cout << "lines " << from << "-" << to;
+                            std::cout << ")";
+                        }
+                        else if (ins > 0)
+                        {
+                            std::cout << " (inserted " << ins << " lines at line "
+                                      << from << ")";
+                        }
+                    }
                 }
                 else if (cmd->status() == Command::Status::Failed)
                 {
@@ -101,8 +146,8 @@ namespace
         std::cout << "\nTotals: commands: " << commands.size()
                   << ", successful: " << total_success
                   << ", failed: " << total_failed
-                  << ", chars inserted: " << total_inserted
-                  << ", chars removed: " << total_removed
+                  << ", lines inserted: " << total_inserted
+                  << ", lines removed: " << total_removed
                   << "\n";
     }
 }

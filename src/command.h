@@ -30,7 +30,6 @@ public:
 
     virtual void parse(const nos::trent &tr) = 0;
     virtual void execute(std::vector<std::string> &lines) = 0;
-
     const std::string &filepath() const { return filepath_; }
     const std::string &command_name() const { return name_; }
     const std::string &comment() const { return comment_; }
@@ -39,8 +38,14 @@ public:
     std::size_t chars_inserted() const { return chars_inserted_; }
     std::size_t chars_removed() const { return chars_removed_; }
 
-    void set_patch_language(const std::string &lang) { language_ = lang; }
+    std::size_t lines_inserted() const { return lines_inserted_; }
+    std::size_t lines_removed() const { return lines_removed_; }
 
+    bool has_effect_region() const { return has_effect_region_; }
+    std::size_t effect_start_line() const { return effect_start_line_; }
+    std::size_t effect_end_line() const { return effect_end_line_; }
+
+    void set_patch_language(const std::string &lang) { language_ = lang; }
     // Optional hook for additional debug info (e.g. marker preview).
     virtual void append_debug_info(std::ostream &os) const;
 
@@ -50,6 +55,8 @@ public:
 protected:
     static std::size_t count_total_chars(const std::vector<std::string> &lines);
     void record_effect(std::size_t before_size, std::size_t after_size);
+    void record_effect(const std::vector<std::string> &before,
+                       const std::vector<std::string> &after);
 
     std::string filepath_;
     std::string name_;
@@ -59,4 +66,9 @@ protected:
     std::string error_message_;
     std::size_t chars_inserted_ = 0;
     std::size_t chars_removed_ = 0;
+    std::size_t lines_inserted_ = 0;
+    std::size_t lines_removed_ = 0;
+    bool has_effect_region_ = false;
+    std::size_t effect_start_line_ = 0;
+    std::size_t effect_end_line_ = 0;
 };

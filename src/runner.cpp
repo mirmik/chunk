@@ -178,10 +178,10 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands,
                         throw std::runtime_error(current_command->error_message());
                     continue;
                 }
-                std::size_t before_size = Command::count_total_chars(state.lines);
+                std::vector<std::string> before = state.lines;
                 state.exists_now = false;
                 state.lines.clear();
-                current_command->record_effect(before_size, 0);
+                current_command->record_effect(before, state.lines);
                 current_command->mark_success();
                 continue;
             }

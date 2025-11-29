@@ -38,7 +38,6 @@ public:<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;void&nbsp;parse(const&nbsp;nos::trent&nbsp;&amp;tr)&nbsp;=&nbsp;0;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;void&nbsp;execute(std::vector&lt;std::string&gt;&nbsp;&amp;lines)&nbsp;=&nbsp;0;<br>
-<br>
 &nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;filepath()&nbsp;const&nbsp;{&nbsp;return&nbsp;filepath_;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;command_name()&nbsp;const&nbsp;{&nbsp;return&nbsp;name_;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;comment()&nbsp;const&nbsp;{&nbsp;return&nbsp;comment_;&nbsp;}<br>
@@ -47,8 +46,14 @@ public:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;chars_inserted()&nbsp;const&nbsp;{&nbsp;return&nbsp;chars_inserted_;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;chars_removed()&nbsp;const&nbsp;{&nbsp;return&nbsp;chars_removed_;&nbsp;}<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;set_patch_language(const&nbsp;std::string&nbsp;&amp;lang)&nbsp;{&nbsp;language_&nbsp;=&nbsp;lang;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;lines_inserted()&nbsp;const&nbsp;{&nbsp;return&nbsp;lines_inserted_;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;lines_removed()&nbsp;const&nbsp;{&nbsp;return&nbsp;lines_removed_;&nbsp;}<br>
 <br>
+&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;has_effect_region()&nbsp;const&nbsp;{&nbsp;return&nbsp;has_effect_region_;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;effect_start_line()&nbsp;const&nbsp;{&nbsp;return&nbsp;effect_start_line_;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;effect_end_line()&nbsp;const&nbsp;{&nbsp;return&nbsp;effect_end_line_;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;set_patch_language(const&nbsp;std::string&nbsp;&amp;lang)&nbsp;{&nbsp;language_&nbsp;=&nbsp;lang;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;Optional&nbsp;hook&nbsp;for&nbsp;additional&nbsp;debug&nbsp;info&nbsp;(e.g.&nbsp;marker&nbsp;preview).<br>
 &nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;void&nbsp;append_debug_info(std::ostream&nbsp;&amp;os)&nbsp;const;<br>
 <br>
@@ -58,6 +63,8 @@ public:<br>
 protected:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;static&nbsp;std::size_t&nbsp;count_total_chars(const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;lines);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;record_effect(std::size_t&nbsp;before_size,&nbsp;std::size_t&nbsp;after_size);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;record_effect(const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;before,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;after);<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;filepath_;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;name_;<br>
@@ -67,6 +74,11 @@ protected:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;error_message_;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;chars_inserted_&nbsp;=&nbsp;0;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;chars_removed_&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;lines_inserted_&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;lines_removed_&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;has_effect_region_&nbsp;=&nbsp;false;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;effect_start_line_&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;effect_end_line_&nbsp;=&nbsp;0;<br>
 };<br>
 <!-- END SCAT CODE -->
 </body>
