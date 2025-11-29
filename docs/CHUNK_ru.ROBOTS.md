@@ -572,3 +572,29 @@ operations:
     ...
 ```
 ---
+
+### 4.3.7. replace_py_block
+
+Команда для Python, аналогичная `replace_c_style_block`, но вместо фигурных
+скобок использует двоеточие и отступы в стиле Python.
+
+* `marker` должен включать строку, где находится двоеточие, открывающее блок
+  (`if ...:`, `for ...:`, `while ...:`, `with ...:`, `def ...:`, `class ...:` и т.д.).
+* Область замены — от начала маркера до конца блока, то есть до первой строки,
+  чей отступ **не больше**, чем у строки с двоеточием. Пустые строки внутри
+  блока допускаются и не обрывают его.
+* Остальные поля (`payload`, `before`, `after`, `options.indent`) работают так же,
+  как у `replace_c_style_block`.
+
+Пример:
+
+```yaml
+operations:
+  - path: src/main.py
+    op: replace_py_block
+    marker: |-
+      if __name__ == "__main__":
+    payload: |-
+      if __name__ == "__main__":
+          print("Hello from CHUNK")
+```

@@ -1,0 +1,299 @@
+#pragma once
+#include "command_base.hpp"
+#include "commands/symbol_utils.h"
+#include "commands/text_utils.h"
+#include <stdexcept>
+#include <cctype>
+
+class ReplacePyBlockCommand : public Command
+{
+public:
+    ReplacePyBlockCommand()
+        : Command("replace-py-block")
+    {
+    }
+
+    void parse(const nos::trent &tr) override
+    {
+        using namespace command_parse;
+        filepath_ = get_scalar(tr, "path");
+        if (filepath_.empty())
+            throw std::runtime_error(
+                "replace-py-block: missing 'path'");
+
+        indent_from_marker_ = parse_indent_from_options(tr, true);
+
+        const auto &dict = tr.as_dict();
+        auto it_comment = dict.find("comment");
+        if (it_comment != dict.end() && !it_comment->second.is_nil())
+            comment_ = it_comment->second.as_string();
+
+        std::string marker_text = get_scalar(tr, "marker");
+        if (marker_text.empty())
+            throw std::runtime_error(
+                "replace-py-block: 'marker' cannot be empty");
+        marker_ = split_scalar_lines(marker_text);
+
+        std::string payload_text = get_scalar(tr, "payload");
+        if (payload_text.empty())
+            throw std::runtime_error(
+                "replace-py-block: 'payload' is required and cannot be empty");
+        payload_ = split_scalar_lines(payload_text);
+
+        auto it_before = dict.find("before");
+        if (it_before != dict.end() && !it_before->second.is_nil())
+            before_ = split_scalar_lines(it_before->second.as_string());
+
+        auto it_after = dict.find("after");
+        if (it_after != dict.end() && !it_after->second.is_nil())
+            after_ = split_scalar_lines(it_after->second.as_string());
+    }
+
+    void execute(std::vector<std::string> &lines) override
+    {
+        using namespace text_utils;
+
+        if (marker_.empty())
+            throw std::runtime_error(
+                "replace-py-block: empty marker after parse");
+
+        PatchLanguage lang = detect_language(language_);
+        auto matches = find_marker_matches(lines, marker_, lang);
+        if (matches.empty())
+        {
+            throw std::runtime_error(
+                "replace-py-block: marker not found in file: " + filepath_);
+        }
+
+        int idx =
+            find_best_marker_match(lines, lang, before_, after_, matches);
+        if (idx < 0 ||
+            idx >= static_cast<int>(matches.size()))
+            throw std::runtime_error(
+                "replace-py-block: internal error choosing marker match");
+
+        const MarkerMatch &mm = matches[static_cast<std::size_t>(idx)];
+
+        int header_line = -1;
+        int header_col = -1;
+
+        bool in_single = false;
+        bool in_double = false;
+        bool in_triple_single = false;
+        bool in_triple_double = false;
+        bool escape = false;
+
+        for (int li = mm.begin; li <= mm.end; ++li)
+        {
+            if (li < 0 ||
+                li >= static_cast<int>(lines.size()))
+                continue;
+
+            const std::string &ln =
+                lines[static_cast<std::size_t>(li)];
+            bool in_comment = false;
+
+            for (std::size_t col = 0; col < ln.size(); ++col)
+            {
+                char c = ln[col];
+                char next =
+                    (col + 1 < ln.size()) ? ln[col + 1] : '\0';
+                char next2 =
+                    (col + 2 < ln.size()) ? ln[col + 2] : '\0';
+
+                if (in_comment)
+                    break;
+
+                if (in_triple_single)
+                {
+                    if (c == '\'' && next == '\'' && next2 == '\'')
+                    {
+                        in_triple_single = false;
+                        col += 2;
+                    }
+                    continue;
+                }
+                if (in_triple_double)
+                {
+                    if (c == '"' && next == '"' && next2 == '"')
+                    {
+                        in_triple_double = false;
+                        col += 2;
+                    }
+                    continue;
+                }
+                if (in_single)
+                {
+                    if (escape)
+                    {
+                        escape = false;
+                        continue;
+                    }
+                    if (c == '\\')
+                    {
+                        escape = true;
+                        continue;
+                    }
+                    if (c == '\'')
+                    {
+                        in_single = false;
+                    }
+                    continue;
+                }
+                if (in_double)
+                {
+                    if (escape)
+                    {
+                        escape = false;
+                        continue;
+                    }
+                    if (c == '\\')
+                    {
+                        escape = true;
+                        continue;
+                    }
+                    if (c == '"')
+                    {
+                        in_double = false;
+                    }
+                    continue;
+                }
+
+                if (c == '#')
+                {
+                    in_comment = true;
+                    break;
+                }
+                if (c == '\'')
+                {
+                    if (next == '\'' && next2 == '\'')
+                    {
+                        in_triple_single = true;
+                        col += 2;
+                    }
+                    else
+                    {
+                        in_single = true;
+                    }
+                    continue;
+                }
+                if (c == '"')
+                {
+                    if (next == '"' && next2 == '"')
+                    {
+                        in_triple_double = true;
+                        col += 2;
+                    }
+                    else
+                    {
+                        in_double = true;
+                    }
+                    continue;
+                }
+
+                if (c == ':')
+                {
+                    header_line = li;
+                    header_col = static_cast<int>(col);
+                    (void)header_col;
+                    break;
+                }
+            }
+
+            if (header_line >= 0)
+                break;
+        }
+
+        if (header_line < 0)
+        {
+            throw std::runtime_error(
+                "replace-py-block: opening ':' not found inside marker for file: " +
+                filepath_);
+        }
+
+        const int nlines =
+            static_cast<int>(lines.size());
+        int base_indent =
+            calc_indent(lines[static_cast<std::size_t>(header_line)]);
+        int last_body = header_line;
+
+        for (int li = header_line + 1; li < nlines; ++li)
+        {
+            const std::string &ln =
+                lines[static_cast<std::size_t>(li)];
+            std::size_t pos = first_code_pos(ln);
+            if (pos >= ln.size())
+                continue; // пустая строка в блоке
+
+            int ind = calc_indent(ln);
+            if (ind <= base_indent)
+                break; // вышли из блока по dedent
+
+            last_body = li;
+        }
+
+        std::size_t region_start =
+            static_cast<std::size_t>(mm.begin);
+        std::size_t region_end =
+            static_cast<std::size_t>(last_body);
+        if (region_start > region_end ||
+            region_end >= lines.size())
+        {
+            throw std::runtime_error(
+                "replace-py-block: internal region calculation error for file: " +
+                filepath_);
+        }
+
+        std::vector<std::string> adjusted_payload;
+        if (indent_from_marker_)
+        {
+            std::string prefix =
+                extract_indent_prefix(lines, mm.begin);
+            adjusted_payload =
+                apply_indent_prefix(payload_, prefix, true);
+        }
+        else
+        {
+            adjusted_payload = payload_;
+        }
+
+        auto it_begin = lines.begin() +
+                        static_cast<std::ptrdiff_t>(region_start);
+        auto it_end = lines.begin() +
+                      static_cast<std::ptrdiff_t>(region_end + 1);
+        lines.erase(it_begin, it_end);
+        lines.insert(lines.begin() +
+                         static_cast<std::ptrdiff_t>(region_start),
+                     adjusted_payload.begin(), adjusted_payload.end());
+    }
+
+private:
+    static int calc_indent(const std::string &line)
+    {
+        int indent = 0;
+        for (char c : line)
+        {
+            if (c == ' ')
+                ++indent;
+            else if (c == '\t')
+                indent += 4; // грубая оценка, но достаточно для сравнения
+            else
+                break;
+        }
+        return indent;
+    }
+
+    static std::size_t first_code_pos(const std::string &line)
+    {
+        std::size_t i = 0;
+        while (i < line.size() && (line[i] == ' ' || line[i] == '\t'))
+            ++i;
+        return i;
+    }
+
+    bool indent_from_marker_ = true;
+    std::vector<std::string> marker_;
+    std::vector<std::string> before_;
+    std::vector<std::string> after_;
+    std::vector<std::string> payload_;
+};

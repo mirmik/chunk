@@ -781,3 +781,46 @@ TEST_CASE("apply_chunk_main: replace_c_style_block handles nested braces and com
     CHECK_FALSE(has_old_x_decl);
     CHECK(has_other_function);
 }
+
+TEST_CASE("apply_chunk_main: replace-py-block replaces python block by marker")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_replace_py_block";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "main.py";
+    {
+        std::ofstream out(f);
+        out << "# header\n"
+               "if __name__ == \"__main__\":\n"
+               "    print(\"OLD1\")\n"
+               "    print(\"OLD2\")\n"
+               "print(\"AFTER\")\n";
+    }
+
+    fs::path patch = tmp / "patch.txt";
+    {
+        std::ofstream out(patch);
+        out << "language: python\n"
+               "operations:\n"
+               "  - op: replace_py_block\n"
+               "    path: \"" << f.string() << "\"\n"
+               "    marker: |\n"
+               "      if __name__ == \"__main__\":\n"
+               "    payload: |\n"
+               "      if __name__ == \"__main__\":\n"
+               "        print(\"NEW1\")\n"
+               "        print(\"NEW2\")\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    auto lines = read_lines(f);
+    REQUIRE(lines.size() == 5);
+    CHECK(lines[0] == "# header");
+    CHECK(lines[1] == "if __name__ == \"__main__\":");
+    CHECK(lines[2] == "  print(\"NEW1\")");
+    CHECK(lines[3] == "  print(\"NEW2\")");
+    CHECK(lines[4] == "print(\"AFTER\")");
+}
