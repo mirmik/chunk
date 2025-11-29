@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>src/yaml/ctrdtr.h</title>
+</head>
+<body>
+<!-- BEGIN SCAT CODE -->
+#ifndef&nbsp;NOS_UTIL_CTRDTR_H<br>
+#define&nbsp;NOS_UTIL_CTRDTR_H<br>
+<br>
+#include&nbsp;&lt;new&gt;<br>
+<br>
+namespace&nbsp;nos<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;template&nbsp;&lt;typename&nbsp;T&gt;&nbsp;void&nbsp;destructor(T&nbsp;*ptr)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ptr-&gt;~T();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;template&nbsp;&lt;typename&nbsp;T,&nbsp;typename...&nbsp;Args&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;constructor(T&nbsp;*ptr,&nbsp;Args&nbsp;&amp;&amp;...&nbsp;args)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new&nbsp;((void&nbsp;*)ptr)&nbsp;T(std::forward&lt;Args&gt;(args)...);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;template&nbsp;&lt;typename&nbsp;T&gt;&nbsp;void&nbsp;copy_constructor(T&nbsp;*ptr,&nbsp;const&nbsp;T&nbsp;&amp;other)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new&nbsp;((void&nbsp;*)ptr)&nbsp;T(other);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;template&nbsp;&lt;typename&nbsp;T&gt;&nbsp;void&nbsp;move_constructor(T&nbsp;*ptr,&nbsp;T&nbsp;&amp;&amp;other)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new&nbsp;((void&nbsp;*)ptr)&nbsp;T(std::move(other));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;template&nbsp;&lt;class&nbsp;InputIterator,&nbsp;class&nbsp;EndIterator&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;array_destructor(InputIterator&nbsp;first,&nbsp;EndIterator&nbsp;last)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(first&nbsp;!=&nbsp;last)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nos::destructor(&amp;*first);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++first;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;template&nbsp;&lt;class&nbsp;InputIterator,&nbsp;class&nbsp;EndIterator,&nbsp;typename...&nbsp;Args&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;array_constructor(InputIterator&nbsp;first,&nbsp;EndIterator&nbsp;last,&nbsp;Args...&nbsp;args)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(first&nbsp;!=&nbsp;last)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nos::constructor(&amp;*first,&nbsp;args...);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++first;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+<br>
+#endif<br>
+<!-- END SCAT CODE -->
+</body>
+</html>
