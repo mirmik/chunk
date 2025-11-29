@@ -1,9 +1,6 @@
-#pragma once
+#include "commands/symbol_utils.h"
 
-#include <string>
-#include <vector>
-
-inline std::string extract_indent_prefix(const std::vector<std::string> &lines,
+std::string extract_indent_prefix(const std::vector<std::string> &lines,
                                          int index)
 {
     if (index < 0 || index >= static_cast<int>(lines.size()))
@@ -17,7 +14,7 @@ inline std::string extract_indent_prefix(const std::vector<std::string> &lines,
     return std::string(line, 0, j);
 }
 
-inline std::vector<std::string>
+std::vector<std::string>
 apply_indent_prefix(const std::vector<std::string> &payload,
                     const std::string &prefix,
                     bool enabled)
@@ -37,7 +34,7 @@ apply_indent_prefix(const std::vector<std::string> &payload,
     return result;
 }
 
-inline std::string join_lines(const std::vector<std::string> &lines)
+std::string join_lines(const std::vector<std::string> &lines)
 {
     if (lines.empty())
         return std::string();
@@ -57,4 +54,3 @@ inline std::string join_lines(const std::vector<std::string> &lines)
 
     return text;
 }
-

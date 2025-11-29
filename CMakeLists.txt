@@ -34,6 +34,8 @@ set(CHUNK_CORE_SOURCES
     src/symbols.cpp
     src/symbols_py.cpp
     src/clipboard.cpp
+    src/commands/text_utils.cpp
+    src/commands/symbol_utils.cpp
 )
 
 add_executable(chunk

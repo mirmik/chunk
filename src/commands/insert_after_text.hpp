@@ -1,7 +1,7 @@
 #pragma once
 
 #include "command_base.hpp"
-#include "commands/text_utils.hpp"
+#include "commands/text_utils.h"
 
 class InsertAfterTextCommand : public MarkerTextCommand
 {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "command_base.hpp"
-#include "commands/symbol_utils.hpp"
+#include "commands/symbol_utils.h"
 #include "symbols.h"
 
 class ReplacePyMethodCommand : public RegionReplaceCommand

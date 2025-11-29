@@ -2,8 +2,8 @@
 
 #include "command.h"
 #include "command_parse_helpers.h"
-#include "commands/text_utils.hpp"
-#include "commands/symbol_utils.hpp"
+#include "commands/text_utils.h"
+#include "commands/symbol_utils.h"
 #include "symbols.h"
 
 // Common base for text commands that operate around markers
