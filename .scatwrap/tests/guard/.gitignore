@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>tests/guard/.gitignore</title>
+</head>
+<body>
+<!-- BEGIN SCAT CODE -->
+a.out<br>
+<!-- END SCAT CODE -->
+</body>
+</html>
