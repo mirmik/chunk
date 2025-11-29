@@ -56,7 +56,6 @@ public:
         if (marker_.empty())
             throw std::runtime_error(
                 "replace-c-style-block: empty marker after parse");
-
         PatchLanguage lang = detect_language(language_);
         auto matches = find_marker_matches(lines, marker_, lang);
         if (matches.empty())
@@ -64,7 +63,6 @@ public:
             throw std::runtime_error(
                 "replace-c-style-block: marker not found in file: " + filepath_);
         }
-
         int idx =
             find_best_marker_match(lines, lang, before_, after_, matches);
         if (idx < 0 ||
@@ -73,7 +71,6 @@ public:
                 "replace-c-style-block: internal error choosing marker match");
 
         const MarkerMatch &mm = matches[static_cast<std::size_t>(idx)];
-
         int open_line = -1;
         int open_col = -1;
         for (int li = mm.begin; li <= mm.end; ++li)
@@ -81,7 +78,6 @@ public:
             if (li < 0 ||
                 li >= static_cast<int>(lines.size()))
                 continue;
-
             const std::string &ln =
                 lines[static_cast<std::size_t>(li)];
             for (std::size_t col = 0; col < ln.size(); ++col)
@@ -93,11 +89,29 @@ public:
                 }
             }
         }
-
+        if (open_line < 0)
+        {
+            for (int li = mm.end + 1;
+                 li < static_cast<int>(lines.size()) && open_line < 0;
+                 ++li)
+            {
+                const std::string &ln =
+                    lines[static_cast<std::size_t>(li)];
+                for (std::size_t col = 0; col < ln.size(); ++col)
+                {
+                    if (ln[col] == '{')
+                    {
+                        open_line = li;
+                        open_col = static_cast<int>(col);
+                        break;
+                    }
+                }
+            }
+        }
         if (open_line < 0)
         {
             throw std::runtime_error(
-                "replace-c-style-block: opening brace '{' not found inside marker for file: " +
+                "replace-c-style-block: opening brace '{' not found after marker for file: " +
                 filepath_);
         }
 
@@ -111,7 +125,6 @@ public:
 
         int depth = 0;
         bool started = false;
-
         const int nlines =
             static_cast<int>(lines.size());
         for (int li = open_line; li < nlines; ++li)
@@ -119,7 +132,6 @@ public:
             const std::string &ln =
                 lines[static_cast<std::size_t>(li)];
             bool in_line_comment = false;
-
             std::size_t start_col =
                 li == open_line
                     ? static_cast<std::size_t>(open_col)
@@ -132,7 +144,6 @@ public:
                 char c = ln[col];
                 char next =
                     (col + 1 < ln.size()) ? ln[col + 1] : '\0';
-
                 if (in_line_comment)
                     break;
 
@@ -145,7 +156,6 @@ public:
                     }
                     continue;
                 }
-
                 if (in_single_quote)
                 {
                     if (escape)
@@ -164,7 +174,6 @@ public:
                     }
                     continue;
                 }
-
                 if (in_double_quote)
                 {
                     if (escape)
@@ -183,7 +192,6 @@ public:
                     }
                     continue;
                 }
-
                 if (c == '/' && next == '/')
                 {
                     in_line_comment = true;
@@ -205,7 +213,6 @@ public:
                     in_double_quote = true;
                     continue;
                 }
-
                 if (c == '{')
                 {
                     ++depth;
@@ -226,7 +233,6 @@ public:
                     }
                 }
             }
-
             if (close_line >= 0)
                 break;
         }
@@ -242,7 +248,6 @@ public:
             static_cast<std::size_t>(mm.begin);
         std::size_t region_end =
             static_cast<std::size_t>(close_line);
-
         if (region_start > region_end ||
             region_end >= lines.size())
         {
@@ -250,7 +255,6 @@ public:
                 "replace-c-style-block: internal region calculation error for file: " +
                 filepath_);
         }
-
         std::vector<std::string> adjusted_payload;
         if (indent_from_marker_)
         {
@@ -263,7 +267,6 @@ public:
         {
             adjusted_payload = payload_;
         }
-
         auto it_begin = lines.begin() +
                         static_cast<std::ptrdiff_t>(region_start);
         auto it_end = lines.begin() +
