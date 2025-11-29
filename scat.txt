@@ -3,6 +3,8 @@ src/*
 !tests/doctest/**
 
 src/apply.cpp
+src/section.cpp
+src/runner.cpp
 src/apply_yaml.cpp
 src/apply.h
 src/file_io.cpp
@@ -10,6 +12,7 @@ src/file_io.h
 src/help.cpp
 src/help.h
 src/main.cpp
+src/commands/*
 docs/*
 
 [TREE]

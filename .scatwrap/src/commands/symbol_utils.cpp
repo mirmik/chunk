@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>src/commands/symbol_utils.cpp</title>
+</head>
+<body>
+<!-- BEGIN SCAT CODE -->
+#include&nbsp;&quot;commands/symbol_utils.h&quot;<br>
+<br>
+std::string&nbsp;extract_indent_prefix(const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;lines,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;index)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(index&nbsp;&lt;&nbsp;0&nbsp;||&nbsp;index&nbsp;&gt;=&nbsp;static_cast&lt;int&gt;(lines.size()))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;{};<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;line&nbsp;=&nbsp;lines[static_cast&lt;std::size_t&gt;(index)];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;j&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(j&nbsp;&lt;&nbsp;line.size()&nbsp;&amp;&amp;&nbsp;(line[j]&nbsp;==&nbsp;'&nbsp;'&nbsp;||&nbsp;line[j]&nbsp;==&nbsp;'\t'))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++j;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;std::string(line,&nbsp;0,&nbsp;j);<br>
+}<br>
+<br>
+std::vector&lt;std::string&gt;<br>
+apply_indent_prefix(const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;payload,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;prefix,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;enabled)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!enabled&nbsp;||&nbsp;prefix.empty())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;payload;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;result;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;result.reserve(payload.size());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(const&nbsp;auto&nbsp;&amp;ln&nbsp;:&nbsp;payload)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ln.empty())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result.push_back(ln);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result.push_back(prefix&nbsp;+&nbsp;ln);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;result;<br>
+}<br>
+<br>
+std::string&nbsp;join_lines(const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;lines)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(lines.empty())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;std::string();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;text;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::size_t&nbsp;total&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(const&nbsp;auto&nbsp;&amp;s&nbsp;:&nbsp;lines)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;total&nbsp;+=&nbsp;s.size()&nbsp;+&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;text.reserve(total);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(std::size_t&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;lines.size();&nbsp;++i)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text&nbsp;+=&nbsp;lines[i];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(i&nbsp;+&nbsp;1&nbsp;&lt;&nbsp;lines.size())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text&nbsp;+=&nbsp;'\n';<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;text;<br>
+}<br>
+<!-- END SCAT CODE -->
+</body>
+</html>
