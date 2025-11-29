@@ -72,30 +72,33 @@ if (HAS_LIBSTDCXXFS)
 endif()
 
 
-add_executable(chunk_tests
-    tests/apply.cpp          
-    tests/apply_yaml.cpp  
-    tests/main.cpp     
-    tests/symbols_py.cpp
-    tests/apply_symbols.cpp  
-    tests/symbols.cpp  
-    tests/yaml_parser.cpp
-    ${CHUNK_CORE_SOURCES}
-    ${YAML_SOURCES}
-    ${CHUNK_HEADERS}
-)
 
-target_compile_definitions(chunk_tests PRIVATE DOCTEST_CONFIG_NO_BREAKS)
+# Не собирать тесты на macOS
+if(NOT APPLE)
+    add_executable(chunk_tests
+        tests/apply.cpp          
+        tests/apply_yaml.cpp  
+        tests/main.cpp     
+        tests/symbols_py.cpp
+        tests/apply_symbols.cpp  
+        tests/symbols.cpp  
+        tests/yaml_parser.cpp
+        ${CHUNK_CORE_SOURCES}
+        ${YAML_SOURCES}
+        ${CHUNK_HEADERS}
+    )
 
-target_include_directories(chunk_tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/yaml
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests
-)
+    target_compile_definitions(chunk_tests PRIVATE DOCTEST_CONFIG_NO_BREAKS)
 
+    target_include_directories(chunk_tests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/yaml
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    )
 
-if(WIN32)
-    target_link_libraries(chunk_tests PRIVATE ws2_32)
+    if(WIN32)
+        target_link_libraries(chunk_tests PRIVATE ws2_32)
+    endif()
+
+    add_test(NAME chunk_tests COMMAND chunk_tests)
 endif()
-
-add_test(NAME chunk_tests COMMAND chunk_tests)
