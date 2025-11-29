@@ -12,7 +12,7 @@
 #include&nbsp;&quot;command_parse_helpers.h&quot;<br>
 #include&nbsp;&quot;commands/text_utils.h&quot;<br>
 #include&nbsp;&quot;commands/symbol_utils.h&quot;<br>
-#include&nbsp;&quot;symbols.h&quot;<br>
+#include&nbsp;&quot;languages/symbols.h&quot;<br>
 <br>
 #include&nbsp;&lt;ostream&gt;<br>
 <br>

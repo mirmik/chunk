@@ -22,24 +22,15 @@ file(GLOB YAML_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/yaml/*.cpp
 )
 
-set(CHUNK_CORE_SOURCES
-    src/apply.cpp
-    src/command.cpp
-    src/command_fabric.cpp
-    src/command_parse_helpers.cpp
-    src/file_io.cpp
-    src/help.cpp
-    src/runner.cpp
-    src/parser.cpp
-    src/symbols.cpp
-    src/symbols_py.cpp
-    src/clipboard.cpp
-    src/commands/text_utils.cpp
-    src/commands/symbol_utils.cpp
+file(GLOB CHUNK_CORE_SOURCES CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/languages/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/yaml/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/commands/*.cpp
 )
 
 add_executable(chunk
-    src/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/app/main.cpp
     ${CHUNK_CORE_SOURCES}
     ${YAML_SOURCES}
 )

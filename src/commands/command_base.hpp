@@ -4,7 +4,7 @@
 #include "command_parse_helpers.h"
 #include "commands/text_utils.h"
 #include "commands/symbol_utils.h"
-#include "symbols.h"
+#include "languages/symbols.h"
 
 #include <ostream>
 

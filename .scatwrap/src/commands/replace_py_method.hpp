@@ -10,7 +10,7 @@
 <br>
 #include&nbsp;&quot;command_base.hpp&quot;<br>
 #include&nbsp;&quot;commands/symbol_utils.h&quot;<br>
-#include&nbsp;&quot;symbols.h&quot;<br>
+#include&nbsp;&quot;languages/symbols.h&quot;<br>
 <br>
 class&nbsp;ReplacePyMethodCommand&nbsp;:&nbsp;public&nbsp;RegionReplaceCommand<br>
 {<br>

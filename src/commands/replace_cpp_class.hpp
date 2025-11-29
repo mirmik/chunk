@@ -2,7 +2,7 @@
 
 #include "command_base.hpp"
 #include "commands/symbol_utils.h"
-#include "symbols.h"
+#include "languages/symbols.h"
 
 class ReplaceCppClassCommand : public RegionReplaceCommand
 {

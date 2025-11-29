@@ -1,4 +1,4 @@
-#include "symbols.h"
+#include "languages/symbols.h"
 #include "doctest/doctest.h"
 
 #include <string>
