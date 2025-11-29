@@ -23,6 +23,7 @@ bool&nbsp;run_clipboard_reader(const&nbsp;ClipboardReader&nbsp;&amp;reader,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;verbose);<br>
 <br>
 bool&nbsp;read_clipboard(std::string&nbsp;&amp;out,&nbsp;bool&nbsp;verbose);<br>
+&nbsp;<br>
 <!-- END SCAT CODE -->
 </body>
 </html>

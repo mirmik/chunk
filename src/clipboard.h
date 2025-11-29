@@ -15,3 +15,4 @@ bool run_clipboard_reader(const ClipboardReader &reader,
                           bool verbose);
 
 bool read_clipboard(std::string &out, bool verbose);
+ 
