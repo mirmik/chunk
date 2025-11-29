@@ -25,7 +25,7 @@
 &nbsp;&nbsp;&nbsp;*&nbsp;Ключи&nbsp;и&nbsp;значения&nbsp;—&nbsp;обычный&nbsp;YAML&nbsp;1.2.<br>
 <br>
 3.&nbsp;**Формат&nbsp;комментариев.**.<br>
-&nbsp;&nbsp;&nbsp;Комментарии&nbsp;к&nbsp;патчу&nbsp;в&nbsp;целом&nbsp;и&nbsp;отдельным&nbsp;операциям&nbsp;выполняй&nbsp;с&nbsp;помощью&nbsp;специальных&nbsp;полей,&nbsp;`description`&nbsp;для&nbsp;патча&nbsp;в&nbsp;целом&nbsp;и&nbsp;`comment`&nbsp;для&nbsp;отдельной&nbsp;операции.&nbsp;YAML-комментарии&nbsp;допускаются,&nbsp;но&nbsp;они&nbsp;не&nbsp;заменяют&nbsp;эти&nbsp;поля.<br>
+&nbsp;&nbsp;&nbsp;Комментарии&nbsp;к&nbsp;патчу&nbsp;в&nbsp;целом&nbsp;и&nbsp;отдельным&nbsp;операциям&nbsp;выполняй&nbsp;с&nbsp;помощью&nbsp;специальных&nbsp;полей,&nbsp;`description`&nbsp;для&nbsp;патча&nbsp;в&nbsp;целом&nbsp;и&nbsp;`comment`&nbsp;для&nbsp;отдельной&nbsp;операции.&nbsp;Также&nbsp;можешь&nbsp;использовать&nbsp;комментарии&nbsp;в&nbsp;соответствии&nbsp;со&nbsp;стандартными&nbsp;правилами&nbsp;YAML.<br>
 <br>
 4.&nbsp;**Только&nbsp;описанные&nbsp;поля.**<br>
 <br>
