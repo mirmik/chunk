@@ -90,8 +90,6 @@ if(NOT APPLE)
         ${CHUNK_HEADERS}
     )
 
-    target_compile_definitions(chunk_tests PRIVATE DOCTEST_CONFIG_NO_BREAKS)
-
     target_include_directories(chunk_tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/yaml

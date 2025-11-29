@@ -1,4 +1,4 @@
-#include "doctest/doctest.h"
+#include "guard/guard.h"
 #include <yaml/yaml.h>
 #include <cmath>
 #include <limits>
@@ -15,8 +15,8 @@ TEST_CASE("YAML parser reads flow collections")
     auto &flow = dict.at("flow").as_list();
 
     REQUIRE(flow.size() == 3);
-    CHECK(flow[0].as_numer() == doctest::Approx(1));
-    CHECK(flow[1].as_numer() == doctest::Approx(2));
+    CHECK(flow[0].as_numer() == guard::Approx(1));
+    CHECK(flow[1].as_numer() == guard::Approx(2));
 
     auto &map = flow[2].as_dict();
     CHECK(map.at("foo").as_bool() == true);
@@ -57,7 +57,7 @@ TEST_CASE("YAML parser understands YAML 1.2 scalars")
     nos::trent root = nos::yaml::parse(src);
     auto &dict = root.as_dict();
 
-    CHECK(dict.at("v1").as_numer() == doctest::Approx(1000));
+    CHECK(dict.at("v1").as_numer() == guard::Approx(1000));
     CHECK(std::isinf(dict.at("v2").as_numer()));
     CHECK(dict.at("v3").as_numer() < 0);
     CHECK(std::isnan(dict.at("v4").as_numer()));
@@ -108,7 +108,7 @@ TEST_CASE("YAML parser handles flow collections across lines")
     auto &flow = root.at("flow").as_list();
     REQUIRE(flow.size() == 3);
     CHECK(flow[2].as_dict().at("key").as_list().at(1).as_numer() ==
-          doctest::Approx(20));
+          guard::Approx(20));
 }
 
 TEST_CASE("YAML parser handles literal, folded and chomping styles")
@@ -145,7 +145,7 @@ TEST_CASE("YAML parser recognizes YAML 1.2 numeric/boolean/null forms")
         "bools: [TRUE, false]\n";
 
     auto dict = nos::yaml::parse(src).as_dict();
-    CHECK(dict.at("u").as_numer() == doctest::Approx(1234567));
+    CHECK(dict.at("u").as_numer() == guard::Approx(1234567));
     CHECK(std::isinf(dict.at("pinf").as_numer()));
     CHECK(dict.at("ninf").as_numer() < 0);
     CHECK(std::isnan(dict.at("nanv").as_numer()));
@@ -227,7 +227,7 @@ TEST_CASE("YAML parser handles nested sequences and mappings")
     auto root = nos::yaml::parse(src).as_dict().at("root").as_list();
     REQUIRE(root.size() == 2);
     CHECK(root[0].as_dict().at("values").as_list().at(2).as_numer() ==
-          doctest::Approx(3));
+          guard::Approx(3));
     CHECK(root[1].as_dict()
               .at("details")
               .as_dict()
@@ -243,10 +243,10 @@ TEST_CASE("YAML parser supports flow map values on mapping lines")
         "cfg: {a: 1, b: [2, 3]}\n";
 
     auto cfg = nos::yaml::parse(src).as_dict().at("cfg").as_dict();
-    CHECK(cfg.at("a").as_numer() == doctest::Approx(1));
+    CHECK(cfg.at("a").as_numer() == guard::Approx(1));
     auto &arr = cfg.at("b").as_list();
     CHECK(arr.size() == 2);
-    CHECK(arr[1].as_numer() == doctest::Approx(3));
+    CHECK(arr[1].as_numer() == guard::Approx(3));
 }
 
 TEST_CASE("YAML parser honors empty block scalar when indent inferred")
@@ -268,8 +268,8 @@ TEST_CASE("YAML parser allows blank lines between mapping entries")
 
     auto dict = nos::yaml::parse(src).as_dict();
     REQUIRE(dict.size() == 2);
-    CHECK(dict.at("a").as_numer() == doctest::Approx(1));
-    CHECK(dict.at("b").as_numer() == doctest::Approx(2));
+    CHECK(dict.at("a").as_numer() == guard::Approx(1));
+    CHECK(dict.at("b").as_numer() == guard::Approx(2));
 }
 
 
@@ -284,6 +284,6 @@ TEST_CASE("YAML parser allows blank lines inside sequences")
     auto dict = nos::yaml::parse(src).as_dict();
     auto &list = dict.at("list").as_list();
     REQUIRE(list.size() == 2);
-    CHECK(list[0].as_numer() == doctest::Approx(1));
-    CHECK(list[1].as_numer() == doctest::Approx(2));
+    CHECK(list[0].as_numer() == guard::Approx(1));
+    CHECK(list[1].as_numer() == guard::Approx(2));
 }

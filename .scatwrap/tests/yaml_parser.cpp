@@ -6,7 +6,7 @@
 </head>
 <body>
 <!-- BEGIN SCAT CODE -->
-#include&nbsp;&quot;doctest/doctest.h&quot;<br>
+#include&nbsp;&quot;guard/guard.h&quot;<br>
 #include&nbsp;&lt;yaml/yaml.h&gt;<br>
 #include&nbsp;&lt;cmath&gt;<br>
 #include&nbsp;&lt;limits&gt;<br>
@@ -23,8 +23,8 @@ TEST_CASE(&quot;YAML&nbsp;parser&nbsp;reads&nbsp;flow&nbsp;collections&quot;)<br
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;&amp;flow&nbsp;=&nbsp;dict.at(&quot;flow&quot;).as_list();<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;REQUIRE(flow.size()&nbsp;==&nbsp;3);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;CHECK(flow[0].as_numer()&nbsp;==&nbsp;doctest::Approx(1));<br>
-&nbsp;&nbsp;&nbsp;&nbsp;CHECK(flow[1].as_numer()&nbsp;==&nbsp;doctest::Approx(2));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;CHECK(flow[0].as_numer()&nbsp;==&nbsp;guard::Approx(1));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;CHECK(flow[1].as_numer()&nbsp;==&nbsp;guard::Approx(2));<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;&amp;map&nbsp;=&nbsp;flow[2].as_dict();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(map.at(&quot;foo&quot;).as_bool()&nbsp;==&nbsp;true);<br>
@@ -65,7 +65,7 @@ TEST_CASE(&quot;YAML&nbsp;parser&nbsp;understands&nbsp;YAML&nbsp;1.2&nbsp;scalar
 &nbsp;&nbsp;&nbsp;&nbsp;nos::trent&nbsp;root&nbsp;=&nbsp;nos::yaml::parse(src);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;&amp;dict&nbsp;=&nbsp;root.as_dict();<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;CHECK(dict.at(&quot;v1&quot;).as_numer()&nbsp;==&nbsp;doctest::Approx(1000));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;CHECK(dict.at(&quot;v1&quot;).as_numer()&nbsp;==&nbsp;guard::Approx(1000));<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(std::isinf(dict.at(&quot;v2&quot;).as_numer()));<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(dict.at(&quot;v3&quot;).as_numer()&nbsp;&lt;&nbsp;0);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(std::isnan(dict.at(&quot;v4&quot;).as_numer()));<br>
@@ -116,7 +116,7 @@ TEST_CASE(&quot;YAML&nbsp;parser&nbsp;handles&nbsp;flow&nbsp;collections&nbsp;ac
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;&amp;flow&nbsp;=&nbsp;root.at(&quot;flow&quot;).as_list();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;REQUIRE(flow.size()&nbsp;==&nbsp;3);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(flow[2].as_dict().at(&quot;key&quot;).as_list().at(1).as_numer()&nbsp;==<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;doctest::Approx(20));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;guard::Approx(20));<br>
 }<br>
 <br>
 TEST_CASE(&quot;YAML&nbsp;parser&nbsp;handles&nbsp;literal,&nbsp;folded&nbsp;and&nbsp;chomping&nbsp;styles&quot;)<br>
@@ -153,7 +153,7 @@ TEST_CASE(&quot;YAML&nbsp;parser&nbsp;recognizes&nbsp;YAML&nbsp;1.2&nbsp;numeric
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;bools:&nbsp;[TRUE,&nbsp;false]\n&quot;;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;dict&nbsp;=&nbsp;nos::yaml::parse(src).as_dict();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;CHECK(dict.at(&quot;u&quot;).as_numer()&nbsp;==&nbsp;doctest::Approx(1234567));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;CHECK(dict.at(&quot;u&quot;).as_numer()&nbsp;==&nbsp;guard::Approx(1234567));<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(std::isinf(dict.at(&quot;pinf&quot;).as_numer()));<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(dict.at(&quot;ninf&quot;).as_numer()&nbsp;&lt;&nbsp;0);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(std::isnan(dict.at(&quot;nanv&quot;).as_numer()));<br>
@@ -235,7 +235,7 @@ TEST_CASE(&quot;YAML&nbsp;parser&nbsp;handles&nbsp;nested&nbsp;sequences&nbsp;an
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;root&nbsp;=&nbsp;nos::yaml::parse(src).as_dict().at(&quot;root&quot;).as_list();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;REQUIRE(root.size()&nbsp;==&nbsp;2);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(root[0].as_dict().at(&quot;values&quot;).as_list().at(2).as_numer()&nbsp;==<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;doctest::Approx(3));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;guard::Approx(3));<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(root[1].as_dict()<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.at(&quot;details&quot;)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.as_dict()<br>
@@ -251,10 +251,10 @@ TEST_CASE(&quot;YAML&nbsp;parser&nbsp;supports&nbsp;flow&nbsp;map&nbsp;values&nb
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;cfg:&nbsp;{a:&nbsp;1,&nbsp;b:&nbsp;[2,&nbsp;3]}\n&quot;;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;cfg&nbsp;=&nbsp;nos::yaml::parse(src).as_dict().at(&quot;cfg&quot;).as_dict();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;CHECK(cfg.at(&quot;a&quot;).as_numer()&nbsp;==&nbsp;doctest::Approx(1));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;CHECK(cfg.at(&quot;a&quot;).as_numer()&nbsp;==&nbsp;guard::Approx(1));<br>
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;&amp;arr&nbsp;=&nbsp;cfg.at(&quot;b&quot;).as_list();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK(arr.size()&nbsp;==&nbsp;2);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;CHECK(arr[1].as_numer()&nbsp;==&nbsp;doctest::Approx(3));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;CHECK(arr[1].as_numer()&nbsp;==&nbsp;guard::Approx(3));<br>
 }<br>
 <br>
 TEST_CASE(&quot;YAML&nbsp;parser&nbsp;honors&nbsp;empty&nbsp;block&nbsp;scalar&nbsp;when&nbsp;indent&nbsp;inferred&quot;)<br>
@@ -276,8 +276,8 @@ TEST_CASE(&quot;YAML&nbsp;parser&nbsp;allows&nbsp;blank&nbsp;lines&nbsp;between&
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;dict&nbsp;=&nbsp;nos::yaml::parse(src).as_dict();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;REQUIRE(dict.size()&nbsp;==&nbsp;2);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;CHECK(dict.at(&quot;a&quot;).as_numer()&nbsp;==&nbsp;doctest::Approx(1));<br>
-&nbsp;&nbsp;&nbsp;&nbsp;CHECK(dict.at(&quot;b&quot;).as_numer()&nbsp;==&nbsp;doctest::Approx(2));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;CHECK(dict.at(&quot;a&quot;).as_numer()&nbsp;==&nbsp;guard::Approx(1));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;CHECK(dict.at(&quot;b&quot;).as_numer()&nbsp;==&nbsp;guard::Approx(2));<br>
 }<br>
 <br>
 <br>
@@ -292,8 +292,8 @@ TEST_CASE(&quot;YAML&nbsp;parser&nbsp;allows&nbsp;blank&nbsp;lines&nbsp;inside&n
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;dict&nbsp;=&nbsp;nos::yaml::parse(src).as_dict();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;&amp;list&nbsp;=&nbsp;dict.at(&quot;list&quot;).as_list();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;REQUIRE(list.size()&nbsp;==&nbsp;2);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;CHECK(list[0].as_numer()&nbsp;==&nbsp;doctest::Approx(1));<br>
-&nbsp;&nbsp;&nbsp;&nbsp;CHECK(list[1].as_numer()&nbsp;==&nbsp;doctest::Approx(2));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;CHECK(list[0].as_numer()&nbsp;==&nbsp;guard::Approx(1));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;CHECK(list[1].as_numer()&nbsp;==&nbsp;guard::Approx(2));<br>
 }<br>
 <!-- END SCAT CODE -->
 </body>
