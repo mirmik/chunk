@@ -16,6 +16,7 @@
 #include&nbsp;&quot;commands/prepend_text.hpp&quot;<br>
 #include&nbsp;&quot;commands/replace_cpp_class.hpp&quot;<br>
 #include&nbsp;&quot;commands/replace_cpp_method.hpp&quot;<br>
+#include&nbsp;&quot;commands/replace_cpp_function.hpp&quot;<br>
 #include&nbsp;&quot;commands/replace_py_class.hpp&quot;<br>
 #include&nbsp;&quot;commands/replace_py_method.hpp&quot;<br>
 #include&nbsp;&quot;commands/replace_text.hpp&quot;<br>
@@ -37,6 +38,8 @@ symbol_command_registry()<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[]()&nbsp;{&nbsp;return&nbsp;std::make_unique&lt;ReplaceCppClassCommand&gt;();&nbsp;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-cpp-method&quot;,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[]()&nbsp;{&nbsp;return&nbsp;std::make_unique&lt;ReplaceCppMethodCommand&gt;();&nbsp;}},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-cpp-function&quot;,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[]()&nbsp;{&nbsp;return&nbsp;std::make_unique&lt;ReplaceCppFunctionCommand&gt;();&nbsp;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-py-class&quot;,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[]()&nbsp;{&nbsp;return&nbsp;std::make_unique&lt;ReplacePyClassCommand&gt;();&nbsp;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-py-method&quot;,<br>

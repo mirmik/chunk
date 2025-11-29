@@ -94,6 +94,7 @@
 
 * `replace_cpp_class` — заменить определение класса в C++-файле.
 * `replace_cpp_method` — заменить определение метода (функции-члена) в C++-классе.
+* `replace_cpp_function` — заменить определение свободной функции в C++-файле.
 * `replace_py_class` — заменить определение класса в Python-файле.
 * `replace_py_method` — заменить определение метода в Python-классе.
 
@@ -446,6 +447,45 @@ operations:
 
 ---
 
+#### 4.3.5. `replace_cpp_function`
+
+Заменить определение **свободной C++ функции** (включая имя, сигнатуру и тело).
+
+**Поля (минимально):**
+
+* `op: "replace_cpp_function"`
+* `path` — путь к C++-файлу (`.h`, `.hpp`, `.cpp` и так далее).
+* `function` — имя функции (например, `foo`) **или**
+* `symbol` — квалифицированное имя функции (например, `ns::foo`).
+* `payload` — новое полное определение функции (с сигнатурой и телом).
+
+**Примеры:**
+
+Минимальный пример по имени функции:
+
+```yaml
+- op: replace_cpp_function
+  path: src/math.cpp
+  function: foo
+  payload: |
+    int foo(int x) {
+        return x * 2;
+    }
+```
+
+Пример с квалифицированным именем:
+
+```yaml
+- op: replace_cpp_function
+  path: src/math.cpp
+  symbol: math::sum
+  payload: |
+    int math::sum(int a, int b) {
+        return a + b;
+    }
+```
+
+## 5. Чего делать нельзя
 ## 5. Чего делать нельзя
 
 1. Нельзя добавлять текст до или после YAML-документа CHUNK.

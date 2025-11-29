@@ -23,6 +23,7 @@ struct&nbsp;Region<br>
 //&nbsp;Умеет:<br>
 //&nbsp;&nbsp;&nbsp;*&nbsp;находить&nbsp;определение&nbsp;класса&nbsp;(class&nbsp;/&nbsp;struct)<br>
 //&nbsp;&nbsp;&nbsp;*&nbsp;искать&nbsp;методы&nbsp;внутри&nbsp;класса&nbsp;(по&nbsp;имени)<br>
+//&nbsp;&nbsp;&nbsp;*&nbsp;искать&nbsp;свободные&nbsp;функции&nbsp;(по&nbsp;имени&nbsp;или&nbsp;квалифицированному&nbsp;имени)<br>
 class&nbsp;CppSymbolFinder<br>
 {<br>
 public:<br>
@@ -46,6 +47,10 @@ public:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;method_name,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Region&nbsp;&amp;out)&nbsp;const;<br>
 <br>
+bool&nbsp;find_function(const&nbsp;std::string&nbsp;&amp;qualified_name,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Region&nbsp;&amp;out)&nbsp;const;<br>
+<br>
+private:<br>
 private:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;Token<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>

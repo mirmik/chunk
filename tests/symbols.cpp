@@ -172,3 +172,25 @@ TEST_CASE("CppSymbolFinder: handles extra whitespace and newlines")
     CHECK(rm.start_line == 5);
     CHECK(rm.end_line == 5);
 }
+
+TEST_CASE("CppSymbolFinder: find_function finds free function by name")
+{
+    const char *src =
+        "int helper();\n"
+        "\n"
+        "int foo(int x)\n"
+        "{\n"
+        "    return x + 1;\n"
+        "}\n"
+        "\n"
+        "int bar()\n"
+        "{\n"
+        "    return 0;\n"
+        "}\n";
+
+    CppSymbolFinder finder(src);
+    Region r;
+    CHECK(finder.find_function("foo", r));
+    CHECK(r.start_line >= 0);
+    CHECK(r.end_line >= r.start_line);
+}

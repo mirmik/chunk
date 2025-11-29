@@ -29,6 +29,8 @@ static&nbsp;std::unordered_map&lt;std::string,&nbsp;std::vector&lt;std::string&g
 &nbsp;&nbsp;&nbsp;&nbsp;{&quot;delete-file&quot;,&nbsp;{&quot;delete-file&quot;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-cpp-class&quot;,&nbsp;{&quot;replace-cpp-class&quot;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-cpp-method&quot;,&nbsp;{&quot;replace-cpp-method&quot;}},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-cpp-method&quot;,&nbsp;{&quot;replace-cpp-method&quot;}},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-cpp-function&quot;,&nbsp;{&quot;replace-cpp-function&quot;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-py-class&quot;,&nbsp;{&quot;replace-py-class&quot;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-py-method&quot;,&nbsp;{&quot;replace-py-method&quot;}},<br>
 };<br>

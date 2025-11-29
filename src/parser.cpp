@@ -21,6 +21,8 @@ static std::unordered_map<std::string, std::vector<std::string>> synonyms = {
     {"delete-file", {"delete-file"}},
     {"replace-cpp-class", {"replace-cpp-class"}},
     {"replace-cpp-method", {"replace-cpp-method"}},
+    {"replace-cpp-method", {"replace-cpp-method"}},
+    {"replace-cpp-function", {"replace-cpp-function"}},
     {"replace-py-class", {"replace-py-class"}},
     {"replace-py-method", {"replace-py-method"}},
 };

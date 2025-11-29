@@ -15,6 +15,7 @@ struct Region
 // Умеет:
 //   * находить определение класса (class / struct)
 //   * искать методы внутри класса (по имени)
+//   * искать свободные функции (по имени или квалифицированному имени)
 class CppSymbolFinder
 {
 public:
@@ -38,6 +39,10 @@ public:
                      const std::string &method_name,
                      Region &out) const;
 
+bool find_function(const std::string &qualified_name,
+                   Region &out) const;
+
+private:
 private:
     struct Token
     {

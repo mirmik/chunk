@@ -8,6 +8,7 @@
 #include "commands/prepend_text.hpp"
 #include "commands/replace_cpp_class.hpp"
 #include "commands/replace_cpp_method.hpp"
+#include "commands/replace_cpp_function.hpp"
 #include "commands/replace_py_class.hpp"
 #include "commands/replace_py_method.hpp"
 #include "commands/replace_text.hpp"
@@ -29,6 +30,8 @@ symbol_command_registry()
          []() { return std::make_unique<ReplaceCppClassCommand>(); }},
         {"replace-cpp-method",
          []() { return std::make_unique<ReplaceCppMethodCommand>(); }},
+        {"replace-cpp-function",
+         []() { return std::make_unique<ReplaceCppFunctionCommand>(); }},
         {"replace-py-class",
          []() { return std::make_unique<ReplacePyClassCommand>(); }},
         {"replace-py-method",

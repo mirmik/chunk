@@ -404,3 +404,155 @@ bool CppSymbolFinder::find_method(const std::string &class_name,
 
     return false;
 }
+
+bool CppSymbolFinder::find_function(const std::string &qualified_name,
+                                    Region &out) const
+{
+    // Разбираем qualified_name на части, разделённые "::"
+    std::vector<std::string> parts;
+    std::size_t start = 0;
+    while (start <= qualified_name.size())
+    {
+        auto pos = qualified_name.find("::", start);
+        if (pos == std::string::npos)
+        {
+            std::string part = qualified_name.substr(start);
+            if (!part.empty())
+                parts.push_back(part);
+            break;
+        }
+        std::string part = qualified_name.substr(start, pos - start);
+        if (!part.empty())
+            parts.push_back(part);
+        start = pos + 2;
+    }
+    if (parts.empty())
+        return false;
+
+    const std::size_t n = m_tokens.size();
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        const Token &t = m_tokens[i];
+        if (t.kind != Token::Identifier)
+            continue;
+        if (t.text != parts.back())
+            continue;
+
+        // Проверяем квалификаторы справа налево: ns1::ns2::func
+        std::size_t pos = i;
+        bool match = true;
+        if (parts.size() > 1)
+        {
+            for (std::size_t k = parts.size() - 1; k-- > 0;)
+            {
+                if (pos < 2)
+                {
+                    match = false;
+                    break;
+                }
+                if (m_tokens[pos - 1].text != "::")
+                {
+                    match = false;
+                    break;
+                }
+                const Token &ns_tok = m_tokens[pos - 2];
+                if (ns_tok.kind != Token::Identifier ||
+                    ns_tok.text != parts[k])
+                {
+                    match = false;
+                    break;
+                }
+                pos -= 2;
+            }
+            // Не допускаем лишних квалификаторов слева
+            if (match && pos >= 1 && m_tokens[pos - 1].text == "::")
+                match = false;
+        }
+        if (!match)
+            continue;
+
+        // После имени должна идти '('
+        std::size_t j = i + 1;
+        if (j >= n || m_tokens[j].text != "(")
+            continue;
+
+        // Определяем начало объявления: идём назад до ';', '{' или '}'.
+        std::size_t start_tok = 0;
+        for (std::size_t k = i; k > 0; --k)
+        {
+            const std::string &s = m_tokens[k].text;
+            if (s == ";" || s == "{" || s == "}")
+            {
+                start_tok = k + 1;
+                break;
+            }
+        }
+
+        // 1) Пропускаем параметры (балансируем скобки)
+        std::size_t pos_after_params = j;
+        int paren_depth = 0;
+        for (; pos_after_params < n; ++pos_after_params)
+        {
+            const std::string &s = m_tokens[pos_after_params].text;
+            if (s == "(")
+            {
+                ++paren_depth;
+            }
+            else if (s == ")")
+            {
+                --paren_depth;
+                if (paren_depth == 0)
+                {
+                    ++pos_after_params; // токен после ')'
+                    break;
+                }
+            }
+        }
+        if (paren_depth != 0)
+            continue;
+
+        // 2) Ищем ';' или тело функции в фигурных скобках
+        std::size_t end_tok = start_tok;
+        int brace_depth = 0;
+        std::size_t pos_body = pos_after_params;
+        for (; pos_body < n; ++pos_body)
+        {
+            const std::string &s = m_tokens[pos_body].text;
+            if (s == ";")
+            {
+                end_tok = pos_body;
+                break;
+            }
+            if (s == "{")
+            {
+                brace_depth = 1;
+                end_tok = pos_body;
+                ++pos_body;
+                for (; pos_body < n; ++pos_body)
+                {
+                    const std::string &sb = m_tokens[pos_body].text;
+                    if (sb == "{")
+                        ++brace_depth;
+                    else if (sb == "}")
+                    {
+                        --brace_depth;
+                        if (brace_depth == 0)
+                        {
+                            end_tok = pos_body;
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+        if (end_tok < start_tok)
+            continue;
+
+        out.start_line = m_tokens[start_tok].line;
+        out.end_line = m_tokens[end_tok].line;
+        return true;
+    }
+
+    return false;
+}

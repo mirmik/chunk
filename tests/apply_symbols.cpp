@@ -270,3 +270,59 @@ TEST_CASE("symbol API: replace-py-method with Class.method syntax")
 
     CHECK(found_bar_2);
 }
+
+// ============================================================================
+// C++: replace-cpp-function
+// ============================================================================
+TEST_CASE("symbol API: replace-cpp-function replaces only target function")
+{
+    fs::path tmp = fs::temp_directory_path() / "symbol_cpp_function";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "foo.cpp";
+    {
+        std::ofstream out(f);
+        out << "int foo() {\n"
+               "    return 1;\n"
+               "}\n"
+               "\n"
+               "int bar() {\n"
+               "    return 2;\n"
+               "}\n";
+    }
+
+    fs::path patch = tmp / "patch_cpp_function.txt";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: replace_cpp_function\n"
+               "    path: \"" << f.string() << "\"\n"
+               "    function: \"foo\"\n"
+               "    payload: |\n"
+               "      int foo() {\n"
+               "          return 42;\n"
+               "      }\n";
+    }
+
+    CHECK(run_apply(patch) == 0);
+
+    auto L = read_lines(f);
+    bool found_foo_42 = false;
+    bool found_bar_2 = false;
+
+    for (const auto &line : L)
+    {
+        if (line.find("int foo()") != std::string::npos)
+            found_foo_42 = true;
+        if (line.find("return 42") != std::string::npos)
+            found_foo_42 = true;
+        if (line.find("int bar()") != std::string::npos)
+            found_bar_2 = true;
+        if (line.find("return 2") != std::string::npos)
+            found_bar_2 = true;
+    }
+
+    CHECK(found_foo_42);
+    CHECK(found_bar_2);
+}
