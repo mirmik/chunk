@@ -34,6 +34,11 @@ int run_apply(const fs::path &patch)
     return apply_chunk_main((int)argv_real.size(), argv_real.data());
 }
 
+static std::string yaml_path(const fs::path &p)
+{
+    return p.generic_string();
+}
+
 TEST_CASE("apply_chunk_main: insert-after-text")
 {
     fs::path tmp = fs::temp_directory_path() / "chunk_test_insert_after_text";
@@ -53,7 +58,7 @@ TEST_CASE("apply_chunk_main: insert-after-text")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: insert_after_text\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    marker: \"LINE2\"\n"
                "    payload: |\n"
@@ -92,7 +97,7 @@ TEST_CASE("apply_chunk_main: insert-before-text")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: insert_before_text\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    marker: \"BBB\"\n"
                "    payload: |\n"
@@ -131,7 +136,7 @@ TEST_CASE("apply_chunk_main: insert-text-after synonym")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: insert-text-after\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    marker: \"TWO\"\n"
                "    payload: |\n"
@@ -170,7 +175,7 @@ TEST_CASE("apply_chunk_main: insert_text_before synonym")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: insert_text_before\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    marker: \"SECOND\"\n"
                "    payload: |\n"
@@ -209,7 +214,7 @@ TEST_CASE("apply_chunk_main: replace-text")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_text\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    marker: \"beta\"\n"
                "    payload: |\n"
@@ -248,7 +253,7 @@ TEST_CASE("apply_chunk_main: delete-text")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: delete_text\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    marker: |\n"
                "      two\n"
@@ -282,7 +287,7 @@ TEST_CASE("apply_chunk_main: prepend-text")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: prepend_text\n"
-               "    path: \"" << f.string() << "\"\n"
+               "    path: \"" << yaml_path(f) << "\"\n"
                "    payload: |\n"
                "      START1\n"
                "      START2\n";
@@ -317,7 +322,7 @@ TEST_CASE("apply_chunk_main: append-text")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: append_text\n"
-               "    path: \"" << f.string() << "\"\n"
+               "    path: \"" << yaml_path(f) << "\"\n"
                "    payload: |\n"
                "      THREE\n"
                "      FOUR\n";
@@ -356,10 +361,10 @@ TEST_CASE("apply_chunk_main: delete-file then create-file")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: delete_file\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "  - op: create_file\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    payload: |\n"
                "      NEW1\n"
@@ -399,7 +404,7 @@ TEST_CASE("apply_chunk_main: marker ignores C++ comments when language is set")
 		out << "language: c++\n"
 		       "operations:\n"
 		       "  - op: replace_text\n"
-		       "    path: \"" << f.string() << "\"\n"
+		       "    path: \"" << yaml_path(f) << "\"\n"
 		       "    marker: |\n"
 		       "      int x = 1;\n"
 		       "      return x;\n"
@@ -439,7 +444,7 @@ TEST_CASE("apply_chunk_main: marker ignores Python comments when language is set
 		out << "language: python\n"
 		       "operations:\n"
 		       "  - op: replace_text\n"
-		       "    path: \"" << f.string() << "\"\n"
+		       "    path: \"" << yaml_path(f) << "\"\n"
 		       "    marker: |\n"
 		       "      y = x + 1\n"
 		       "      return y\n"
@@ -476,7 +481,7 @@ TEST_CASE("apply_chunk_main: replace-text on top")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_text\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    marker: \"header\"\n"
                "    payload: |\n"
@@ -543,7 +548,7 @@ TEST_CASE("apply_chunk_main: replace section in long markdown file")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_text\n"
-               "    path: \"" << f.string() << "\"\n"
+               "    path: \"" << yaml_path(f) << "\"\n"
                "    marker: |\n"
                "      ## Getting Started\n"
                "      1. Install dependencies\n"
@@ -625,7 +630,7 @@ TEST_CASE("apply_chunk_main: insert section into long markdown file")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: insert_after_text\n"
-               "    path: \"" << f.string() << "\"\n"
+               "    path: \"" << yaml_path(f) << "\"\n"
                "    marker: |\n"
                "      ## FAQ\n"
                "      Q: How to configure?\n"
@@ -687,7 +692,7 @@ TEST_CASE("apply_chunk_main: replace_c_style_block replaces single function body
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_c_style_block\n"
-               "    path: \"" << f.string() << "\"\n"
+               "    path: \"" << yaml_path(f) << "\"\n"
                "    marker: |\n"
                "      int foo()\n"
                "      {\n"
@@ -746,7 +751,7 @@ TEST_CASE("apply_chunk_main: replace_c_style_block handles nested braces and com
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_c_style_block\n"
-               "    path: \"" << f.string() << "\"\n"
+               "    path: \"" << yaml_path(f) << "\"\n"
                "    marker: |\n"
                "      void foo()\n"
                "      {\n"
@@ -804,7 +809,7 @@ TEST_CASE("apply_chunk_main: replace-py-block replaces python block by marker")
         out << "language: python\n"
                "operations:\n"
                "  - op: replace_py_block\n"
-               "    path: \"" << f.string() << "\"\n"
+               "    path: \"" << yaml_path(f) << "\"\n"
                "    marker: |\n"
                "      if __name__ == \"__main__\":\n"
                "    payload: |\n"

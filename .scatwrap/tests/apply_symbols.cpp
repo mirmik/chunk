@@ -40,6 +40,11 @@ static&nbsp;int&nbsp;run_apply(const&nbsp;fs::path&nbsp;&amp;patch)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;apply_chunk_main((int)argv.size(),&nbsp;argv.data());<br>
 }<br>
 <br>
+static&nbsp;std::string&nbsp;yaml_path(const&nbsp;fs::path&nbsp;&amp;p)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;p.generic_string();<br>
+}<br>
+<br>
 //&nbsp;============================================================================<br>
 //&nbsp;C++:&nbsp;replace-cpp-class<br>
 //&nbsp;============================================================================<br>
@@ -70,7 +75,7 @@ TEST_CASE(&quot;symbol&nbsp;API:&nbsp;replace-cpp-class&nbsp;replaces&nbsp;only&
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;op:&nbsp;replace_cpp_class\n&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;f.string()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;class:&nbsp;\&quot;Foo\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|\n&quot;<br>
@@ -123,7 +128,7 @@ TEST_CASE(&quot;symbol&nbsp;API:&nbsp;replace-py-class&nbsp;replaces&nbsp;whole&
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;op:&nbsp;replace_py_class\n&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;f.string()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;class:&nbsp;\&quot;Foo\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|\n&quot;<br>
@@ -194,7 +199,7 @@ TEST_CASE(&quot;symbol&nbsp;API:&nbsp;replace-py-method&nbsp;with&nbsp;separate&
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;op:&nbsp;replace_py_method\n&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;f.string()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;class:&nbsp;\&quot;Weird\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;method:&nbsp;\&quot;run\&quot;\n&quot;<br>
@@ -253,7 +258,7 @@ TEST_CASE(&quot;symbol&nbsp;API:&nbsp;replace-py-method&nbsp;with&nbsp;Class.met
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;op:&nbsp;replace_py_method\n&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;f.string()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;symbol:&nbsp;\&quot;Foo.bar\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|\n&quot;<br>
@@ -306,7 +311,7 @@ TEST_CASE(&quot;symbol&nbsp;API:&nbsp;replace-cpp-function&nbsp;replaces&nbsp;on
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;op:&nbsp;replace_cpp_function\n&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;function:&nbsp;\&quot;foo\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;foo()&nbsp;{\n&quot;<br>

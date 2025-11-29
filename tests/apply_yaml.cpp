@@ -35,6 +35,11 @@ static int run_apply(const fs::path &patch)
     return apply_chunk_main((int)argv.size(), argv.data());
 }
 
+static std::string yaml_path(const fs::path &p)
+{
+    return p.generic_string();
+}
+
 class ScopedStreamSilence
 {
 public:
@@ -95,7 +100,7 @@ private:
 
         std::ostringstream patch;
         patch << "operations:\n";
-        patch << "  - path: " << f.string() << "\n";
+        patch << "  - path: \"" << yaml_path(f) << "\"\n";
         patch << "    op: replace_text\n";
         patch << "    marker: |\n";
         patch << "      beta\n";
@@ -134,7 +139,7 @@ TEST_CASE("YAML: only MARKER: behaves like legacy replace-text")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_text\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    marker: \"B\"\n"
                "    payload: \"X\"\n";
@@ -175,7 +180,7 @@ TEST_CASE("YAML: BEFORE fuzzy selects the correct marker")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_text\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    before: \"XXX\"\n"
                "    marker: \"target\"\n"
@@ -215,7 +220,7 @@ TEST_CASE("YAML: AFTER fuzzy selects correct block")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_text\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    marker: \"X\"\n"
                "    after: \"finish\"\n"
@@ -255,7 +260,7 @@ TEST_CASE("YAML: strong fuzzy match with BEFORE + AFTER")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_text\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    before: \"C\"\n"
                "    marker: \"mark\"\n"
@@ -293,12 +298,12 @@ TEST_CASE("YAML patch: create_file and delete_file")
         std::ofstream out(patch);
         out << "description: create and delete\n";
         out << "operations:\n";
-        out << "  - path: " << to_create.string() << "\n";
+        out << "  - path: \"" << yaml_path(to_create) << "\"\n";
         out << "    op: create_file\n";
         out << "    payload: |\n";
         out << "      one\n";
         out << "      two\n";
-        out << "  - path: " << to_delete.string() << "\n";
+        out << "  - path: \"" << yaml_path(to_delete) << "\"\n";
         out << "    op: delete_file\n";
     }
 
@@ -336,7 +341,7 @@ TEST_CASE("YAML patch: replace_text simple")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: replace_text\n";
         out << "    marker: |\n";
         out << "      beta\n";
@@ -377,7 +382,7 @@ TEST_CASE("YAML patch: indent from-marker for insert_after_text")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: insert_after_text\n";
         out << "    marker: |\n";
         out << "      int y = 2;\n";
@@ -418,7 +423,7 @@ TEST_CASE("YAML patch: indent from-marker for replace_text")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: replace_text\n";
         out << "    marker: |\n";
         out << "      do_something();\n";
@@ -463,7 +468,7 @@ TEST_CASE("YAML patch: BEFORE and AFTER select correct marker")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: replace_text\n";
         out << "    before: |\n";
         out << "      XXX\n";
@@ -504,7 +509,7 @@ TEST_CASE("YAML patch: delete_text removes block")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: delete_text\n";
         out << "    marker: |\n";
         out << "      bbb\n";
@@ -539,7 +544,7 @@ TEST_CASE("YAML patch: missing marker for text op fails and keeps file intact")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: replace_text\n";
         // marker отсутствует
         out << "    payload: |\n";
@@ -575,7 +580,7 @@ TEST_CASE("YAML patch: unknown indent mode causes failure and rollback")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: insert_after_text\n";
         out << "    marker: |\n";
         out << "      bar\n";
@@ -622,13 +627,13 @@ TEST_CASE("YAML patch: rollback restores metadata")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: replace_text\n";
         out << "    marker: |\n";
         out << "      beta\n";
         out << "    payload: |\n";
         out << "      XXX\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: delete_text\n";
         out << "    marker: |\n";
         out << "      missing\n";
@@ -672,7 +677,7 @@ TEST_CASE("YAML patch: insert_after_text skips blank lines in marker matching")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: insert_after_text\n";
         out << "    marker: |\n";
         out << "      A\n";
@@ -717,7 +722,7 @@ TEST_CASE("YAML patch: replace_text removes whole block including blank lines")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: replace_text\n";
         out << "    marker: |\n";
         out << "      A\n";
@@ -759,7 +764,7 @@ TEST_CASE("YAML patch: replace_text removes whole block including blank lines")
               std::ofstream out(patch);
               out << "language: cpp\n";
               out << "operations:\n";
-              out << "  - path: " << f.string() << "\n";
+              out << "  - path: \"" << yaml_path(f) << "\"\n";
               out << "    op: replace_text\n";
               out << "    marker: |\n";
               out << "      void foo() {\n";
@@ -811,7 +816,7 @@ TEST_CASE("YAML patch: replace_text removes whole block including blank lines")
               std::ofstream out(patch);
               out << "language: python\n";
               out << "operations:\n";
-              out << "  - path: " << f.string() << "\n";
+              out << "  - path: \"" << yaml_path(f) << "\"\n";
               out << "    op: replace_text\n";
               out << "    marker: |\n";
               out << "      class Foo:\n";
@@ -869,7 +874,7 @@ TEST_CASE("YAML patch: replace_text removes whole block including blank lines")
               std::ofstream out(patch);
               out << "language: cpp\n";
               out << "operations:\n";
-              out << "  - path: " << f.string() << "\n";
+              out << "  - path: \"" << yaml_path(f) << "\"\n";
               out << "    op: replace_text\n";
               out << "    marker: |\n";
               out << "      void foo() {\n";
@@ -928,7 +933,7 @@ TEST_CASE("YAML symbol API: replace_cpp_class replaces only target class")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: replace_cpp_class\n";
         out << "    class: Foo\n";
         out << "    payload: |\n";
@@ -978,7 +983,7 @@ TEST_CASE("YAML symbol API: replace_cpp_method with class & method")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: replace_cpp_method\n";
         out << "    class: Foo\n";
         out << "    method: value\n";
@@ -1027,7 +1032,7 @@ TEST_CASE("YAML symbol API: replace_py_class replaces whole class body")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: replace_py_class\n";
         out << "    class: Foo\n";
         out << "    payload: |\n";
@@ -1082,7 +1087,7 @@ TEST_CASE("YAML symbol API: replace_py_method with class & method")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: replace_py_method\n";
         out << "    class: Weird\n";
         out << "    method: run\n";
@@ -1134,7 +1139,7 @@ TEST_CASE("YAML patch: UTF-8 Cyrillic marker and payload")
     {
         std::ofstream out(patch);
         out << "operations:\n";
-        out << "  - path: " << f.string() << "\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
         out << "    op: replace_text\n";
         out << "    marker: \"привет\"\n";
         out << "    payload: \"здравствуй\"\n";

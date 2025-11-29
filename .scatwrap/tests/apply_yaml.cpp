@@ -43,6 +43,11 @@ static&nbsp;int&nbsp;run_apply(const&nbsp;fs::path&nbsp;&amp;patch)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;apply_chunk_main((int)argv.size(),&nbsp;argv.data());<br>
 }<br>
 <br>
+static&nbsp;std::string&nbsp;yaml_path(const&nbsp;fs::path&nbsp;&amp;p)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;p.generic_string();<br>
+}<br>
+<br>
 class&nbsp;ScopedStreamSilence<br>
 {<br>
 public:<br>
@@ -103,7 +108,7 @@ private:<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ostringstream&nbsp;patch;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;patch&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;patch&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;patch&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;patch&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;patch&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;patch&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;beta\n&quot;;<br>
@@ -142,7 +147,7 @@ TEST_CASE(&quot;YAML:&nbsp;only&nbsp;MARKER:&nbsp;behaves&nbsp;like&nbsp;legacy&
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;op:&nbsp;replace_text\n&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;f.string()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;\&quot;B\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;\&quot;X\&quot;\n&quot;;<br>
@@ -183,7 +188,7 @@ TEST_CASE(&quot;YAML:&nbsp;BEFORE&nbsp;fuzzy&nbsp;selects&nbsp;the&nbsp;correct&
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;op:&nbsp;replace_text\n&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;f.string()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;before:&nbsp;\&quot;XXX\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;\&quot;target\&quot;\n&quot;<br>
@@ -223,7 +228,7 @@ TEST_CASE(&quot;YAML:&nbsp;AFTER&nbsp;fuzzy&nbsp;selects&nbsp;correct&nbsp;block
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;op:&nbsp;replace_text\n&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;f.string()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;\&quot;X\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;after:&nbsp;\&quot;finish\&quot;\n&quot;<br>
@@ -263,7 +268,7 @@ TEST_CASE(&quot;YAML:&nbsp;strong&nbsp;fuzzy&nbsp;match&nbsp;with&nbsp;BEFORE&nb
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;op:&nbsp;replace_text\n&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;f.string()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;before:&nbsp;\&quot;C\&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;\&quot;mark\&quot;\n&quot;<br>
@@ -301,12 +306,12 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;create_file&nbsp;and&nbsp;delete_file&quot
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;description:&nbsp;create&nbsp;and&nbsp;delete\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;to_create.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(to_create)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;create_file\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;one\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;two\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;to_delete.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(to_delete)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;delete_file\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;}<br>
 <br>
@@ -344,7 +349,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;replace_text&nbsp;simple&quot;)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;beta\n&quot;;<br>
@@ -385,7 +390,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;indent&nbsp;from-marker&nbsp;for&nbsp;inse
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;insert_after_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;y&nbsp;=&nbsp;2;\n&quot;;<br>
@@ -426,7 +431,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;indent&nbsp;from-marker&nbsp;for&nbsp;repl
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do_something();\n&quot;;<br>
@@ -471,7 +476,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;BEFORE&nbsp;and&nbsp;AFTER&nbsp;select&nbs
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;before:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XXX\n&quot;;<br>
@@ -512,7 +517,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;delete_text&nbsp;removes&nbsp;block&quot;)
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;delete_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bbb\n&quot;;<br>
@@ -547,7 +552,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;missing&nbsp;marker&nbsp;for&nbsp;text&nbs
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;marker&nbsp;отсутствует<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|\n&quot;;<br>
@@ -583,7 +588,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;unknown&nbsp;indent&nbsp;mode&nbsp;causes&
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;insert_after_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bar\n&quot;;<br>
@@ -630,13 +635,13 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;rollback&nbsp;restores&nbsp;metadata&quot;
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;beta\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XXX\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;delete_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missing\n&quot;;<br>
@@ -680,7 +685,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;insert_after_text&nbsp;skips&nbsp;blank&nb
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;insert_after_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A\n&quot;;<br>
@@ -725,7 +730,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;replace_text&nbsp;removes&nbsp;whole&nbsp;
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A\n&quot;;<br>
@@ -767,7 +772,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;replace_text&nbsp;removes&nbsp;whole&nbsp;
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;language:&nbsp;cpp\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;foo()&nbsp;{\n&quot;;<br>
@@ -819,7 +824,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;replace_text&nbsp;removes&nbsp;whole&nbsp;
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;language:&nbsp;python\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;Foo:\n&quot;;<br>
@@ -877,7 +882,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;replace_text&nbsp;removes&nbsp;whole&nbsp;
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;language:&nbsp;cpp\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;|\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;foo()&nbsp;{\n&quot;;<br>
@@ -936,7 +941,7 @@ TEST_CASE(&quot;YAML&nbsp;symbol&nbsp;API:&nbsp;replace_cpp_class&nbsp;replaces&
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_cpp_class\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;class:&nbsp;Foo\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|\n&quot;;<br>
@@ -986,7 +991,7 @@ TEST_CASE(&quot;YAML&nbsp;symbol&nbsp;API:&nbsp;replace_cpp_method&nbsp;with&nbs
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_cpp_method\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;class:&nbsp;Foo\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;method:&nbsp;value\n&quot;;<br>
@@ -1035,7 +1040,7 @@ TEST_CASE(&quot;YAML&nbsp;symbol&nbsp;API:&nbsp;replace_py_class&nbsp;replaces&n
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_py_class\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;class:&nbsp;Foo\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;|\n&quot;;<br>
@@ -1090,7 +1095,7 @@ TEST_CASE(&quot;YAML&nbsp;symbol&nbsp;API:&nbsp;replace_py_method&nbsp;with&nbsp
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_py_method\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;class:&nbsp;Weird\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;method:&nbsp;run\n&quot;;<br>
@@ -1142,7 +1147,7 @@ TEST_CASE(&quot;YAML&nbsp;patch:&nbsp;UTF-8&nbsp;Cyrillic&nbsp;marker&nbsp;and&n
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(patch);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;operations:\n&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;&quot;&nbsp;&lt;&lt;&nbsp;f.string()&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;-&nbsp;path:&nbsp;\&quot;&quot;&nbsp;&lt;&lt;&nbsp;yaml_path(f)&nbsp;&lt;&lt;&nbsp;&quot;\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;op:&nbsp;replace_text\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;marker:&nbsp;\&quot;привет\&quot;\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;payload:&nbsp;\&quot;здравствуй\&quot;\n&quot;;<br>

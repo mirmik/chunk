@@ -388,7 +388,10 @@ namespace nos
                             break;
                         }
                         default:
-                            result.push_back(next);
+                            throw nos::yaml::parse_error(
+                                line,
+                                column + i,
+                                "invalid escape sequence");
                             break;
                         }
                         continue;

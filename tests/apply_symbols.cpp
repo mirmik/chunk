@@ -32,6 +32,11 @@ static int run_apply(const fs::path &patch)
     return apply_chunk_main((int)argv.size(), argv.data());
 }
 
+static std::string yaml_path(const fs::path &p)
+{
+    return p.generic_string();
+}
+
 // ============================================================================
 // C++: replace-cpp-class
 // ============================================================================
@@ -62,7 +67,7 @@ TEST_CASE("symbol API: replace-cpp-class replaces only target class")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_cpp_class\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    class: \"Foo\"\n"
                "    payload: |\n"
@@ -115,7 +120,7 @@ TEST_CASE("symbol API: replace-py-class replaces whole class body")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_py_class\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    class: \"Foo\"\n"
                "    payload: |\n"
@@ -186,7 +191,7 @@ TEST_CASE("symbol API: replace-py-method with separate class and method name")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_py_method\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    class: \"Weird\"\n"
                "    method: \"run\"\n"
@@ -245,7 +250,7 @@ TEST_CASE("symbol API: replace-py-method with Class.method syntax")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_py_method\n"
-               "    path: \"" << f.string()
+               "    path: \"" << yaml_path(f)
             << "\"\n"
                "    symbol: \"Foo.bar\"\n"
                "    payload: |\n"
@@ -298,7 +303,7 @@ TEST_CASE("symbol API: replace-cpp-function replaces only target function")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_cpp_function\n"
-               "    path: \"" << f.string() << "\"\n"
+               "    path: \"" << yaml_path(f) << "\"\n"
                "    function: \"foo\"\n"
                "    payload: |\n"
                "      int foo() {\n"
