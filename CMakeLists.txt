@@ -41,6 +41,7 @@ add_executable(chunk
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app/main.cpp
     ${CHUNK_CORE_SOURCES}
     ${YAML_SOURCES}
+    ${CHUNK_HEADERS}
 )
 target_include_directories(chunk PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -81,6 +82,7 @@ add_executable(chunk_tests
     tests/yaml_parser.cpp
     ${CHUNK_CORE_SOURCES}
     ${YAML_SOURCES}
+    ${CHUNK_HEADERS}
 )
 target_include_directories(chunk_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
