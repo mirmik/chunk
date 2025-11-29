@@ -19,5 +19,3 @@ public:
     void parse(const nos::trent &tr) override;
     void execute(std::vector<std::string> &lines) override;
 };
-
-std::unique_ptr<Command> create_file_command(const std::string &name);

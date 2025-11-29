@@ -55,7 +55,7 @@ std::unique_ptr&lt;Command&gt;&nbsp;create_command(const&nbsp;Section&nbsp;&amp;
 &nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;auto&nbsp;&amp;registry&nbsp;=&nbsp;symbol_command_registry();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;it&nbsp;=&nbsp;registry.find(section.command);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(it&nbsp;==&nbsp;registry.end())<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;apply_symbol_commands:&nbsp;unknown&nbsp;command:&nbsp;&quot;&nbsp;+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;apply_commands:&nbsp;unknown&nbsp;command:&nbsp;&quot;&nbsp;+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;section.command);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;cmd&nbsp;=&nbsp;it-&gt;second();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;cmd-&gt;load_section(section);<br>

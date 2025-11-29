@@ -27,8 +27,6 @@ public:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;parse(const&nbsp;nos::trent&nbsp;&amp;tr)&nbsp;override;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;execute(std::vector&lt;std::string&gt;&nbsp;&amp;lines)&nbsp;override;<br>
 };<br>
-<br>
-std::unique_ptr&lt;Command&gt;&nbsp;create_file_command(const&nbsp;std::string&nbsp;&amp;name);<br>
 <!-- END SCAT CODE -->
 </body>
 </html>

@@ -47,7 +47,7 @@ std::unique_ptr<Command> create_command(const Section &section,
     const auto &registry = symbol_command_registry();
     auto it = registry.find(section.command);
     if (it == registry.end())
-        throw std::runtime_error("apply_symbol_commands: unknown command: " +
+        throw std::runtime_error("apply_commands: unknown command: " +
                                  section.command);
     auto cmd = it->second();
     cmd->load_section(section);
