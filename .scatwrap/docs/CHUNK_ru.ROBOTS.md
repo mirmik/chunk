@@ -73,6 +73,9 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<br>
 &nbsp;&nbsp;&nbsp;```<br>
 <br>
+10.&nbsp;**Учитывай&nbsp;возможность&nbsp;повторов&nbsp;маркеров**<br>
+&nbsp;&nbsp;&nbsp;Маркер&nbsp;в&nbsp;тексте&nbsp;ищется&nbsp;начиная&nbsp;от&nbsp;начала&nbsp;файла&nbsp;к&nbsp;концу.&nbsp;При&nbsp;выборе&nbsp;маркера&nbsp;следует&nbsp;проверить,&nbsp;что&nbsp;такая&nbsp;последавательность&nbsp;не&nbsp;встречается&nbsp;в&nbsp;файле&nbsp;выше.<br>
+<br>
 ---<br>
 <br>
 ##&nbsp;2.&nbsp;Полный&nbsp;список&nbsp;команд<br>
