@@ -22,7 +22,9 @@ int main(int argc, char **argv)
 
     if (argc >= 2 && (std::strcmp(argv[1], "--ref") == 0))
     {
-        std::cout << "https://mirmik.github.io/chunk/\n";
+        std::cout << 
+            "https://mirmik.github.io/chunk/CHUNK_ru.md\n" <<
+            "https://mirmik.github.io/chunk/CHUNK_en.md\n";
         return 0;
     }
 

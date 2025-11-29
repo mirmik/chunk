@@ -30,7 +30,9 @@ int&nbsp;main(int&nbsp;argc,&nbsp;char&nbsp;**argv)<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;=&nbsp;2&nbsp;&amp;&amp;&nbsp;(std::strcmp(argv[1],&nbsp;&quot;--ref&quot;)&nbsp;==&nbsp;0))<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::cout&nbsp;&lt;&lt;&nbsp;&quot;https://mirmik.github.io/chunk/\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::cout&nbsp;&lt;&lt;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;https://mirmik.github.io/chunk/CHUNK_ru.md\n&quot;&nbsp;&lt;&lt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;https://mirmik.github.io/chunk/CHUNK_en.md\n&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;}<br>
 <br>
