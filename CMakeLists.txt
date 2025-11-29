@@ -68,7 +68,9 @@ endif()
 endif()
 
 if (HAS_LIBSTDCXXFS)
-    target_link_libraries(chunk PRIVATE stdc++fs)
+    if (NOT APPLE)
+        target_link_libraries(chunk PRIVATE stdc++fs)
+    endif()
 endif()
 
 
