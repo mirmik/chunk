@@ -27,7 +27,7 @@
 <br>
 Как&nbsp;этим&nbsp;пользоваться?&nbsp;<br>
 <br>
-Сбрасываете&nbsp;нейросети&nbsp;ссылку&nbsp;на&nbsp;спецификацию&nbsp;формата&nbsp;(можете&nbsp;добавить&nbsp;в&nbsp;персонализацию,&nbsp;лучше&nbsp;бросить&nbsp;файл&nbsp;в&nbsp;файлы&nbsp;проекта,&nbsp;если&nbsp;среда&nbsp;позволяет).&nbsp;Сбрасываете&nbsp;тексты&nbsp;исходного&nbsp;кода&nbsp;своего&nbsp;софта&nbsp;и&nbsp;относительные&nbsp;пути&nbsp;к&nbsp;файлам.&nbsp;И&nbsp;получаете&nbsp;ответ&nbsp;в&nbsp;форме&nbsp;легкоприменимом&nbsp;с&nbsp;помощью&nbsp;утилиты&nbsp;`chunk`:<br>
+Сбрасываете&nbsp;нейросети&nbsp;ссылку&nbsp;на&nbsp;спецификацию&nbsp;формата&nbsp;(можете&nbsp;добавить&nbsp;в&nbsp;персонализацию,&nbsp;лучше&nbsp;бросить&nbsp;файл&nbsp;в&nbsp;файлы&nbsp;проекта,&nbsp;если&nbsp;среда&nbsp;позволяет&nbsp;и&nbsp;дополнительно&nbsp;бросить&nbsp;в&nbsp;конце&nbsp;сообщения).&nbsp;Сбрасываете&nbsp;тексты&nbsp;исходного&nbsp;кода&nbsp;своего&nbsp;софта&nbsp;и&nbsp;относительные&nbsp;пути&nbsp;к&nbsp;файлам.&nbsp;И&nbsp;получаете&nbsp;ответ&nbsp;в&nbsp;форме&nbsp;легкоприменимом&nbsp;с&nbsp;помощью&nbsp;утилиты&nbsp;`chunk`:<br>
 <br>
 ```bash<br>
 chunk&nbsp;--paste<br>
