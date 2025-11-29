@@ -1,6 +1,7 @@
 #include "section.h"
 
 #include "command.h"
+#include "command_fabric.h"
 #include "file_command_objects.h"
 #include "symbol_commands.h"
 #include "text_commands.h"
@@ -65,43 +66,6 @@ namespace
         }
 
         return it->second;
-    }
-} // namespace
-
-bool is_text_command(const std::string &cmd)
-{
-    return cmd == "insert-after-text" || cmd == "insert-before-text" ||
-           cmd == "replace-text" || cmd == "delete-text" ||
-           cmd == "prepend-text" || cmd == "append-text";
-}
-
-bool is_symbol_command(const std::string &cmd)
-{
-    return cmd == "replace-cpp-method" || cmd == "replace-cpp-class" ||
-           cmd == "replace-py-method" || cmd == "replace-py-class";
-}
-
-namespace
-{
-    std::unique_ptr<Command> make_command(const std::string &name)
-    {
-        if (auto file_cmd = create_file_command(name))
-            return file_cmd;
-
-        if (is_text_command(name))
-        {
-            Section s;
-            s.command = name;
-            return create_text_command(s, std::string());
-        }
-        if (is_symbol_command(name))
-        {
-            Section s;
-            s.command = name;
-            return create_symbol_command(s, std::string());
-        }
-
-        throw std::runtime_error("YAML patch: unknown operation: " + name);
     }
 } // namespace
 

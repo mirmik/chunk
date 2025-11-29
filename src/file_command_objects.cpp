@@ -25,6 +25,11 @@ void CreateFileCommand::parse(const nos::trent &tr)
 void CreateFileCommand::execute(std::vector<std::string> &lines)
 {
     (void)lines;
+
+    std::filesystem::path p(section_.filepath);
+    if (std::filesystem::exists(p))
+        return;
+    write_file_lines(p, section_.payload);
 }
 
 DeleteFileCommand::DeleteFileCommand() : Command("delete-file") {}
@@ -41,13 +46,13 @@ void DeleteFileCommand::parse(const nos::trent &tr)
 void DeleteFileCommand::execute(std::vector<std::string> &lines)
 {
     (void)lines;
-}
 
-std::unique_ptr<Command> create_file_command(const std::string &name)
-{
-    if (name == "create-file")
-        return std::make_unique<CreateFileCommand>();
-    if (name == "delete-file")
-        return std::make_unique<DeleteFileCommand>();
-    return nullptr;
+    std::filesystem::path p(section_.filepath);
+    if (!std::filesystem::exists(p))
+        return;
+    std::error_code ec;
+    std::filesystem::remove(p, ec);
+    if (ec)
+        throw std::runtime_error("delete-file: cannot delete file: " +
+                                 section_.filepath + ": " + ec.message());
 }

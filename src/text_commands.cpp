@@ -356,7 +356,7 @@ namespace
 
 } // namespace
 
-namespace text_commands_detail
+namespace commands_detail
 {
     SimpleInsertCommand::SimpleInsertCommand(const std::string &name,
                                              bool prepend)
@@ -559,62 +559,4 @@ namespace text_commands_detail
         auto it_end = lines.begin() + static_cast<std::ptrdiff_t>(end + 1);
         lines.erase(it_begin, it_end);
     }
-} // namespace text_commands_detail
-
-namespace
-{
-    const std::unordered_map<std::string,
-                             text_commands_detail::CommandFactory> &
-    text_command_registry()
-    {
-        using namespace text_commands_detail;
-
-        static const std::unordered_map<std::string, CommandFactory> registry =
-            {
-                {"prepend-text",
-                 []() {
-                     return std::make_unique<SimpleInsertCommand>(
-                         "prepend-text", true);
-                 }},
-                {"append-text",
-                 []() {
-                     return std::make_unique<SimpleInsertCommand>("append-text",
-                                                                  false);
-                 }},
-                {"insert-after-text",
-                 []() { return std::make_unique<InsertAfterTextCommand>(); }},
-                {"insert-before-text",
-                 []() { return std::make_unique<InsertBeforeTextCommand>(); }},
-                {"replace-text",
-                 []() { return std::make_unique<ReplaceTextCommand>(); }},
-                {"delete-text",
-                 []() { return std::make_unique<DeleteTextCommand>(); }},
-            };
-
-        return registry;
-    }
-} // namespace
-
-std::unique_ptr<Command> create_text_command(const Section &section,
-                                             const std::string &filepath)
-{
-    const auto &registry = text_command_registry();
-    auto it = registry.find(section.command);
-    if (it == registry.end())
-        throw std::runtime_error("unknown text command: " + section.command);
-    auto cmd = it->second();
-    cmd->load_section(section);
-    (void)filepath;
-    return cmd;
-}
-
-void apply_text_commands(const std::string &filepath,
-                         std::vector<std::string> &lines,
-                         const std::vector<const Section *> &sections)
-{
-    for (const Section *s : sections)
-    {
-        auto cmd = create_text_command(*s, filepath);
-        cmd->execute(lines);
-    }
-}
+} // namespace commands_detail

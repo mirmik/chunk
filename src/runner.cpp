@@ -81,7 +81,7 @@ namespace
     }
 
     void apply_for_file(const std::string &filepath,
-                        const std::vector<Command *> &commands)
+                        const std::unique_ptr<Command> &command)
     {
         fs::path p = filepath;
         std::vector<std::string> orig;
@@ -97,44 +97,10 @@ namespace
             orig.clear();
         }
 
-        for (Command *cmd : commands)
-        {
-            if (!existed && cmd->command_name() == "delete-file")
-                throw std::runtime_error("delete-file: file does not exist");
-        }
+        command->execute(orig);
 
-        for (Command *cmd : commands)
-        {
-            if (cmd->command_name() == "create-file")
-            {
-                write_file_lines(p, cmd->data().payload);
-                return;
-            }
-            if (cmd->command_name() == "delete-file")
-            {
-                std::error_code ec;
-                fs::remove(p, ec);
-                if (ec)
-                    throw std::runtime_error("delete-file failed");
-                return;
-            }
-        }
-
-        for (Command *cmd : commands)
-        {
-            if (cmd->command_name() == "create-file" ||
-                cmd->command_name() == "delete-file")
-                continue;
-
-            if (is_text_command(cmd->command_name()) ||
-                is_symbol_command(cmd->command_name()))
-                cmd->execute(orig);
-            else
-                throw std::runtime_error("unexpected command: " +
-                                         cmd->command_name());
-        }
-
-        if (!commands.empty())
+        if (command->command_name() != "delete-file" &&
+            command->command_name() != "create-file")
             write_file_lines(p, orig);
     }
 } // namespace
@@ -199,9 +165,7 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
     {
         for (const auto &cmd : commands)
         {
-            current_command = cmd.get();
-            std::vector<Command *> single{cmd.get()};
-            apply_for_file(cmd->filepath(), single);
+            apply_for_file(cmd->filepath(), cmd);
         }
     }
     catch (const std::exception &e)

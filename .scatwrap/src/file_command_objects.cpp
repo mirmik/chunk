@@ -33,6 +33,11 @@ void&nbsp;CreateFileCommand::parse(const&nbsp;nos::trent&nbsp;&amp;tr)<br>
 void&nbsp;CreateFileCommand::execute(std::vector&lt;std::string&gt;&nbsp;&amp;lines)<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;(void)lines;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::filesystem::path&nbsp;p(section_.filepath);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(std::filesystem::exists(p))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;write_file_lines(p,&nbsp;section_.payload);<br>
 }<br>
 <br>
 DeleteFileCommand::DeleteFileCommand()&nbsp;:&nbsp;Command(&quot;delete-file&quot;)&nbsp;{}<br>
@@ -49,15 +54,15 @@ void&nbsp;DeleteFileCommand::parse(const&nbsp;nos::trent&nbsp;&amp;tr)<br>
 void&nbsp;DeleteFileCommand::execute(std::vector&lt;std::string&gt;&nbsp;&amp;lines)<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;(void)lines;<br>
-}<br>
 <br>
-std::unique_ptr&lt;Command&gt;&nbsp;create_file_command(const&nbsp;std::string&nbsp;&amp;name)<br>
-{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(name&nbsp;==&nbsp;&quot;create-file&quot;)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;std::make_unique&lt;CreateFileCommand&gt;();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(name&nbsp;==&nbsp;&quot;delete-file&quot;)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;std::make_unique&lt;DeleteFileCommand&gt;();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;nullptr;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::filesystem::path&nbsp;p(section_.filepath);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!std::filesystem::exists(p))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::error_code&nbsp;ec;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::filesystem::remove(p,&nbsp;ec);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ec)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;delete-file:&nbsp;cannot&nbsp;delete&nbsp;file:&nbsp;&quot;&nbsp;+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;section_.filepath&nbsp;+&nbsp;&quot;:&nbsp;&quot;&nbsp;+&nbsp;ec.message());<br>
 }<br>
 <!-- END SCAT CODE -->
 </body>

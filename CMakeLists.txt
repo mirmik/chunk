@@ -25,6 +25,7 @@ file(GLOB YAML_SOURCES CONFIGURE_DEPENDS
 set(CHUNK_CORE_SOURCES
     src/apply.cpp
     src/command.cpp
+    src/command_fabric.cpp
     src/command_parse_helpers.cpp
     src/file_io.cpp
     src/file_command_objects.cpp

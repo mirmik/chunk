@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace text_commands_detail
+namespace commands_detail
 {
     class SimpleInsertCommand : public Command
     {
@@ -107,4 +107,4 @@ namespace text_commands_detail
     };
 
     using CommandFactory = std::function<std::unique_ptr<Command>()>;
-} // namespace text_commands_detail
+} // namespace commands_detail

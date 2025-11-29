@@ -71,7 +71,7 @@ namespace
 
 } // namespace
 
-namespace symbol_commands_detail
+namespace commands_detail
 {
     RegionReplaceCommand::RegionReplaceCommand(const std::string &name)
         : Command(name)
@@ -301,53 +301,4 @@ namespace symbol_commands_detail
     {
         return "replace-py-method: invalid region";
     }
-} // namespace symbol_commands_detail
-
-namespace
-{
-    const std::unordered_map<std::string,
-                             symbol_commands_detail::CommandFactory> &
-    symbol_command_registry()
-    {
-        using namespace symbol_commands_detail;
-
-        static const std::unordered_map<std::string, CommandFactory> registry =
-            {
-                {"replace-cpp-class",
-                 []() { return std::make_unique<ReplaceCppClassCommand>(); }},
-                {"replace-cpp-method",
-                 []() { return std::make_unique<ReplaceCppMethodCommand>(); }},
-                {"replace-py-class",
-                 []() { return std::make_unique<ReplacePyClassCommand>(); }},
-                {"replace-py-method",
-                 []() { return std::make_unique<ReplacePyMethodCommand>(); }},
-            };
-
-        return registry;
-    }
-} // namespace
-
-std::unique_ptr<Command> create_symbol_command(const Section &section,
-                                               const std::string &filepath)
-{
-    const auto &registry = symbol_command_registry();
-    auto it = registry.find(section.command);
-    if (it == registry.end())
-        throw std::runtime_error("apply_symbol_commands: unknown command: " +
-                                 section.command);
-    auto cmd = it->second();
-    cmd->load_section(section);
-    (void)filepath;
-    return cmd;
-}
-
-void apply_symbol_commands(const std::string &filepath,
-                           std::vector<std::string> &lines,
-                           const std::vector<const Section *> &sections)
-{
-    for (const Section *s : sections)
-    {
-        auto cmd = create_symbol_command(*s, filepath);
-        cmd->execute(lines);
-    }
-}
+} // namespace commands_detail

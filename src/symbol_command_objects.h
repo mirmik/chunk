@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace symbol_commands_detail
+namespace commands_detail
 {
     class RegionReplaceCommand : public Command
     {
@@ -82,4 +82,4 @@ namespace symbol_commands_detail
     };
 
     using CommandFactory = std::function<std::unique_ptr<Command>()>;
-} // namespace symbol_commands_detail
+} // namespace commands_detail

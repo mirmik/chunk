@@ -18,7 +18,7 @@
 #include&nbsp;&lt;string&gt;<br>
 #include&nbsp;&lt;vector&gt;<br>
 <br>
-namespace&nbsp;symbol_commands_detail<br>
+namespace&nbsp;commands_detail<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;class&nbsp;RegionReplaceCommand&nbsp;:&nbsp;public&nbsp;Command<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br>
@@ -90,7 +90,7 @@ namespace&nbsp;symbol_commands_detail<br>
 &nbsp;&nbsp;&nbsp;&nbsp;};<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;using&nbsp;CommandFactory&nbsp;=&nbsp;std::function&lt;std::unique_ptr&lt;Command&gt;()&gt;;<br>
-}&nbsp;//&nbsp;namespace&nbsp;symbol_commands_detail<br>
+}&nbsp;//&nbsp;namespace&nbsp;commands_detail<br>
 <!-- END SCAT CODE -->
 </body>
 </html>
