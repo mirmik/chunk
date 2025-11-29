@@ -24,9 +24,8 @@
 &nbsp;&nbsp;&nbsp;*&nbsp;Рекомендуемый&nbsp;отступ&nbsp;—&nbsp;**2&nbsp;пробела**.<br>
 &nbsp;&nbsp;&nbsp;*&nbsp;Ключи&nbsp;и&nbsp;значения&nbsp;—&nbsp;обычный&nbsp;YAML&nbsp;1.2.<br>
 <br>
-3.&nbsp;**Без&nbsp;комментариев.**<br>
-&nbsp;&nbsp;&nbsp;Не&nbsp;используй&nbsp;строки,&nbsp;начинающиеся&nbsp;с&nbsp;`#`.<br>
-&nbsp;&nbsp;&nbsp;Комментарии&nbsp;внутри&nbsp;документа&nbsp;недопустимы.<br>
+3.&nbsp;**Формат&nbsp;комментариев.**.<br>
+&nbsp;&nbsp;&nbsp;Комментарии&nbsp;к&nbsp;патчу&nbsp;в&nbsp;целом&nbsp;и&nbsp;отдельным&nbsp;операциям&nbsp;выполняй&nbsp;с&nbsp;помощью&nbsp;специальных&nbsp;полей,&nbsp;`description`&nbsp;для&nbsp;патча&nbsp;в&nbsp;целом&nbsp;и&nbsp;`comment`&nbsp;для&nbsp;отдельной&nbsp;операции.&nbsp;Не&nbsp;используй&nbsp;`#`&nbsp;как&nbsp;yaml-комментарий.&nbsp;<br>
 <br>
 4.&nbsp;**Только&nbsp;описанные&nbsp;поля.**<br>
 <br>
@@ -135,6 +134,7 @@ operations:<br>
 <br>
 ```yaml<br>
 -&nbsp;op:&nbsp;&lt;имя-команды&gt;<br>
+&nbsp;&nbsp;comment:&nbsp;&quot;Краткое&nbsp;описание,&nbsp;что&nbsp;и&nbsp;зачем&nbsp;изменяет&nbsp;комманда&quot;<br>
 &nbsp;&nbsp;path:&nbsp;&lt;путь/к/файлу&gt;<br>
 &nbsp;&nbsp;...другие&nbsp;поля&nbsp;команды...<br>
 ```<br>
