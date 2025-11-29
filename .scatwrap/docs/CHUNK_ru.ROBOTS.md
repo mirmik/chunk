@@ -300,6 +300,8 @@ operations:<br>
 <br>
 Неправильно:<br>
 ```yaml<br>
+-&nbsp;op:&nbsp;insert_after_text<br>
+&nbsp;&nbsp;path:&nbsp;src/logger.cpp<br>
 &nbsp;&nbsp;marker:&nbsp;&quot;Logger::Logger()&nbsp;{&quot;<br>
 &nbsp;&nbsp;payload:&nbsp;|<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Logger::Logger()&nbsp;{<br>
@@ -308,6 +310,8 @@ operations:<br>
 <br>
 Правильно:<br>
 ```yaml<br>
+-&nbsp;op:&nbsp;insert_after_text<br>
+&nbsp;&nbsp;path:&nbsp;src/logger.cpp<br>
 &nbsp;&nbsp;marker:&nbsp;&quot;Logger::Logger()&nbsp;{&quot;<br>
 &nbsp;&nbsp;payload:&nbsp;|<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;init_default_sink();<br>

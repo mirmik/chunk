@@ -292,6 +292,8 @@ operations:
 
 Неправильно:
 ```yaml
+- op: insert_after_text
+  path: src/logger.cpp
   marker: "Logger::Logger() {"
   payload: |
     Logger::Logger() {
@@ -300,6 +302,8 @@ operations:
 
 Правильно:
 ```yaml
+- op: insert_after_text
+  path: src/logger.cpp
   marker: "Logger::Logger() {"
   payload: |
         init_default_sink();
