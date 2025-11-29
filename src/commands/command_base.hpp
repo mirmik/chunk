@@ -98,7 +98,6 @@ public:
 
         if (!chunk_verbose_logging_enabled())
             return;
-
         if (debug_file_text_.empty() || marker_.empty())
             return;
 
@@ -109,7 +108,6 @@ public:
         const std::string &file_text = debug_file_text_;
         std::size_t best_pos = std::string::npos;
         std::size_t best_len = 0;
-
         if (!file_text.empty())
         {
             for (std::size_t i = 0; i < file_text.size(); ++i)
@@ -129,16 +127,21 @@ public:
                 }
             }
         }
-
         if (best_pos == std::string::npos)
             return;
+
+        std::size_t mismatch_file_pos = best_pos + best_len;
+        std::size_t mismatch_marker_pos = best_len;
 
         os << "\nverbose marker diagnostics:\n";
         os << "  best marker prefix match length: " << best_len
            << " of " << marker_text.size() << " bytes\n";
 
-        std::size_t mismatch_file_pos = best_pos + best_len;
-        std::size_t mismatch_marker_pos = best_len;
+        if (best_len == marker_text.size())
+        {
+            os << "  note: full marker matched; most likely error is in marker search logic\n";
+            return;
+        }
 
         std::size_t line = 1;
         std::size_t column = 1;
@@ -154,7 +157,6 @@ public:
                 ++column;
             }
         }
-
         os << "  file position: offset " << mismatch_file_pos
            << ", line " << line << ", column " << column << "\n";
 
@@ -174,6 +176,10 @@ public:
                 static_cast<unsigned char>(file_text[mismatch_file_pos]);
             os << "  file mismatch byte (hex): 0x" << hex_of(fc) << "\n";
         }
+        else
+        {
+            os << "  note: mismatch is at end of file\n";
+        }
 
         if (mismatch_marker_pos < marker_text.size())
         {
@@ -187,7 +193,6 @@ public:
         {
             std::size_t available = file_text.size() - mismatch_file_pos;
             std::size_t len = available < max_tail ? available : max_tail;
-
             os << "  file tail (hex):";
             for (std::size_t i = 0; i < len; ++i)
             {
@@ -197,6 +202,33 @@ public:
             }
             os << "\n";
         }
+
+        auto print_context = [&os](const char *label,
+                                   const std::string &text,
+                                   std::size_t pos) {
+            if (text.empty() || pos >= text.size())
+                return;
+            std::size_t start = pos;
+            while (start > 0 && text[start - 1] != '\n' && text[start - 1] != '\r')
+                --start;
+            std::size_t end = pos;
+            while (end < text.size() && text[end] != '\n' && text[end] != '\r')
+                ++end;
+            std::string line_str = text.substr(start, end - start);
+            os << "  " << label << ":\n";
+            os << "    " << line_str << "\n";
+            os << "    ";
+            std::size_t caret_pos = pos - start;
+            for (std::size_t i = 0; i < caret_pos && i < line_str.size(); ++i)
+            {
+                char c = line_str[i];
+                os << (c == '\t' ? '\t' : ' ');
+            }
+            os << "^\n";
+        };
+
+        print_context("marker context around mismatch", marker_text, mismatch_marker_pos);
+        print_context("file context around mismatch", file_text, mismatch_file_pos);
     }
 
 protected:
