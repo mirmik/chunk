@@ -13,243 +13,301 @@ namespace fs = std::filesystem;
 
 namespace
 {
-    struct Backup
+    struct FileState
     {
-        bool existed = false;
-        std::string data;
+        std::string path;
+
+        bool existed_before = false;   // было на диске до патча
+        bool exists_now = false;       // логическое «существует» после применения команд в памяти
+
+        std::string original_bytes;     // для бэкапа на случай проблем при коммите
+        std::vector<std::string> lines; // текущее текстовое представление файла (если exists_now == true)
+
         fs::file_time_type last_write_time;
         fs::perms permissions = fs::perms::unknown;
         bool has_last_write_time = false;
         bool has_permissions = false;
     };
 
-    std::string restore_backup(const std::string &path, const Backup &b)
+    std::string restore_backup(const FileState &state)
     {
-        fs::path p = path;
+        fs::path p = state.path;
         std::error_code ec;
 
-        if (!b.existed)
+        if (!state.existed_before)
         {
             fs::remove(p, ec);
             if (ec)
-                return "rollback: failed to remove file '" + path +
+            {
+                return "rollback: failed to remove file '" + state.path +
                        "': " + ec.message();
+            }
             return {};
         }
 
         try
         {
-            write_file_bytes(p, b.data);
+            write_file_bytes(p, state.original_bytes);
         }
         catch (const std::exception &e)
         {
-            return "rollback: failed to restore data for file '" + path +
-                   "': " + e.what();
+            return "rollback: failed to restore data for file '" +
+                   state.path + "': " + e.what();
         }
         catch (...)
         {
-            return "rollback: failed to restore data for file '" + path +
-                   "': unknown error";
+            return "rollback: failed to restore data for file '" +
+                   state.path + "': unknown error";
         }
 
-        if (b.has_permissions)
+        if (state.has_permissions)
         {
             std::error_code perm_ec;
             fs::permissions(
-                p, b.permissions, fs::perm_options::replace, perm_ec);
+                p, state.permissions, fs::perm_options::replace, perm_ec);
             if (perm_ec)
             {
                 return "rollback: failed to restore permissions for file '" +
-                       path + "': " + perm_ec.message();
+                       state.path + "': " + perm_ec.message();
             }
         }
 
-        if (b.has_last_write_time)
+        if (state.has_last_write_time)
         {
             std::error_code time_ec;
-            fs::last_write_time(p, b.last_write_time, time_ec);
+            fs::last_write_time(p, state.last_write_time, time_ec);
             if (time_ec)
             {
                 return "rollback: failed to restore timestamp for file '" +
-                       path + "': " + time_ec.message();
+                       state.path + "': " + time_ec.message();
             }
         }
 
         return {};
     }
-
-    void apply_for_file(const std::string &filepath,
-                        const std::vector<Command *> &commands)
-    {
-        fs::path p = filepath;
-        std::vector<std::string> orig;
-        bool existed = true;
-
-        try
-        {
-            orig = read_file_lines(p);
-        }
-        catch (...)
-        {
-            existed = false;
-            orig.clear();
-        }
-
-        for (Command *cmd : commands)
-        {
-            if (!existed && cmd->command_name() == "delete-file")
-                throw std::runtime_error("delete-file: file does not exist");
-        }
-
-        for (Command *cmd : commands)
-        {
-            if (cmd->command_name() == "create-file")
-            {
-                write_file_lines(p, cmd->data().payload);
-                return;
-            }
-            if (cmd->command_name() == "delete-file")
-            {
-                std::error_code ec;
-                fs::remove(p, ec);
-                if (ec)
-                    throw std::runtime_error("delete-file failed");
-                return;
-            }
-        }
-
-        for (Command *cmd : commands)
-        {
-            cmd->execute(orig);
-        }
-
-        if (!commands.empty())
-            write_file_lines(p, orig);
-    }
 } // namespace
 
 void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
 {
-    std::vector<std::string> files;
-    files.reserve(commands.size());
-    for (auto &cmd : commands)
-        files.push_back(cmd->filepath());
+    // Собираем список файлов, которые затрагивает патч.
+    std::map<std::string, FileState> files;
 
-    std::sort(files.begin(), files.end());
-    files.erase(std::unique(files.begin(), files.end()), files.end());
-
-    std::map<std::string, Backup> backup;
-
-    for (auto &f : files)
+    for (const auto &cmd : commands)
     {
-        Backup b;
-        fs::path p = f;
+        const std::string &path = cmd->filepath();
+        if (path.empty())
+            continue;
 
+        auto it = files.find(path);
+        if (it == files.end())
+        {
+            FileState st;
+            st.path = path;
+            files.emplace(path, std::move(st));
+        }
+    }
+
+    // Снимок состояния файлов до применения патча.
+    for (auto &[path, state] : files)
+    {
+        fs::path p = path;
         std::error_code ec;
         if (fs::exists(p, ec))
         {
-            b.existed = true;
+            state.existed_before = true;
+            state.exists_now = true;
 
             try
             {
-                b.data = read_file_bytes(p);
+                state.original_bytes = read_file_bytes(p);
+                state.lines = read_file_lines(p);
             }
             catch (...)
             {
-                throw std::runtime_error("cannot read original file: " + f);
+                throw std::runtime_error("cannot read original file: " + path);
             }
 
             auto status = fs::status(p, ec);
             if (!ec)
             {
-                b.permissions = status.permissions();
-                b.has_permissions = true;
+                state.permissions = status.permissions();
+                state.has_permissions = true;
             }
 
             auto mtime = fs::last_write_time(p, ec);
             if (!ec)
             {
-                b.last_write_time = mtime;
-                b.has_last_write_time = true;
+                state.last_write_time = mtime;
+                state.has_last_write_time = true;
             }
         }
         else
         {
-            b.existed = false;
+            state.existed_before = false;
+            state.exists_now = false;
+            state.original_bytes.clear();
+            state.lines.clear();
         }
-
-        backup[f] = std::move(b);
     }
 
+    // Этап 1: применяем все команды в памяти, не трогая диск.
     Command *current_command = nullptr;
-    std::vector<std::string> rollback_errors;
 
     try
     {
-        for (const auto &cmd : commands)
+        for (const auto &cmd_ptr : commands)
         {
-            current_command = cmd.get();
-            std::vector<Command *> single{cmd.get()};
-            apply_for_file(cmd->filepath(), single);
+            current_command = cmd_ptr.get();
+            const std::string &path = current_command->filepath();
+            if (path.empty())
+                continue;
+
+            auto it = files.find(path);
+            if (it == files.end())
+                throw std::runtime_error("internal error: no file state");
+
+            FileState &state = it->second;
+            const std::string &name = current_command->command_name();
+
+            if (name == "create-file")
+            {
+                state.exists_now = true;
+                state.lines = current_command->data().payload;
+                continue;
+            }
+
+            if (name == "delete-file")
+            {
+                if (!state.exists_now)
+                    throw std::runtime_error("delete-file: file does not exist");
+                state.exists_now = false;
+                state.lines.clear();
+                continue;
+            }
+
+            if (!state.exists_now)
+                state.lines.clear();
+
+            current_command->execute(state.lines);
+            state.exists_now = true;
         }
     }
     catch (const std::exception &e)
     {
-        for (auto &[path, b] : backup)
-        {
-            std::string err = restore_backup(path, b);
-            if (!err.empty())
-                rollback_errors.push_back(std::move(err));
-        }
+        std::ostringstream oss;
+        oss << e.what();
 
-        if (!rollback_errors.empty() || current_command)
+        if (current_command)
         {
-            std::ostringstream oss;
-            oss << e.what();
-
-            if (current_command)
+            const Section &s = current_command->data();
+            if (!s.comment.empty())
+                oss << "\nsection comment: " << s.comment;
+            if (!s.marker.empty())
             {
-                const Section &s = current_command->data();
-                if (!s.comment.empty())
-                    oss << "\nsection comment: " << s.comment;
-                if (!s.marker.empty())
+                oss << "\nsection marker preview:\n";
+                size_t max_preview_lines = 3;
+                for (size_t i = 0;
+                     i < s.marker.size() && i < max_preview_lines;
+                     ++i)
                 {
-                    oss << "\nsection marker preview:\n";
-                    size_t max_preview_lines = 3;
-                    for (size_t i = 0;
-                         i < s.marker.size() && i < max_preview_lines;
-                         ++i)
-                    {
-                        oss << s.marker[i] << "\n";
-                    }
+                    oss << s.marker[i] << "\n";
                 }
             }
-
-            if (!rollback_errors.empty())
-            {
-                oss << "\nrollback errors:\n";
-                for (const auto &msg : rollback_errors)
-                    oss << "  " << msg << "\n";
-            }
-
-            throw std::runtime_error(oss.str());
         }
 
-        throw;
+        throw std::runtime_error(oss.str());
     }
     catch (...)
     {
-        for (auto &[path, b] : backup)
+        std::ostringstream oss;
+        oss << "unknown error while applying patch";
+        if (current_command)
+            oss << " in file '" << current_command->filepath() << "'";
+
+        throw std::runtime_error(oss.str());
+    }
+
+    // Этап 2: коммитим изменения на диск. Если что-то пошло не так — откатываем.
+    std::vector<std::string> rollback_errors;
+
+    try
+    {
+        for (auto &[path, state] : files)
         {
-            std::string err = restore_backup(path, b);
+            fs::path p = path;
+            std::error_code ec;
+
+            if (!state.exists_now)
+            {
+                if (state.existed_before)
+                {
+                    fs::remove(p, ec);
+                    if (ec)
+                        throw std::runtime_error("delete-file failed");
+                }
+                continue;
+            }
+
+            write_file_lines(p, state.lines);
+
+            if (state.has_permissions)
+            {
+                std::error_code perm_ec;
+                fs::permissions(
+                    p, state.permissions, fs::perm_options::replace, perm_ec);
+                if (perm_ec)
+                {
+                    throw std::runtime_error(
+                        "failed to restore permissions for file '" + path +
+                        "': " + perm_ec.message());
+                }
+            }
+
+            if (state.has_last_write_time)
+            {
+                std::error_code time_ec;
+                fs::last_write_time(p, state.last_write_time, time_ec);
+                if (time_ec)
+                {
+                    throw std::runtime_error(
+                        "failed to restore timestamp for file '" + path +
+                        "': " + time_ec.message());
+                }
+            }
+        }
+    }
+    catch (const std::exception &e)
+    {
+        for (auto &[path, state] : files)
+        {
+            std::string err = restore_backup(state);
             if (!err.empty())
                 rollback_errors.push_back(std::move(err));
         }
 
         std::ostringstream oss;
-        oss << "unknown error while applying patch";
-        if (current_command)
-            oss << " in file '" << current_command->filepath() << "'";
+        oss << e.what();
+
+        if (!rollback_errors.empty())
+        {
+            oss << "\nrollback errors:\n";
+            for (const auto &msg : rollback_errors)
+                oss << "  " << msg << "\n";
+        }
+
+        throw std::runtime_error(oss.str());
+    }
+    catch (...)
+    {
+        for (auto &[path, state] : files)
+        {
+            std::string err = restore_backup(state);
+            if (!err.empty())
+                rollback_errors.push_back(std::move(err));
+        }
+
+        std::ostringstream oss;
+        oss << "unknown error while writing files";
 
         if (!rollback_errors.empty())
         {
