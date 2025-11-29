@@ -1,7 +1,7 @@
 #include "apply.h"
 
 #include "runner.h"
-#include "section.h"
+#include "parser.h"
 
 #include "clipboard.h"
 #include "file_io.h"

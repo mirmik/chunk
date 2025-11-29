@@ -1,10 +1,27 @@
 #pragma once
 
-#include "section.h"
+#include "parser.h"
 #include "yaml/trent.h"
 
 #include <string>
 #include <vector>
+
+struct Section
+{
+    std::string filepath;
+    std::string command;
+    std::string language;
+    std::vector<std::string> payload;
+    std::vector<std::string> marker;
+    std::vector<std::string> before;
+    std::vector<std::string> after;
+    int seq = 0;
+    std::string comment;
+    std::string arg1;
+    std::string arg2;
+    bool indent_from_marker = true;
+};
+
 
 class Command
 {

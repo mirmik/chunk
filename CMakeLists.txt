@@ -30,7 +30,7 @@ set(CHUNK_CORE_SOURCES
     src/file_io.cpp
     src/help.cpp
     src/runner.cpp
-    src/section.cpp
+    src/parser.cpp
     src/symbols.cpp
     src/symbols_py.cpp
     src/clipboard.cpp
