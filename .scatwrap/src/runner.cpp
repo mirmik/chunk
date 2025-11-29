@@ -218,8 +218,6 @@ void&nbsp;apply_sections(const&nbsp;std::vector&lt;std::unique_ptr&lt;Command&gt
 &nbsp;&nbsp;&nbsp;&nbsp;}<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;Этап&nbsp;2:&nbsp;коммитим&nbsp;изменения&nbsp;на&nbsp;диск.&nbsp;Если&nbsp;что-то&nbsp;пошло&nbsp;не&nbsp;так&nbsp;—&nbsp;откатываем.<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;Этап&nbsp;2:&nbsp;коммитим&nbsp;изменения&nbsp;на&nbsp;диск.&nbsp;Если&nbsp;что-то&nbsp;пошло&nbsp;не&nbsp;так&nbsp;—&nbsp;откатываем.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;rollback_errors;<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;try<br>

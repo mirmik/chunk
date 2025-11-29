@@ -8,6 +8,8 @@
 <!-- BEGIN SCAT CODE -->
 #include&nbsp;&quot;clipboard.h&quot;<br>
 #include&nbsp;&lt;iostream&gt;<br>
+#include&nbsp;&lt;cstdio&gt;<br>
+#include&nbsp;&lt;cstdlib&gt;<br>
 <br>
 namespace<br>
 {<br>

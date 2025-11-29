@@ -210,8 +210,6 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
     }
 
     // Этап 2: коммитим изменения на диск. Если что-то пошло не так — откатываем.
-
-    // Этап 2: коммитим изменения на диск. Если что-то пошло не так — откатываем.
     std::vector<std::string> rollback_errors;
 
     try

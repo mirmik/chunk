@@ -1,5 +1,7 @@
 #include "clipboard.h"
 #include <iostream>
+#include <cstdio>
+#include <cstdlib>
 
 namespace
 {
