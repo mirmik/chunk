@@ -40,6 +40,7 @@
 6.&nbsp;**Многострочные&nbsp;строки&nbsp;(`payload`,&nbsp;большие&nbsp;фрагменты&nbsp;кода).**<br>
 <br>
 &nbsp;&nbsp;&nbsp;*&nbsp;Для&nbsp;многострочного&nbsp;текста&nbsp;**всегда**&nbsp;используй&nbsp;YAML-литерал&nbsp;`|`.<br>
+&nbsp;&nbsp;&nbsp;*&nbsp;Для&nbsp;`marker`&nbsp;и&nbsp;`payload`&nbsp;**всегда**&nbsp;используй&nbsp;YAML-литерал&nbsp;`|`,&nbsp;даже&nbsp;если&nbsp;их&nbsp;значение&nbsp;однострочное.<br>
 &nbsp;&nbsp;&nbsp;*&nbsp;Содержимое&nbsp;блока&nbsp;`|`&nbsp;должно&nbsp;быть&nbsp;с&nbsp;отступом&nbsp;минимум&nbsp;2&nbsp;пробела&nbsp;относительно&nbsp;ключа.<br>
 &nbsp;&nbsp;&nbsp;*&nbsp;Пример:<br>
 <br>
@@ -586,6 +587,7 @@ operations:<br>
 1.&nbsp;Обязательно&nbsp;проверяй&nbsp;корректность&nbsp;отступов.<br>
 2.&nbsp;При&nbsp;редактировании&nbsp;документации&nbsp;пиши&nbsp;маркеры&nbsp;абсолютно&nbsp;точно,&nbsp;в&nbsp;соответствии&nbsp;с&nbsp;исходным&nbsp;текстом.&nbsp;Переставлять&nbsp;слова&nbsp;в&nbsp;маркере&nbsp;запрещается.<br>
 3.&nbsp;Следу&nbsp;порядку&nbsp;комментирования.&nbsp;Обязательно&nbsp;используй&nbsp;поля&nbsp;`description`&nbsp;и&nbsp;`comment`.&nbsp;Заполняй&nbsp;`comment`&nbsp;для&nbsp;каждой&nbsp;операции.&nbsp;<br>
+4.&nbsp;Всегда&nbsp;записывай&nbsp;`marker`&nbsp;и&nbsp;`payload`&nbsp;как&nbsp;многострочный&nbsp;блок.&nbsp;Даже&nbsp;если&nbsp;блок&nbsp;состоит&nbsp;из&nbsp;одной&nbsp;строки.<br>
 <br>
 ---<br>
 <br>
