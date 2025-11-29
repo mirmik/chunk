@@ -1,0 +1,30 @@
+src/**
+tests/**
+docs/**
+
+[TREE]
+**
+!**/*.o
+!**/*.d
+!CMakeFiles/**
+!.github/**
+!.git/**
+!CMakeCache.txt
+!CMakeFiles*
+!CTest*
+!.scatwrap/**
+!build/**
+!Testing/**
+!chunk
+!chunk_tests
+!cmake_install.cmake
+!install_manifest.txt
+!patch.yaml
+
+[MAPFORMAT]
+------------------------------
+Актуальная версия репозитория:
+{RAWMAP}
+Присылать патчи к коду можно в формате CHUNK: https://mirmik.github.io/chunk/CHUNK.html 
+(При составлении патча обрати внимания, что .scatwrap/ не является частью относительного пути)
+------------------------------
