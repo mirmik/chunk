@@ -661,3 +661,123 @@ TEST_CASE("apply_chunk_main: insert section into long markdown file")
     CHECK(lines[32] == "## License");
     CHECK(lines[33] == "MIT License");
 }
+
+TEST_CASE("apply_chunk_main: replace_c_style_block replaces single function body")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_replace_c_style_block_simple";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "code.cpp";
+    {
+        std::ofstream out(f);
+        out << "int foo()\n"
+               "{\n"
+               "    return 1;\n"
+               "}\n"
+               "\n"
+               "int bar()\n"
+               "{\n"
+               "    return 2;\n"
+               "}\n";
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: replace_c_style_block\n"
+               "    path: \"" << f.string() << "\"\n"
+               "    marker: |\n"
+               "      int foo()\n"
+               "      {\n"
+               "    payload: |\n"
+               "      int foo()\n"
+               "      {\n"
+               "          return 42;\n"
+               "      }\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    auto lines = read_lines(f);
+    REQUIRE(lines.size() == 9);
+    CHECK(lines[0] == "int foo()");
+    CHECK(lines[1] == "{");
+    CHECK(lines[2].find("return 42;") != std::string::npos);
+    CHECK(lines[3] == "}");
+    CHECK(lines[4] == "");
+    CHECK(lines[5] == "int bar()");
+    CHECK(lines[6] == "{");
+    CHECK(lines[7].find("return 2;") != std::string::npos);
+    CHECK(lines[8] == "}");
+}
+
+TEST_CASE("apply_chunk_main: replace_c_style_block handles nested braces and comments")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_replace_c_style_block_nested";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "code_nested.cpp";
+    {
+        std::ofstream out(f);
+        out << "void foo()\n"
+               "{\n"
+               "    int x = 0;\n"
+               "    if (x) {\n"
+               "        x = 1;\n"
+               "    }\n"
+               "    std::string s = \"{not a brace}\";\n"
+               "    // comment with }\n"
+               "    /* block { comment */\n"
+               "    return x;\n"
+               "}\n"
+               "\n"
+               "int other()\n"
+               "{\n"
+               "    return 0;\n"
+               "}\n";
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: replace_c_style_block\n"
+               "    path: \"" << f.string() << "\"\n"
+               "    marker: |\n"
+               "      void foo()\n"
+               "      {\n"
+               "    payload: |\n"
+               "      void foo()\n"
+               "      {\n"
+               "          int y = 42;\n"
+               "          if (y > 0) {\n"
+               "              y += 1;\n"
+               "          }\n"
+               "      }\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    auto lines = read_lines(f);
+
+    bool has_y_decl = false;
+    bool has_old_x_decl = false;
+    bool has_other_function = false;
+    for (const auto &line : lines)
+    {
+        if (line.find("int y = 42;") != std::string::npos)
+            has_y_decl = true;
+        if (line.find("int x = 0;") != std::string::npos)
+            has_old_x_decl = true;
+        if (line == "int other()")
+            has_other_function = true;
+    }
+    CHECK(has_y_decl);
+    CHECK_FALSE(has_old_x_decl);
+    CHECK(has_other_function);
+}
