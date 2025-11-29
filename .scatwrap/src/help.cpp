@@ -28,6 +28,7 @@ void&nbsp;print_chunk_help()<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;--paste&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Read&nbsp;patch&nbsp;from&nbsp;system&nbsp;clipboard.\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;--verbose&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Print&nbsp;diagnostics&nbsp;while&nbsp;choosing&nbsp;clipboard&nbsp;tool.\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;--dry-ran&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simulate&nbsp;patch&nbsp;application&nbsp;without&nbsp;writing&nbsp;files;&nbsp;print&nbsp;per-command&nbsp;statistics.\n&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;--quiet,&nbsp;--quite&nbsp;&nbsp;Suppress&nbsp;summary&nbsp;output;&nbsp;only&nbsp;errors&nbsp;will&nbsp;be&nbsp;printed.\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;--help,&nbsp;-h&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Show&nbsp;this&nbsp;help&nbsp;and&nbsp;exit.\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;--version&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Show&nbsp;version&nbsp;information&nbsp;and&nbsp;exit.\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;--ref&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Show&nbsp;links&nbsp;to&nbsp;patch&nbsp;format&nbsp;reference&nbsp;documentation.\n&quot;<br>
@@ -45,7 +46,7 @@ void&nbsp;print_chunk_help()<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;pbpaste\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;On&nbsp;Windows&nbsp;it&nbsp;uses:\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;powershell&nbsp;-NoProfile&nbsp;-Command&nbsp;\&quot;[Console]::OutputEncoding&nbsp;=&nbsp;&quot;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;[System.Text.Encoding]::UTF8;&nbsp;Get-Clipboard&nbsp;-Raw\&quot;\n&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;[System.Text.Encoding]::UTF8;&nbsp;Get-Clipboard&nbsp;-Raw\&quot;\n&quot;;<br>
 }<br>
 <!-- END SCAT CODE -->
 </body>

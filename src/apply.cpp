@@ -19,21 +19,20 @@ namespace
 {
     bool g_chunk_verbose_logging = false;
 
-    void print_dry_run_summary(const std::vector<std::unique_ptr<Command>> &commands)
+    void print_summary(const std::vector<std::unique_ptr<Command>> &commands,
+                       bool dry_run)
     {
         std::map<std::string, std::vector<const Command *>> by_file;
         std::size_t total_inserted = 0;
         std::size_t total_removed = 0;
         std::size_t total_success = 0;
         std::size_t total_failed = 0;
-
         for (const auto &cmd_ptr : commands)
         {
             const Command *cmd = cmd_ptr.get();
             const std::string &path = cmd->filepath();
             const std::string key = path.empty() ? std::string("<no path>") : path;
             by_file[key].push_back(cmd);
-
             if (cmd->status() == Command::Status::Success)
             {
                 ++total_success;
@@ -46,7 +45,14 @@ namespace
             }
         }
 
-        std::cout << "DRY-RAN summary (no changes were written to disk)\n";
+        if (dry_run)
+        {
+            std::cout << "DRY-RAN summary (no changes were written to disk)\n";
+        }
+        else
+        {
+            std::cout << "Patch summary (changes were written to disk)\n";
+        }
 
         for (const auto &entry : by_file)
         {
@@ -57,7 +63,6 @@ namespace
             for (const Command *cmd : list)
             {
                 std::cout << "  - [";
-
                 switch (cmd->status())
                 {
                 case Command::Status::Success:
@@ -72,10 +77,8 @@ namespace
                 }
 
                 std::cout << "] " << cmd->command_name();
-
                 if (!cmd->comment().empty())
                     std::cout << "  # " << cmd->comment();
-
                 if (cmd->status() == Command::Status::Success)
                 {
                     std::size_t ins = cmd->chars_inserted();
@@ -91,7 +94,6 @@ namespace
                     if (!msg.empty())
                         std::cout << " (error: " << msg << ")";
                 }
-
                 std::cout << "\n";
             }
         }
@@ -158,13 +160,12 @@ int apply_chunk_main(int argc, char **argv)
                   << "  chunk --dry-ran <patchfile>\n";
         return 1;
     }
-
     bool verbose = false;
     bool use_stdin = false;
     bool use_clipboard = false;
     bool dry_run = false;
+    bool quiet = false;
     const char *filename = nullptr;
-
     for (int i = 1; i < argc; ++i)
     {
         const char *arg = argv[i];
@@ -184,13 +185,18 @@ int apply_chunk_main(int argc, char **argv)
         {
             dry_run = true;
         }
+        else if (std::strcmp(arg, "--quiet") == 0 ||
+                 std::strcmp(arg, "--quite") == 0)
+        {
+            quiet = true;
+        }
         else if (!filename)
         {
             filename = arg;
         }
     }
-
-    g_chunk_verbose_logging = verbose;
+    bool effective_verbose = verbose && !quiet;
+    g_chunk_verbose_logging = effective_verbose;
     if ((use_stdin && use_clipboard) || (use_stdin && filename) ||
         (use_clipboard && filename))
     {
@@ -199,34 +205,50 @@ int apply_chunk_main(int argc, char **argv)
     }
 
     auto [text, status] =
-        get_script(use_stdin, use_clipboard, filename, verbose);
+        get_script(use_stdin, use_clipboard, filename, effective_verbose);
 
     if (!status.empty())
     {
         std::cerr << status;
         return 1;
     }
-
     if (text.empty())
     {
         std::cerr << "empty patch input\n";
         return 1;
     }
 
+    std::vector<std::unique_ptr<Command>> commands;
     try
     {
-        auto commands = parse_yaml_patch_text(text);
+        commands = parse_yaml_patch_text(text);
         ApplyOptions options;
         options.dry_run = dry_run;
         options.ignore_failures = dry_run;
         apply_sections(commands, options);
-        if (dry_run)
-            print_dry_run_summary(commands);
     }
     catch (const std::exception &e)
     {
-        std::cerr << "error while applying patch: " << e.what() << "\n";
+        if (!quiet && !commands.empty())
+        {
+            print_summary(commands, dry_run);
+        }
+        if (dry_run)
+        {
+            std::cerr << "chunk: dry-run aborted due to error: " << e.what()
+                      << "\n";
+        }
+        else
+        {
+            std::cerr << "chunk: patch aborted due to error: " << e.what()
+                      << "\n";
+        }
         return 1;
+    }
+
+    if (!quiet)
+    {
+        print_summary(commands, dry_run);
     }
 
     return 0;

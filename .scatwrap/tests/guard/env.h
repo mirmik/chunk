@@ -15,7 +15,9 @@
 //&nbsp;Вся&nbsp;среда&nbsp;проверки&nbsp;в&nbsp;одной&nbsp;структуре<br>
 struct&nbsp;guard_check_env_t<br>
 {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;error_msg;<br>
+std::string&nbsp;error_msg;<br>
+unsigned&nbsp;long&nbsp;long&nbsp;assert_total&nbsp;=&nbsp;0;<br>
+unsigned&nbsp;long&nbsp;long&nbsp;assert_failed&nbsp;=&nbsp;0;<br>
 };<br>
 <br>
 //&nbsp;Глобальный&nbsp;(на&nbsp;процесс)&nbsp;экземпляр&nbsp;среды,&nbsp;реализованный&nbsp;через<br>
@@ -35,8 +37,7 @@ inline&nbsp;guard_check_env_t&nbsp;&amp;guard_check_env()<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try<br>
 <br>
 //&nbsp;Ветка&nbsp;обработки&nbsp;ошибки&nbsp;(после&nbsp;выброса&nbsp;guard_check_exception)<br>
-#define&nbsp;GUARD_CHECK_ENV_ERROR_HANDLER()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;catch&nbsp;(const&nbsp;guard_check_exception&nbsp;&amp;)<br>
+#define&nbsp;GUARD_CHECK_ENV_ERROR_HANDLER()&nbsp;catch&nbsp;(const&nbsp;guard_check_exception&nbsp;&amp;)<br>
 <br>
 //&nbsp;Установка&nbsp;сообщения&nbsp;об&nbsp;ошибке&nbsp;(перезаписывает&nbsp;предыдущий&nbsp;текст)<br>
 inline&nbsp;void&nbsp;GUARD_CHECK_ENV_RAISE_SET(const&nbsp;std::string&nbsp;&amp;msg)<br>
@@ -56,6 +57,13 @@ public:<br>
 inline&nbsp;void&nbsp;GUARD_CHECK_ENV_RAISE_IMPL()<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;guard_check_exception{};<br>
+}<br>
+inline&nbsp;void&nbsp;GUARD_CHECK_ENV_COUNT_ASSERT(bool&nbsp;success)<br>
+{<br>
+guard_check_env_t&nbsp;&amp;env&nbsp;=&nbsp;guard_check_env();<br>
+++env.assert_total;<br>
+if&nbsp;(!success)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;++env.assert_failed;<br>
 }<br>
 <br>
 //&nbsp;Добавление&nbsp;сообщения&nbsp;об&nbsp;ошибке&nbsp;(для&nbsp;&quot;мягких&quot;&nbsp;CHECK)<br>

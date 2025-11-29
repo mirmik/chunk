@@ -20,6 +20,7 @@ void print_chunk_help()
         << "  --paste        Read patch from system clipboard.\n"
         << "  --verbose      Print diagnostics while choosing clipboard tool.\n"
         << "  --dry-ran      Simulate patch application without writing files; print per-command statistics.\n"
+        << "  --quiet, --quite  Suppress summary output; only errors will be printed.\n"
         << "  --help, -h     Show this help and exit.\n"
         << "  --version      Show version information and exit.\n"
         << "  --ref          Show links to patch format reference documentation.\n"
@@ -37,5 +38,5 @@ void print_chunk_help()
         << "    pbpaste\n"
         << "  On Windows it uses:\n"
         << "    powershell -NoProfile -Command \"[Console]::OutputEncoding = "
-           "[System.Text.Encoding]::UTF8; Get-Clipboard -Raw\"\n";
+        << "[System.Text.Encoding]::UTF8; Get-Clipboard -Raw\"\n";
 }
