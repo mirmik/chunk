@@ -28,12 +28,9 @@ set(CHUNK_CORE_SOURCES
     src/command_fabric.cpp
     src/command_parse_helpers.cpp
     src/file_io.cpp
-    src/file_command_objects.cpp
     src/help.cpp
     src/runner.cpp
     src/section.cpp
-    src/symbol_commands.cpp
-    src/text_commands.cpp
     src/symbols.cpp
     src/symbols_py.cpp
     src/clipboard.cpp

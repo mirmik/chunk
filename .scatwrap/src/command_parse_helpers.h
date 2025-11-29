@@ -12,6 +12,7 @@
 <br>
 #include&nbsp;&lt;string&gt;<br>
 #include&nbsp;&lt;vector&gt;<br>
+#include&nbsp;&lt;unordered_map&gt;<br>
 <br>
 namespace&nbsp;command_parse<br>
 {<br>

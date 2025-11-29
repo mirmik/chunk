@@ -25,6 +25,12 @@ namespace command_parse
         std::vector<std::string> result;
         std::size_t start = 0;
 
+        if (text.empty())
+        {
+            result.emplace_back(std::string());
+            return result;
+        }
+
         while (start < text.size())
         {
             auto pos = text.find('\n', start);

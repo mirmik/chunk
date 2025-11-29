@@ -10,9 +10,6 @@
 <br>
 #include&nbsp;&quot;command.h&quot;<br>
 #include&nbsp;&quot;command_fabric.h&quot;<br>
-#include&nbsp;&quot;file_command_objects.h&quot;<br>
-#include&nbsp;&quot;symbol_commands.h&quot;<br>
-#include&nbsp;&quot;text_commands.h&quot;<br>
 <br>
 #include&nbsp;&lt;memory&gt;<br>
 #include&nbsp;&lt;stdexcept&gt;<br>

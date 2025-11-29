@@ -2,9 +2,6 @@
 
 #include "command.h"
 #include "command_fabric.h"
-#include "file_command_objects.h"
-#include "symbol_commands.h"
-#include "text_commands.h"
 
 #include <memory>
 #include <stdexcept>

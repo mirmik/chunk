@@ -1,7 +1,23 @@
 #include "command_fabric.h"
-#include "file_command_objects.h"
-#include "symbol_command_objects.h"
-#include "text_command_objects.h"
+#include "commands/append_text.hpp"
+#include "commands/create_file.hpp"
+#include "commands/delete_file.hpp"
+#include "commands/delete_text.hpp"
+#include "commands/insert_after_text.hpp"
+#include "commands/insert_before_text.hpp"
+#include "commands/prepend_text.hpp"
+#include "commands/replace_cpp_class.hpp"
+#include "commands/replace_cpp_method.hpp"
+#include "commands/replace_py_class.hpp"
+#include "commands/replace_py_method.hpp"
+#include "commands/replace_text.hpp"
+#include <functional>
+#include <unordered_map>
+
+namespace commands_detail
+{
+using CommandFactory = std::function<std::unique_ptr<Command>()>;
+}
 
 const std::unordered_map<std::string, commands_detail::CommandFactory> &
 symbol_command_registry()
@@ -19,13 +35,9 @@ symbol_command_registry()
          []() { return std::make_unique<ReplacePyMethodCommand>(); }},
 
         {"prepend-text",
-         []() {
-             return std::make_unique<SimpleInsertCommand>("prepend-text", true);
-         }},
+         []() { return std::make_unique<PrependTextCommand>(); }},
         {"append-text",
-         []() {
-             return std::make_unique<SimpleInsertCommand>("append-text", false);
-         }},
+         []() { return std::make_unique<AppendTextCommand>(); }},
         {"insert-after-text",
          []() { return std::make_unique<InsertAfterTextCommand>(); }},
         {"insert-before-text",
