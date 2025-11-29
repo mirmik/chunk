@@ -12,6 +12,22 @@ class Command
 public:
     explicit Command(std::string name);
     virtual ~Command() = default;
+    virtual ~Command() = default;
+
+    enum class Status
+    {
+        NotRun,
+        Success,
+        Failed
+    };
+
+    Status status() const { return status_; }
+    const std::string &error_message() const { return error_message_; }
+
+    void reset_status();
+    void mark_success();
+    void mark_failed(const std::string &message);
+    void run(std::vector<std::string> &lines);
 
     virtual void parse(const nos::trent &tr) = 0;
     virtual void execute(std::vector<std::string> &lines) = 0;
@@ -32,4 +48,7 @@ protected:
     std::string name_;
     std::string language_;
     std::string comment_;
+    std::string comment_;
+    Status status_ = Status::NotRun;
+    std::string error_message_;
 };

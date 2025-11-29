@@ -168,20 +168,27 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands)
 
             FileState &state = it->second;
             const std::string &name = current_command->command_name();
-
             if (name == "delete-file")
             {
+                current_command->reset_status();
                 if (!state.exists_now)
-                    throw std::runtime_error("delete-file: file does not exist");
+                {
+                    current_command->mark_failed("delete-file: file does not exist");
+                    throw std::runtime_error(current_command->error_message());
+                }
                 state.exists_now = false;
                 state.lines.clear();
+                current_command->mark_success();
                 continue;
             }
 
             if (!state.exists_now)
                 state.lines.clear();
-
-            current_command->execute(state.lines);
+            current_command->run(state.lines);
+            if (current_command->status() == Command::Status::Failed)
+            {
+                throw std::runtime_error(current_command->error_message());
+            }
             state.exists_now = true;
         }
     }

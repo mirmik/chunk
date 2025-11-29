@@ -20,6 +20,22 @@ class&nbsp;Command<br>
 public:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;explicit&nbsp;Command(std::string&nbsp;name);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;~Command()&nbsp;=&nbsp;default;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;~Command()&nbsp;=&nbsp;default;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;enum&nbsp;class&nbsp;Status<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NotRun,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Success,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Failed<br>
+&nbsp;&nbsp;&nbsp;&nbsp;};<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Status&nbsp;status()&nbsp;const&nbsp;{&nbsp;return&nbsp;status_;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::string&nbsp;&amp;error_message()&nbsp;const&nbsp;{&nbsp;return&nbsp;error_message_;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;reset_status();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;mark_success();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;mark_failed(const&nbsp;std::string&nbsp;&amp;message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;run(std::vector&lt;std::string&gt;&nbsp;&amp;lines);<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;void&nbsp;parse(const&nbsp;nos::trent&nbsp;&amp;tr)&nbsp;=&nbsp;0;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;virtual&nbsp;void&nbsp;execute(std::vector&lt;std::string&gt;&nbsp;&amp;lines)&nbsp;=&nbsp;0;<br>
@@ -40,6 +56,9 @@ protected:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;name_;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;language_;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;comment_;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;comment_;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Status&nbsp;status_&nbsp;=&nbsp;Status::NotRun;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;error_message_;<br>
 };<br>
 <!-- END SCAT CODE -->
 </body>
