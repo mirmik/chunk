@@ -24,9 +24,10 @@ static std::vector<std::string> read_lines(const fs::path &p)
 static int run_apply(const fs::path &patch)
 {
     std::string a0 = "apply";
-    std::string a1 = patch.string();
+    std::string a1 = "--quiet";
+    std::string a2 = patch.string();
 
-    std::vector<std::string> store = {a0, a1};
+    std::vector<std::string> store = {a0, a1, a2};
     std::vector<char *> argv;
     for (auto &s : store)
         argv.push_back(s.data());
@@ -65,12 +66,12 @@ private:
 
         std::string a0 = "apply";
         std::string a1 = "--stdin";
+        std::string a2 = "--quiet";
 
-        std::vector<std::string> store = {a0, a1};
+        std::vector<std::string> store = {a0, a1, a2};
         std::vector<char *> argv;
         for (auto &s : store)
             argv.push_back(s.data());
-
         int rc = apply_chunk_main((int)argv.size(), argv.data());
 
         // Восстанавливаем std::cin

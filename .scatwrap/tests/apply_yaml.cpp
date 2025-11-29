@@ -32,9 +32,10 @@ static&nbsp;std::vector&lt;std::string&gt;&nbsp;read_lines(const&nbsp;fs::path&n
 static&nbsp;int&nbsp;run_apply(const&nbsp;fs::path&nbsp;&amp;patch)<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;a0&nbsp;=&nbsp;&quot;apply&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;a1&nbsp;=&nbsp;patch.string();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;a1&nbsp;=&nbsp;&quot;--quiet&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;a2&nbsp;=&nbsp;patch.string();<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;store&nbsp;=&nbsp;{a0,&nbsp;a1};<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;store&nbsp;=&nbsp;{a0,&nbsp;a1,&nbsp;a2};<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;char&nbsp;*&gt;&nbsp;argv;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(auto&nbsp;&amp;s&nbsp;:&nbsp;store)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv.push_back(s.data());<br>
@@ -73,12 +74,12 @@ private:<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;a0&nbsp;=&nbsp;&quot;apply&quot;;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;a1&nbsp;=&nbsp;&quot;--stdin&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;a2&nbsp;=&nbsp;&quot;--quiet&quot;;<br>
 <br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;store&nbsp;=&nbsp;{a0,&nbsp;a1};<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;store&nbsp;=&nbsp;{a0,&nbsp;a1,&nbsp;a2};<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;char&nbsp;*&gt;&nbsp;argv;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(auto&nbsp;&amp;s&nbsp;:&nbsp;store)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv.push_back(s.data());<br>
-<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;rc&nbsp;=&nbsp;apply_chunk_main((int)argv.size(),&nbsp;argv.data());<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;Восстанавливаем&nbsp;std::cin<br>

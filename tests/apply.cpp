@@ -20,10 +20,10 @@ std::vector<std::string> read_lines(const fs::path &p)
 int run_apply(const fs::path &patch)
 {
     std::string arg0 = "apply";
-    std::string arg1 = patch.string();
-
+    std::string arg1 = "--quiet";
+    std::string arg2 = patch.string();
     // храним строки в живом виде
-    std::vector<std::string> args = {arg0, arg1};
+    std::vector<std::string> args = {arg0, arg1, arg2};
 
     // формируем argv как указатели НА ЖИВЫЕ строки
     std::vector<char *> argv_real;

@@ -102,6 +102,15 @@ GUARD_TEST_MAIN();<br>
 <br>
 Тогда&nbsp;используются&nbsp;только&nbsp;`GUARD_CHECK`,&nbsp;`GUARD_REQUIRE`&nbsp;и&nbsp;т.п.<br>
 <br>
+###&nbsp;Цветной&nbsp;вывод<br>
+<br>
+Цвета&nbsp;отключены&nbsp;по&nbsp;умолчанию.&nbsp;Чтобы&nbsp;включить,&nbsp;определите&nbsp;макрос&nbsp;**до**&nbsp;подключения&nbsp;`guard.h`&nbsp;(или&nbsp;передайте&nbsp;`-DGUARD_TEST_ENABLE_COLORS`&nbsp;компилятору):<br>
+<br>
+```cpp<br>
+#define&nbsp;GUARD_TEST_ENABLE_COLORS<br>
+#include&nbsp;&quot;guard.h&quot;<br>
+```<br>
+<br>
 ###&nbsp;Низкоуровневый&nbsp;API<br>
 <br>
 Макросы&nbsp;проверок&nbsp;(когда&nbsp;алиасы&nbsp;отключены):<br>

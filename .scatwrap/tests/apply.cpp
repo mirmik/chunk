@@ -28,10 +28,10 @@ std::vector&lt;std::string&gt;&nbsp;read_lines(const&nbsp;fs::path&nbsp;&amp;p)<
 int&nbsp;run_apply(const&nbsp;fs::path&nbsp;&amp;patch)<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;arg0&nbsp;=&nbsp;&quot;apply&quot;;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;arg1&nbsp;=&nbsp;patch.string();<br>
-<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;arg1&nbsp;=&nbsp;&quot;--quiet&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::string&nbsp;arg2&nbsp;=&nbsp;patch.string();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;храним&nbsp;строки&nbsp;в&nbsp;живом&nbsp;виде<br>
-&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;args&nbsp;=&nbsp;{arg0,&nbsp;arg1};<br>
+&nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;std::string&gt;&nbsp;args&nbsp;=&nbsp;{arg0,&nbsp;arg1,&nbsp;arg2};<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;формируем&nbsp;argv&nbsp;как&nbsp;указатели&nbsp;НА&nbsp;ЖИВЫЕ&nbsp;строки<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::vector&lt;char&nbsp;*&gt;&nbsp;argv_real;<br>

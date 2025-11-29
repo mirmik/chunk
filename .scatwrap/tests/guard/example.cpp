@@ -6,6 +6,7 @@
 </head>
 <body>
 <!-- BEGIN SCAT CODE -->
+#define&nbsp;GUARD_TEST_ENABLE_COLORS<br>
 #include&nbsp;&quot;check.h&quot;<br>
 #include&nbsp;&quot;guard.h&quot;<br>
 #include&nbsp;&lt;stdexcept&gt;<br>
@@ -39,7 +40,6 @@ TEST_CASE(&quot;failed&nbsp;test:&nbsp;simple&nbsp;arithmetic&quot;)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK_EQ(2&nbsp;+&nbsp;2,&nbsp;4);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;CHECK_LT(20,&nbsp;10);<br>
 }<br>
-<br>
 GUARD_TEST_MAIN();<br>
 <!-- END SCAT CODE -->
 </body>
