@@ -20,6 +20,7 @@ void print_chunk_help()
         << "  --verbose      Print diagnostics while choosing clipboard tool.\n"
         << "  --help, -h     Show this help and exit.\n"
         << "  --version      Show version information and exit.\n"
+        << "  --ref          Show links to patch format reference documentation.\n"
         << "\n"
         << "Patch format:\n"
         << "  Patches must be written in the chunk_v2 YAML format.\n"

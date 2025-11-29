@@ -28,6 +28,7 @@ void&nbsp;print_chunk_help()<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;--verbose&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Print&nbsp;diagnostics&nbsp;while&nbsp;choosing&nbsp;clipboard&nbsp;tool.\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;--help,&nbsp;-h&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Show&nbsp;this&nbsp;help&nbsp;and&nbsp;exit.\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;--version&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Show&nbsp;version&nbsp;information&nbsp;and&nbsp;exit.\n&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;--ref&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Show&nbsp;links&nbsp;to&nbsp;patch&nbsp;format&nbsp;reference&nbsp;documentation.\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;Patch&nbsp;format:\n&quot;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;&nbsp;&quot;&nbsp;&nbsp;Patches&nbsp;must&nbsp;be&nbsp;written&nbsp;in&nbsp;the&nbsp;chunk_v2&nbsp;YAML&nbsp;format.\n&quot;<br>
