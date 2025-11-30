@@ -22,7 +22,6 @@ namespace
     void print_summary(const std::vector<std::unique_ptr<Command>> &commands,
                        bool dry_run)
     {
-        std::map<std::string, std::vector<const Command *>> by_file;
         std::size_t total_inserted = 0;
         std::size_t total_removed = 0;
         std::size_t total_success = 0;
@@ -31,9 +30,6 @@ namespace
         for (const auto &cmd_ptr : commands)
         {
             const Command *cmd = cmd_ptr.get();
-            const std::string &path = cmd->filepath();
-            const std::string key = path.empty() ? std::string("<no path>") : path;
-            by_file[key].push_back(cmd);
             if (cmd->status() == Command::Status::Success)
             {
                 ++total_success;
@@ -60,87 +56,92 @@ namespace
         const char *YELLOW = "\033[33m";
         const char *RESET = "\033[0m";
 
-        for (const auto &entry : by_file)
+        std::string last_path;
+        bool first_file = true;
+
+        for (const auto &cmd_ptr : commands)
         {
-            const std::string &path = entry.first;
-            const auto &list = entry.second;
-            std::cout << "\nFile: " << path << "\n";
-            for (const Command *cmd : list)
+            const Command *cmd = cmd_ptr.get();
+            const std::string &path = cmd->filepath();
+            const std::string key = path.empty() ? std::string("<no path>") : path;
+
+            if (first_file || key != last_path)
             {
-                std::cout << "  - [";
-                switch (cmd->status())
+                std::cout << "\nFile: " << key << "\n";
+                last_path = key;
+                first_file = false;
+            }
+
+            std::cout << "  - [";
+            switch (cmd->status())
+            {
+            case Command::Status::Success:
+                std::cout << GREEN << "OK" << RESET;
+                break;
+            case Command::Status::Failed:
+                std::cout << RED << "FAIL" << RESET;
+                break;
+            default:
+                std::cout << YELLOW << "SKIP" << RESET;
+                break;
+            }
+            std::cout << "] " << cmd->command_name();
+            if (!cmd->comment().empty())
+                std::cout << "  # " << cmd->comment();
+            if (cmd->status() == Command::Status::Success)
+            {
+                std::size_t ins = cmd->lines_inserted();
+                std::size_t rem = cmd->lines_removed();
+                bool has_region = cmd->has_effect_region();
+                if (ins == 0 && rem == 0)
                 {
-                case Command::Status::Success:
-                    std::cout << GREEN << "OK" << RESET;
-                    break;
-                case Command::Status::Failed:
-                    std::cout << RED << "FAIL" << RESET;
-                    break;
-                default:
-                    std::cout << YELLOW << "SKIP" << RESET;
-                    break;
+                    std::cout << " (no changes)";
                 }
-                std::cout << "] " << cmd->command_name();
-                if (!cmd->comment().empty())
-                    std::cout << "  # " << cmd->comment();
-
-                if (cmd->status() == Command::Status::Success)
+                else if (!has_region)
                 {
-                    std::size_t ins = cmd->lines_inserted();
-                    std::size_t rem = cmd->lines_removed();
-                    bool has_region = cmd->has_effect_region();
-
-                    if (ins == 0 && rem == 0)
+                    std::cout << " (";
+                    if (ins > 0)
+                        std::cout << "+" << ins << " lines";
+                    if (rem > 0)
                     {
-                        std::cout << " (no changes)";
-                    }
-                    else if (!has_region)
-                    {
-                        std::cout << " (";
                         if (ins > 0)
-                            std::cout << "+" << ins << " lines";
-                        if (rem > 0)
-                        {
-                            if (ins > 0)
-                                std::cout << ", ";
-                            std::cout << "-" << rem << " lines";
-                        }
+                            std::cout << ", ";
+                        std::cout << "-" << rem << " lines";
+                    }
+                    std::cout << ")";
+                }
+                else
+                {
+                    std::size_t from = cmd->effect_start_line();
+                    std::size_t to = cmd->effect_end_line();
+                    if (ins > 0 && rem > 0)
+                    {
+                        std::cout << " (replaced lines " << from << "-" << to
+                                  << " with " << ins << " lines)";
+                    }
+                    else if (rem > 0)
+                    {
+                        std::cout << " (removed " << rem << " lines at ";
+                        if (from == to)
+                            std::cout << "line " << from;
+                        else
+                            std::cout << "lines " << from << "-" << to;
                         std::cout << ")";
                     }
-                    else
+                    else if (ins > 0)
                     {
-                        std::size_t from = cmd->effect_start_line();
-                        std::size_t to = cmd->effect_end_line();
-
-                        if (ins > 0 && rem > 0)
-                        {
-                            std::cout << " (replaced lines " << from << "-" << to
-                                      << " with " << ins << " lines)";
-                        }
-                        else if (rem > 0)
-                        {
-                            std::cout << " (removed " << rem << " lines at ";
-                            if (from == to)
-                                std::cout << "line " << from;
-                            else
-                                std::cout << "lines " << from << "-" << to;
-                            std::cout << ")";
-                        }
-                        else if (ins > 0)
-                        {
-                            std::cout << " (inserted " << ins << " lines at line "
-                                      << from << ")";
-                        }
+                        std::cout << " (inserted " << ins << " lines at line "
+                                  << from << ")";
                     }
                 }
-                else if (cmd->status() == Command::Status::Failed)
-                {
-                    const std::string &msg = cmd->error_message();
-                    if (!msg.empty())
-                        std::cout << " (error: " << msg << ")";
-                }
-                std::cout << "\n";
             }
+            else if (cmd->status() == Command::Status::Failed)
+            {
+                const std::string &msg = cmd->error_message();
+                if (!msg.empty())
+                    std::cout << " (error: " << msg << ")";
+            }
+            std::cout << "\n";
         }
 
         std::cout << "\nTotals: commands: " << commands.size()

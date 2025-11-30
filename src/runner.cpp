@@ -247,31 +247,6 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands,
             }
 
             write_file_lines(p, state.lines);
-
-            if (state.has_permissions)
-            {
-                std::error_code perm_ec;
-                fs::permissions(
-                    p, state.permissions, fs::perm_options::replace, perm_ec);
-                if (perm_ec)
-                {
-                    throw std::runtime_error(
-                        "failed to restore permissions for file '" + path +
-                        "': " + perm_ec.message());
-                }
-            }
-
-            if (state.has_last_write_time)
-            {
-                std::error_code time_ec;
-                fs::last_write_time(p, state.last_write_time, time_ec);
-                if (time_ec)
-                {
-                    throw std::runtime_error(
-                        "failed to restore timestamp for file '" + path +
-                        "': " + time_ec.message());
-                }
-            }
         }
     }
     catch (const std::exception &e)
