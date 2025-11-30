@@ -73,18 +73,14 @@ if (HAS_LIBSTDCXXFS)
     endif()
 endif()
 
-
+file(GLOB CHUNK_TESTS_SOURCES CONFIGURE_DEPENDS
+    tests/*.cpp
+)
 
 # Не собирать тесты на macOS
 if(NOT APPLE)
     add_executable(chunk_tests
-        tests/apply.cpp          
-        tests/apply_yaml.cpp  
-        tests/main.cpp     
-        tests/symbols_py.cpp
-        tests/apply_symbols.cpp  
-        tests/symbols.cpp  
-        tests/yaml_parser.cpp
+        ${CHUNK_TESTS_SOURCES}
         ${CHUNK_CORE_SOURCES}
         ${YAML_SOURCES}
         ${CHUNK_HEADERS}
