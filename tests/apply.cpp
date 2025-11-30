@@ -830,61 +830,82 @@ TEST_CASE("apply_chunk_main: replace-py-block replaces python block by marker")
     CHECK(lines[4] == "print(\"AFTER\")");
 }
 
-TEST_CASE("apply_chunk_main: replace-py-method with union-annotated field")
+
+TEST_CASE("apply_chunk_main: insert-after-text drops repeated marker header from payload")
 {
-    fs::path tmp = fs::temp_directory_path() / "chunk_test_replace_py_method";
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_insert_after_text_drop_header";
     fs::remove_all(tmp);
     fs::create_directories(tmp);
-
-    fs::path f = tmp / "editor_window.py";
+    fs::path f = tmp / "a.txt";
     {
         std::ofstream out(f);
-        out << "class EditorWindow:\n"
-               "    def __init__(self) -> None:\n"
-               "        self.controller: \"Controller\" | None = None\n"
-               "\n"
-               "    def push_undo_command(self, cmd, merge: bool = False) -> None:\n"
-               "        self.stack.append(cmd)\n";
+        out << "M1\n"
+               "M2\n"
+               "TAIL\n";
     }
-
-    fs::path patch = tmp / "patch.yml";
+    fs::path patch = tmp / "patch.txt";
     {
         std::ofstream out(patch);
-        out << "language: python\n"
-               "operations:\n"
-               "  - op: replace_py_method\n"
+        out << "operations:\n"
+               "  - op: insert_after_text\n"
                "    path: \"" << yaml_path(f) << "\"\n"
-               "    class: EditorWindow\n"
-               "    method: push_undo_command\n"
+               "    marker: |\n"
+               "      M1\n"
+               "      M2\n"
                "    payload: |\n"
-               "      def push_undo_command(self, cmd, merge: bool = False) -> None:\n"
-               "          self.stack.append(cmd)\n"
-               "          self.on_undo_stack_changed()\n";
+               "      M1  \n"
+               "      M2\n"
+               "      BODY1\n"
+               "      BODY2\n";
     }
 
     int r = run_apply(patch);
     CHECK(r == 0);
-
     auto lines = read_lines(f);
-    bool has_class = false;
-    bool has_union_attr = false;
-    bool has_method_def = false;
-    bool has_new_call = false;
+    REQUIRE(lines.size() == 5);
+    CHECK(lines[0] == "M1");
+    CHECK(lines[1] == "M2");
+    CHECK(lines[2] == "BODY1");
+    CHECK(lines[3] == "BODY2");
+    CHECK(lines[4] == "TAIL");
+}
 
-    for (const auto &line : lines)
+TEST_CASE("apply_chunk_main: insert-before-text drops repeated marker trailer from payload")
+{
+    fs::path tmp =
+        fs::temp_directory_path() / "chunk_test_insert_before_text_drop_trailer";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+    fs::path f = tmp / "b.txt";
     {
-        if (line == "class EditorWindow:")
-            has_class = true;
-        if (line.find("self.controller: \"Controller\" | None") != std::string::npos)
-            has_union_attr = true;
-        if (line.find("def push_undo_command") != std::string::npos)
-            has_method_def = true;
-        if (line.find("self.on_undo_stack_changed()") != std::string::npos)
-            has_new_call = true;
+        std::ofstream out(f);
+        out << "HEAD\n"
+               "M1\n"
+               "M2\n";
+    }
+    fs::path patch = tmp / "patch.txt";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: insert_before_text\n"
+               "    path: \"" << yaml_path(f) << "\"\n"
+               "    marker: |\n"
+               "      M1\n"
+               "      M2\n"
+               "    payload: |\n"
+               "      BODY1\n"
+               "      BODY2\n"
+               "      M1\n"
+               "       M2  \n";
     }
 
-    CHECK(has_class);
-    CHECK(has_union_attr);
-    CHECK(has_method_def);
-    CHECK(has_new_call);
+    int r = run_apply(patch);
+    CHECK(r == 0);
+    auto lines = read_lines(f);
+    REQUIRE(lines.size() == 5);
+    CHECK(lines[0] == "HEAD");
+    CHECK(lines[1] == "BODY1");
+    CHECK(lines[2] == "BODY2");
+    CHECK(lines[3] == "M1");
+    CHECK(lines[4] == "M2");
 }
