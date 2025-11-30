@@ -829,3 +829,62 @@ TEST_CASE("apply_chunk_main: replace-py-block replaces python block by marker")
     CHECK(lines[3] == "  print(\"NEW2\")");
     CHECK(lines[4] == "print(\"AFTER\")");
 }
+
+TEST_CASE("apply_chunk_main: replace-py-method with union-annotated field")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_replace_py_method";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "editor_window.py";
+    {
+        std::ofstream out(f);
+        out << "class EditorWindow:\n"
+               "    def __init__(self) -> None:\n"
+               "        self.controller: \"Controller\" | None = None\n"
+               "\n"
+               "    def push_undo_command(self, cmd, merge: bool = False) -> None:\n"
+               "        self.stack.append(cmd)\n";
+    }
+
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "language: python\n"
+               "operations:\n"
+               "  - op: replace_py_method\n"
+               "    path: \"" << yaml_path(f) << "\"\n"
+               "    class: EditorWindow\n"
+               "    method: push_undo_command\n"
+               "    payload: |\n"
+               "      def push_undo_command(self, cmd, merge: bool = False) -> None:\n"
+               "          self.stack.append(cmd)\n"
+               "          self.on_undo_stack_changed()\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    auto lines = read_lines(f);
+    bool has_class = false;
+    bool has_union_attr = false;
+    bool has_method_def = false;
+    bool has_new_call = false;
+
+    for (const auto &line : lines)
+    {
+        if (line == "class EditorWindow:")
+            has_class = true;
+        if (line.find("self.controller: \"Controller\" | None") != std::string::npos)
+            has_union_attr = true;
+        if (line.find("def push_undo_command") != std::string::npos)
+            has_method_def = true;
+        if (line.find("self.on_undo_stack_changed()") != std::string::npos)
+            has_new_call = true;
+    }
+
+    CHECK(has_class);
+    CHECK(has_union_attr);
+    CHECK(has_method_def);
+    CHECK(has_new_call);
+}
