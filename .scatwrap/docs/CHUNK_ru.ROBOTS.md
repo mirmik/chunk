@@ -66,7 +66,7 @@
 <br>
 &nbsp;&nbsp;&nbsp;```yaml<br>
 &nbsp;&nbsp;&nbsp;description:&nbsp;&quot;краткое&nbsp;описание&nbsp;патча&nbsp;на&nbsp;человеческом&nbsp;языке&quot;<br>
-&nbsp;&nbsp;&nbsp;language:&nbsp;&quot;ru&quot;<br>
+&nbsp;&nbsp;&nbsp;language:&nbsp;&quot;c++&quot;<br>
 &nbsp;&nbsp;&nbsp;operations:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;op:&nbsp;...<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<br>
@@ -104,12 +104,8 @@
 Используются&nbsp;для&nbsp;работы&nbsp;с&nbsp;сущностями&nbsp;языков&nbsp;C++&nbsp;и&nbsp;Python.<br>
 Применяй&nbsp;их&nbsp;**вместо&nbsp;`replace_text`**,&nbsp;когда&nbsp;нужно&nbsp;менять&nbsp;классы&nbsp;или&nbsp;методы.<br>
 <br>
-*&nbsp;`replace_cpp_class`&nbsp;—&nbsp;заменить&nbsp;определение&nbsp;класса&nbsp;в&nbsp;C++-файле.<br>
-*&nbsp;`replace_cpp_method`&nbsp;—&nbsp;заменить&nbsp;определение&nbsp;метода&nbsp;(функции-члена)&nbsp;в&nbsp;C++-классе.<br>
-*&nbsp;`replace_cpp_function`&nbsp;—&nbsp;заменить&nbsp;определение&nbsp;свободной&nbsp;функции&nbsp;в&nbsp;C++-файле.<br>
-*&nbsp;`replace_py_class`&nbsp;—&nbsp;заменить&nbsp;определение&nbsp;класса&nbsp;в&nbsp;Python-файле.<br>
-*&nbsp;`replace_py_method`&nbsp;—&nbsp;заменить&nbsp;определение&nbsp;метода&nbsp;в&nbsp;Python-классе.<br>
 *&nbsp;`replace_c_style_block`&nbsp;—&nbsp;заменить&nbsp;C-подобный&nbsp;блок&nbsp;кода&nbsp;по&nbsp;шапке&nbsp;(от&nbsp;строки&nbsp;с&nbsp;сигнатурой&nbsp;до&nbsp;закрывающей&nbsp;фигурной&nbsp;скобки).<br>
+*&nbsp;`replace_py_block`&nbsp;—&nbsp;заменить&nbsp;Python-подобный&nbsp;блок,&nbsp;начинающийся&nbsp;с&nbsp;двоеточия&nbsp;и&nbsp;длящийся&nbsp;до&nbsp;выхода&nbsp;за&nbsp;предел&nbsp;идентации.<br>
 <br>
 **Важно:**<br>
 Не&nbsp;придумывай&nbsp;новых&nbsp;команд.&nbsp;Используй&nbsp;только&nbsp;перечисленные&nbsp;выше&nbsp;значения&nbsp;`op`.<br>
@@ -122,7 +118,7 @@
 <br>
 ```yaml<br>
 description:&nbsp;&quot;Краткое&nbsp;описание,&nbsp;что&nbsp;делает&nbsp;патч&quot;<br>
-language:&nbsp;&quot;ru&quot;<br>
+language:&nbsp;&quot;python&quot;<br>
 operations:<br>
 &nbsp;&nbsp;-&nbsp;op:&nbsp;...<br>
 &nbsp;&nbsp;&nbsp;&nbsp;...<br>
@@ -131,7 +127,7 @@ operations:<br>
 ```<br>
 <br>
 *&nbsp;`description`&nbsp;—&nbsp;произвольное&nbsp;краткое&nbsp;описание&nbsp;патча&nbsp;на&nbsp;естественном&nbsp;языке.<br>
-*&nbsp;`language`&nbsp;—&nbsp;язык&nbsp;описания/комментариев&nbsp;(`&quot;ru&quot;`&nbsp;или&nbsp;`&quot;en&quot;`&nbsp;и&nbsp;так&nbsp;далее).<br>
+*&nbsp;`language`&nbsp;—&nbsp;основной&nbsp;язык.&nbsp;Поддерживаются&nbsp;`&quot;python&quot;`,&nbsp;`&quot;c++&quot;`.<br>
 *&nbsp;`operations`&nbsp;—&nbsp;список&nbsp;операций.&nbsp;Каждая&nbsp;операция&nbsp;—&nbsp;отдельный&nbsp;YAML-объект&nbsp;(элемент&nbsp;списка).<br>
 <br>
 ###&nbsp;3.2.&nbsp;Общие&nbsp;правила&nbsp;для&nbsp;операций<br>
@@ -453,7 +449,7 @@ operations:<br>
 <br>
 ```yaml<br>
 description:&nbsp;&quot;Кратко,&nbsp;что&nbsp;делает&nbsp;патч&quot;<br>
-language:&nbsp;&quot;ru&quot;<br>
+language:&nbsp;&quot;с++&quot;<br>
 operations:<br>
 &nbsp;&nbsp;-&nbsp;op:&nbsp;...<br>
 &nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;...<br>
@@ -462,8 +458,6 @@ operations:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;...<br>
 &nbsp;&nbsp;&nbsp;&nbsp;...<br>
 ```<br>
----<br>
-<br>
 <!-- END SCAT CODE -->
 </body>
 </html>
