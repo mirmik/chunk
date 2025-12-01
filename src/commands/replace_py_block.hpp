@@ -82,6 +82,7 @@ public:
         bool in_triple_single = false;
         bool in_triple_double = false;
         bool escape = false;
+        int paren_depth = 0;
 
         for (int li = mm.begin; li <= mm.end; ++li)
         {
@@ -191,8 +192,22 @@ public:
                     continue;
                 }
 
+                if (c == '(' || c == '[' || c == '{')
+                {
+                    ++paren_depth;
+                    continue;
+                }
+                if (c == ')' || c == ']' || c == '}')
+                {
+                    if (paren_depth > 0)
+                        --paren_depth;
+                    continue;
+                }
+
                 if (c == ':')
                 {
+                    if (paren_depth > 0)
+                        continue;
                     header_line = li;
                     header_col = static_cast<int>(col);
                     (void)header_col;
