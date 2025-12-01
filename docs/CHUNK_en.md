@@ -127,7 +127,7 @@ Modes:
 Base indentation is taken from:
 
 * for text commands — the first line of the marker range;
-* for language commands (`replace_c_style_block`, `replace_py_block`) — the line with the block “header” (function signature, `if ...`, `for ...`, `def ...`, `class ...` and so on).
+* for language commands (`replace_c_style_block`, `replace_py_block`, `replace_xml_block`) — the line with the block “header” (function signature, `if ...`, `for ...`, `def ...`, `class ...` and so on).
 
 Indentation is added only to **non-empty** lines of `payload`.
 
@@ -276,7 +276,7 @@ operations:
 
 ---
 
-## 6. Commands for C-style and Python blocks
+## 6. Commands for C-style, Python and XML blocks
 
 These commands operate not on arbitrary text, but on **logical code blocks** (functions, methods, `if` or `for` blocks, and so on).
 
@@ -284,6 +284,7 @@ Supported commands:
 
 * `replace_c_style_block`
 * `replace_py_block`
+* `replace_xml_block`
 
 Common fields:
 
@@ -342,6 +343,29 @@ operations:
       def run(self):
           print("value:", self.value)
           return self.value
+```
+
+### 6.3. XML code: `replace_xml_block`
+
+Command for XML-like blocks based on matching opening and closing tags.
+
+* `marker` must include the line with the opening tag (for example, `<item>` or `<item id="foo">`). Marker search uses the same normalization rules as for other commands.
+* The replacement range spans from the beginning of the marker to the matching closing tag `</tag_name>`, taking into account nested tags with the same name.
+* A block can be self-closing (`<tag ... />`) — in this case only that tag is replaced.
+* Other fields (`payload`, `before`, `after`, `options.indent`) behave the same as in `replace_c_style_block`.
+
+Example:
+
+```yaml
+operations:
+  - path: config.xml
+    op: replace_xml_block
+    marker: |-
+      <item id="foo">
+    payload: |-
+      <item id="foo">
+        <value>42</value>
+      </item>
 ```
 
 ---

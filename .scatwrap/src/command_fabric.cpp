@@ -22,6 +22,7 @@
 #include&nbsp;&quot;commands/replace_text.hpp&quot;<br>
 #include&nbsp;&quot;commands/replace_c_style_block.hpp&quot;<br>
 #include&nbsp;&quot;commands/replace_py_block.hpp&quot;<br>
+#include&nbsp;&quot;commands/replace_xml_block.hpp&quot;<br>
 #include&nbsp;&lt;functional&gt;<br>
 #include&nbsp;&lt;unordered_map&gt;<br>
 <br>
@@ -50,6 +51,8 @@ symbol_command_registry()<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[]()&nbsp;{&nbsp;return&nbsp;std::make_unique&lt;ReplaceCStyleBlockCommand&gt;();&nbsp;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-py-block&quot;,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[]()&nbsp;{&nbsp;return&nbsp;std::make_unique&lt;ReplacePyBlockCommand&gt;();&nbsp;}},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-xml-block&quot;,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[]()&nbsp;{&nbsp;return&nbsp;std::make_unique&lt;ReplaceXmlBlockCommand&gt;();&nbsp;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&quot;prepend-text&quot;,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[]()&nbsp;{&nbsp;return&nbsp;std::make_unique&lt;PrependTextCommand&gt;();&nbsp;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&quot;append-text&quot;,<br>

@@ -14,6 +14,7 @@
 #include "commands/replace_text.hpp"
 #include "commands/replace_c_style_block.hpp"
 #include "commands/replace_py_block.hpp"
+#include "commands/replace_xml_block.hpp"
 #include <functional>
 #include <unordered_map>
 
@@ -42,6 +43,8 @@ symbol_command_registry()
          []() { return std::make_unique<ReplaceCStyleBlockCommand>(); }},
         {"replace-py-block",
          []() { return std::make_unique<ReplacePyBlockCommand>(); }},
+        {"replace-xml-block",
+         []() { return std::make_unique<ReplaceXmlBlockCommand>(); }},
         {"prepend-text",
          []() { return std::make_unique<PrependTextCommand>(); }},
         {"append-text",

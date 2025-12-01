@@ -35,6 +35,7 @@ static&nbsp;std::unordered_map&lt;std::string,&nbsp;std::vector&lt;std::string&g
 &nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-py-method&quot;,&nbsp;{&quot;replace-py-method&quot;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-c-style-block&quot;,&nbsp;{&quot;replace-c-style-block&quot;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-py-block&quot;,&nbsp;{&quot;replace-py-block&quot;}},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{&quot;replace-xml-block&quot;,&nbsp;{&quot;replace-xml-block&quot;}},<br>
 &nbsp;&nbsp;&nbsp;&nbsp;};<br>
 <br>
 static&nbsp;std::unordered_map&lt;std::string,&nbsp;std::string&gt;&nbsp;synonym_map;<br>
