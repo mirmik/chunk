@@ -64,7 +64,7 @@ namespace
         {
             std::error_code perm_ec;
             fs::permissions(
-                p, state.permissions, fs::perm_options::replace, perm_ec);
+                p, state.permissions, fs::perm_options::replace | fs::perm_options::nofollow, perm_ec);
             if (perm_ec)
             {
                 return "rollback: failed to restore permissions for file '" +

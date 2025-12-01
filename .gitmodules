@@ -1,4 +1,0 @@
-
-[submodule "tests/guard"]
-	path = tests/guard
-	url = https://github.com/mirmik/guard
