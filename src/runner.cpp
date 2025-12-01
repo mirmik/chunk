@@ -17,11 +17,13 @@ namespace
     {
         std::string path;
 
-        bool existed_before = false;   // было на диске до патча
-        bool exists_now = false;       // логическое «существует» после применения команд в памяти
+        bool existed_before = false; // было на диске до патча
+        bool exists_now =
+            false; // логическое «существует» после применения команд в памяти
 
-        std::string original_bytes;     // для бэкапа на случай проблем при коммите
-        std::vector<std::string> lines; // текущее текстовое представление файла (если exists_now == true)
+        std::string original_bytes; // для бэкапа на случай проблем при коммите
+        std::vector<std::string> lines; // текущее текстовое представление файла
+                                        // (если exists_now == true)
 
         fs::file_time_type last_write_time;
         fs::perms permissions = fs::perms::unknown;
@@ -51,20 +53,23 @@ namespace
         }
         catch (const std::exception &e)
         {
-            return "rollback: failed to restore data for file '" +
-                   state.path + "': " + e.what();
+            return "rollback: failed to restore data for file '" + state.path +
+                   "': " + e.what();
         }
         catch (...)
         {
-            return "rollback: failed to restore data for file '" +
-                   state.path + "': unknown error";
+            return "rollback: failed to restore data for file '" + state.path +
+                   "': unknown error";
         }
 
         if (state.has_permissions)
         {
             std::error_code perm_ec;
-            fs::permissions(
-                p, state.permissions, fs::perm_options::replace | fs::perm_options::nofollow, perm_ec);
+            fs::permissions(p,
+                            state.permissions,
+                            fs::perm_options::replace |
+                                fs::perm_options::nofollow,
+                            perm_ec);
             if (perm_ec)
             {
                 return "rollback: failed to restore permissions for file '" +
@@ -173,9 +178,11 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands,
                 current_command->reset_status();
                 if (!state.exists_now)
                 {
-                    current_command->mark_failed("delete-file: file does not exist");
+                    current_command->mark_failed(
+                        "delete-file: file does not exist");
                     if (!options.ignore_failures)
-                        throw std::runtime_error(current_command->error_message());
+                        throw std::runtime_error(
+                            current_command->error_message());
                     continue;
                 }
                 std::vector<std::string> before = state.lines;
@@ -225,7 +232,8 @@ void apply_sections(const std::vector<std::unique_ptr<Command>> &commands,
 
     if (options.dry_run)
         return;
-    // Этап 2: коммитим изменения на диск. Если что-то пошло не так — откатываем.
+    // Этап 2: коммитим изменения на диск. Если что-то пошло не так —
+    // откатываем.
     std::vector<std::string> rollback_errors;
 
     try

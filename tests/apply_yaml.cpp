@@ -1,13 +1,14 @@
 #include "apply.h"
 #include "guard/guard.h"
+#include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <iostream>
-#include <chrono>
-#include <sstream>
 #include <yaml/string_ext.h>
+
 
 namespace fs = std::filesystem;
 
@@ -62,62 +63,61 @@ private:
     std::streambuf *old_cerr;
 };
 
-    static int run_apply_stdin(const std::string &patch_text)
+static int run_apply_stdin(const std::string &patch_text)
+{
+    // Подменяем std::cin на буфер с нашим патчем
+    std::streambuf *old_buf = std::cin.rdbuf();
+    std::istringstream iss(patch_text);
+    std::cin.rdbuf(iss.rdbuf());
+
+    std::string a0 = "apply";
+    std::string a1 = "--stdin";
+    std::string a2 = "--quiet";
+
+    std::vector<std::string> store = {a0, a1, a2};
+    std::vector<char *> argv;
+    for (auto &s : store)
+        argv.push_back(s.data());
+    int rc = apply_chunk_main((int)argv.size(), argv.data());
+
+    // Восстанавливаем std::cin
+    std::cin.rdbuf(old_buf);
+    return rc;
+}
+
+TEST_CASE("YAML stdin: apply_chunk_main with --stdin reads from std::cin")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_stdin_patch";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path f = tmp / "stdin.txt";
     {
-        // Подменяем std::cin на буфер с нашим патчем
-        std::streambuf *old_buf = std::cin.rdbuf();
-        std::istringstream iss(patch_text);
-        std::cin.rdbuf(iss.rdbuf());
-
-        std::string a0 = "apply";
-        std::string a1 = "--stdin";
-        std::string a2 = "--quiet";
-
-        std::vector<std::string> store = {a0, a1, a2};
-        std::vector<char *> argv;
-        for (auto &s : store)
-            argv.push_back(s.data());
-        int rc = apply_chunk_main((int)argv.size(), argv.data());
-
-        // Восстанавливаем std::cin
-        std::cin.rdbuf(old_buf);
-        return rc;
+        std::ofstream out(f);
+        out << "alpha\n"
+               "beta\n"
+               "gamma\n";
     }
 
-    TEST_CASE("YAML stdin: apply_chunk_main with --stdin reads from std::cin")
-    {
-        fs::path tmp = fs::temp_directory_path() / "yaml_stdin_patch";
-        fs::remove_all(tmp);
-        fs::create_directories(tmp);
+    std::ostringstream patch;
+    patch << "operations:\n";
+    patch << "  - path: \"" << yaml_path(f) << "\"\n";
+    patch << "    op: replace_text\n";
+    patch << "    marker: |\n";
+    patch << "      beta\n";
+    patch << "    payload: |\n";
+    patch << "      XXX\n";
+    patch << "      YYY\n";
 
-        fs::path f = tmp / "stdin.txt";
-        {
-            std::ofstream out(f);
-            out << "alpha\n"
-                   "beta\n"
-                   "gamma\n";
-        }
+    CHECK(run_apply_stdin(patch.str()) == 0);
 
-        std::ostringstream patch;
-        patch << "operations:\n";
-        patch << "  - path: \"" << yaml_path(f) << "\"\n";
-        patch << "    op: replace_text\n";
-        patch << "    marker: |\n";
-        patch << "      beta\n";
-        patch << "    payload: |\n";
-        patch << "      XXX\n";
-        patch << "      YYY\n";
-
-        CHECK(run_apply_stdin(patch.str()) == 0);
-
-        auto L = read_lines(f);
-        REQUIRE(L.size() == 4);
-        CHECK(L[0] == "alpha");
-        CHECK(L[1] == "XXX");
-        CHECK(L[2] == "YYY");
-        CHECK(L[3] == "gamma");
-    }
-
+    auto L = read_lines(f);
+    REQUIRE(L.size() == 4);
+    CHECK(L[0] == "alpha");
+    CHECK(L[1] == "XXX");
+    CHECK(L[2] == "YYY");
+    CHECK(L[3] == "gamma");
+}
 
 // ============================================================================
 // 1. MARKER: без BEFORE/AFTER — работает как старый режим
@@ -139,7 +139,8 @@ TEST_CASE("YAML: only MARKER: behaves like legacy replace-text")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_text\n"
-               "    path: \"" << yaml_path(f)
+               "    path: \""
+            << yaml_path(f)
             << "\"\n"
                "    marker: \"B\"\n"
                "    payload: \"X\"\n";
@@ -180,7 +181,8 @@ TEST_CASE("YAML: BEFORE fuzzy selects the correct marker")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_text\n"
-               "    path: \"" << yaml_path(f)
+               "    path: \""
+            << yaml_path(f)
             << "\"\n"
                "    before: \"XXX\"\n"
                "    marker: \"target\"\n"
@@ -220,7 +222,8 @@ TEST_CASE("YAML: AFTER fuzzy selects correct block")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_text\n"
-               "    path: \"" << yaml_path(f)
+               "    path: \""
+            << yaml_path(f)
             << "\"\n"
                "    marker: \"X\"\n"
                "    after: \"finish\"\n"
@@ -260,7 +263,8 @@ TEST_CASE("YAML: strong fuzzy match with BEFORE + AFTER")
         std::ofstream out(patch);
         out << "operations:\n"
                "  - op: replace_text\n"
-               "    path: \"" << yaml_path(f)
+               "    path: \""
+            << yaml_path(f)
             << "\"\n"
                "    before: \"C\"\n"
                "    marker: \"mark\"\n"
@@ -620,7 +624,8 @@ TEST_CASE("YAML patch: rollback restores metadata")
     fs::perms original_perms = fs::perms::owner_all | fs::perms::group_read;
     fs::permissions(f, original_perms);
 
-    auto original_time = fs::file_time_type::clock::now() - std::chrono::hours(1);
+    auto original_time =
+        fs::file_time_type::clock::now() - std::chrono::hours(1);
     fs::last_write_time(f, original_time);
 
     fs::path patch = tmp / "patch.yml";
@@ -648,17 +653,16 @@ TEST_CASE("YAML patch: rollback restores metadata")
     CHECK(L[2] == "gamma");
 
     auto status = fs::status(f);
-    
-    // On Windows, permissions handling is different (NTFS ACLs vs POSIX perms)
-    // So we skip the permissions check on Windows
-    #ifndef _WIN32
+
+// On Windows, permissions handling is different (NTFS ACLs vs POSIX perms)
+// So we skip the permissions check on Windows
+#ifndef _WIN32
     CHECK((status.permissions() & fs::perms::all) ==
           (original_perms & fs::perms::all));
-    #endif
-    
+#endif
+
     CHECK(fs::last_write_time(f) == original_time);
 }
-
 
 // ============================================================================
 // 16. Маркер игнорирует пустые строки в файле при сравнении
@@ -698,12 +702,11 @@ TEST_CASE("YAML patch: insert_after_text skips blank lines in marker matching")
     REQUIRE(L.size() == 6);
     CHECK(L[0] == "begin");
     CHECK(L[1] == "A");
-    CHECK(L[2] == "");      // пустая строка осталась на месте
+    CHECK(L[2] == ""); // пустая строка осталась на месте
     CHECK(L[3] == "B");
-    CHECK(L[4] == "X");     // X после B, как и хотим
+    CHECK(L[4] == "X"); // X после B, как и хотим
     CHECK(L[5] == "end");
 }
-
 
 // ============================================================================
 // 17. insert_after_text: маркер матчится через пустую строку
@@ -742,178 +745,173 @@ TEST_CASE("YAML patch: replace_text removes whole block including blank lines")
     auto L = read_lines(f);
     REQUIRE(L.size() == 3);
     CHECK(L[0] == "begin");
-    CHECK(L[1] == "X");     // весь блок A / пустая / B заменён X
+    CHECK(L[1] == "X"); // весь блок A / пустая / B заменён X
     CHECK(L[2] == "end");
 }
 
 // ============================================================================
-      // 18. C++/Python: marker ignores comments/docstrings
-      // ============================================================================
-      TEST_CASE("YAML patch: C++ marker ignores block comments")
-      {
-          fs::path tmp = fs::temp_directory_path() / "yaml_cpp_block_comment_marker";
-          fs::remove_all(tmp);
-          fs::create_directories(tmp);
-          fs::path f = tmp / "code.cpp";
-          {
-              std::ofstream out(f);
-              out << "void foo() {\n"
-                  << "    int x = 1;\n"
-                  << "    /* begin block\n"
-                  << "       still comment\n"
-                  << "       end */\n"
-                  << "    int y = 2;\n"
-                  << "}\n";
-          }
-          fs::path patch = tmp / "patch.yml";
-          {
-              std::ofstream out(patch);
-              out << "language: cpp\n";
-              out << "operations:\n";
-              out << "  - path: \"" << yaml_path(f) << "\"\n";
-              out << "    op: replace_text\n";
-              out << "    marker: |\n";
-              out << "      void foo() {\n";
-              out << "        int x = 1;\n";
-              out << "        int y = 2;\n";
-              out << "      }\n";
-              out << "    payload: |\n";
-              out << "      void foo() {\n";
-              out << "        int x = 10;\n";
-              out << "        int y = 20;\n";
-              out << "      }\n";
-          }
+// 18. C++/Python: marker ignores comments/docstrings
+// ============================================================================
+TEST_CASE("YAML patch: C++ marker ignores block comments")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_cpp_block_comment_marker";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+    fs::path f = tmp / "code.cpp";
+    {
+        std::ofstream out(f);
+        out << "void foo() {\n"
+            << "    int x = 1;\n"
+            << "    /* begin block\n"
+            << "       still comment\n"
+            << "       end */\n"
+            << "    int y = 2;\n"
+            << "}\n";
+    }
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "language: cpp\n";
+        out << "operations:\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
+        out << "    op: replace_text\n";
+        out << "    marker: |\n";
+        out << "      void foo() {\n";
+        out << "        int x = 1;\n";
+        out << "        int y = 2;\n";
+        out << "      }\n";
+        out << "    payload: |\n";
+        out << "      void foo() {\n";
+        out << "        int x = 10;\n";
+        out << "        int y = 20;\n";
+        out << "      }\n";
+    }
 
-          CHECK(run_apply(patch) == 0);
-          auto L = read_lines(f);
-          REQUIRE(!L.empty());
+    CHECK(run_apply(patch) == 0);
+    auto L = read_lines(f);
+    REQUIRE(!L.empty());
 
-          std::string all;
-          for (auto &s : L)
-              all += s + "\n";
+    std::string all;
+    for (auto &s : L)
+        all += s + "\n";
 
-          // новый код на месте
-          CHECK(all.find("int x = 10;") != std::string::npos);
-          CHECK(all.find("int y = 20;") != std::string::npos);
-          // старый блочный коммент исчез вместе со старым телом функции
-          CHECK(all.find("begin block") == std::string::npos);
-      }
+    // новый код на месте
+    CHECK(all.find("int x = 10;") != std::string::npos);
+    CHECK(all.find("int y = 20;") != std::string::npos);
+    // старый блочный коммент исчез вместе со старым телом функции
+    CHECK(all.find("begin block") == std::string::npos);
+}
 
-      TEST_CASE("YAML patch: Python marker ignores triple-quoted docstrings")
-      {
-          fs::path tmp = fs::temp_directory_path() / "yaml_py_docstring_marker";
-          fs::remove_all(tmp);
-          fs::create_directories(tmp);
-          fs::path f = tmp / "foo.py";
-          {
-              std::ofstream out(f);
-              out << "class Foo:\n"
-                  << "    \"\"\"Class docs\n"
-                  << "    Spanning multiple lines\n"
-                  << "    \"\"\"\n"
-                  << "    def __init__(self):\n"
-                  << "        self.x = 1\n"
-                  << "\n"
-                  << "class Bar:\n"
-                  << "    pass\n";
-          }
-          fs::path patch = tmp / "patch.yml";
-          {
-              std::ofstream out(patch);
-              out << "language: python\n";
-              out << "operations:\n";
-              out << "  - path: \"" << yaml_path(f) << "\"\n";
-              out << "    op: replace_text\n";
-              out << "    marker: |\n";
-              out << "      class Foo:\n";
-              out << "        def __init__(self):\n";
-              out << "          self.x = 1\n";
-              out << "    payload: |\n";
-              out << "      class Foo:\n";
-              out << "        def __init__(self):\n";
-              out << "          self.x = 2\n";
-              out << "        def answer(self):\n";
-              out << "          return 42\n";
-          }
+TEST_CASE("YAML patch: Python marker ignores triple-quoted docstrings")
+{
+    fs::path tmp = fs::temp_directory_path() / "yaml_py_docstring_marker";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+    fs::path f = tmp / "foo.py";
+    {
+        std::ofstream out(f);
+        out << "class Foo:\n"
+            << "    \"\"\"Class docs\n"
+            << "    Spanning multiple lines\n"
+            << "    \"\"\"\n"
+            << "    def __init__(self):\n"
+            << "        self.x = 1\n"
+            << "\n"
+            << "class Bar:\n"
+            << "    pass\n";
+    }
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "language: python\n";
+        out << "operations:\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
+        out << "    op: replace_text\n";
+        out << "    marker: |\n";
+        out << "      class Foo:\n";
+        out << "        def __init__(self):\n";
+        out << "          self.x = 1\n";
+        out << "    payload: |\n";
+        out << "      class Foo:\n";
+        out << "        def __init__(self):\n";
+        out << "          self.x = 2\n";
+        out << "        def answer(self):\n";
+        out << "          return 42\n";
+    }
 
-          CHECK(run_apply(patch) == 0);
-          auto L = read_lines(f);
-          REQUIRE(!L.empty());
+    CHECK(run_apply(patch) == 0);
+    auto L = read_lines(f);
+    REQUIRE(!L.empty());
 
-          std::string all;
-          for (auto &s : L)
-              all += s + "\n";
+    std::string all;
+    for (auto &s : L)
+        all += s + "\n";
 
-          // докстринг и старое тело класса ушли
-          CHECK(all.find("self.x = 1") == std::string::npos);
-          // новое тело на месте
-          CHECK(all.find("self.x = 2") != std::string::npos);
-          CHECK(all.find("def answer(self):") != std::string::npos);
-          // соседний класс не тронули
-          CHECK(all.find("class Bar:") != std::string::npos);
-      }
+    // докстринг и старое тело класса ушли
+    CHECK(all.find("self.x = 1") == std::string::npos);
+    // новое тело на месте
+    CHECK(all.find("self.x = 2") != std::string::npos);
+    CHECK(all.find("def answer(self):") != std::string::npos);
+    // соседний класс не тронули
+    CHECK(all.find("class Bar:") != std::string::npos);
+}
 
-
-      
 // 18. Prefer exact match with comments before ignoring them
-      // ============================================================================
-      TEST_CASE("YAML patch: prefer exact C++ marker match before ignoring comments")
-      {
-          fs::path tmp = fs::temp_directory_path() / "yaml_cpp_prefer_exact_with_comments";
-          fs::remove_all(tmp);
-          fs::create_directories(tmp);
-          fs::path f = tmp / "code.cpp";
-          {
-              std::ofstream out(f);
-              out << "void foo() {\n"
-                  << "    int x = 1; // foo\n"
-                  << "    int y = 2;\n"
-                  << "}\n"
-                  << "\n"
-                  << "void bar() {\n"
-                  << "    int x = 1;\n"
-                  << "    int y = 2;\n"
-                  << "}\n";
-          }
-          fs::path patch = tmp / "patch.yml";
-          {
-              std::ofstream out(patch);
-              out << "language: cpp\n";
-              out << "operations:\n";
-              out << "  - path: \"" << yaml_path(f) << "\"\n";
-              out << "    op: replace_text\n";
-              out << "    marker: |\n";
-              out << "      void foo() {\n";
-              out << "        int x = 1; // foo\n";
-              out << "        int y = 2;\n";
-              out << "      }\n";
-              out << "    payload: |\n";
-              out << "      void foo() {\n";
-              out << "        int x = 10; // foo\n";
-              out << "        int y = 20;\n";
-              out << "      }\n";
-          }
+// ============================================================================
+TEST_CASE("YAML patch: prefer exact C++ marker match before ignoring comments")
+{
+    fs::path tmp =
+        fs::temp_directory_path() / "yaml_cpp_prefer_exact_with_comments";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+    fs::path f = tmp / "code.cpp";
+    {
+        std::ofstream out(f);
+        out << "void foo() {\n"
+            << "    int x = 1; // foo\n"
+            << "    int y = 2;\n"
+            << "}\n"
+            << "\n"
+            << "void bar() {\n"
+            << "    int x = 1;\n"
+            << "    int y = 2;\n"
+            << "}\n";
+    }
+    fs::path patch = tmp / "patch.yml";
+    {
+        std::ofstream out(patch);
+        out << "language: cpp\n";
+        out << "operations:\n";
+        out << "  - path: \"" << yaml_path(f) << "\"\n";
+        out << "    op: replace_text\n";
+        out << "    marker: |\n";
+        out << "      void foo() {\n";
+        out << "        int x = 1; // foo\n";
+        out << "        int y = 2;\n";
+        out << "      }\n";
+        out << "    payload: |\n";
+        out << "      void foo() {\n";
+        out << "        int x = 10; // foo\n";
+        out << "        int y = 20;\n";
+        out << "      }\n";
+    }
 
-          CHECK(run_apply(patch) == 0);
-          auto L = read_lines(f);
-          REQUIRE(!L.empty());
+    CHECK(run_apply(patch) == 0);
+    auto L = read_lines(f);
+    REQUIRE(!L.empty());
 
-          std::string all;
-          for (auto &s : L)
-              all += s + "\n";
+    std::string all;
+    for (auto &s : L)
+        all += s + "\n";
 
-          // foo обновился
-          CHECK(all.find("int x = 10; // foo") != std::string::npos);
-          CHECK(all.find("int y = 20;") != std::string::npos);
+    // foo обновился
+    CHECK(all.find("int x = 10; // foo") != std::string::npos);
+    CHECK(all.find("int y = 20;") != std::string::npos);
 
-          // bar остался как был
-          CHECK(all.find("void bar() {") != std::string::npos);
-          CHECK(all.find("int x = 1;\n") != std::string::npos);
-      }
-
-
-
-
+    // bar остался как был
+    CHECK(all.find("void bar() {") != std::string::npos);
+    CHECK(all.find("int x = 1;\n") != std::string::npos);
+}
 
 // ============================================================================
 // 22. UTF-8: Cyrillic marker and payload
