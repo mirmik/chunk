@@ -11,6 +11,8 @@ namespace chunk
 
 /* CHANGELIST
 
+0.4.0 
+    Symbolyc api removed. Create file command also create parent directories as needed.
 0.3.0 
     The program no longer writes the result of each command to disk, 
     but first compiles a new file in its memory and 

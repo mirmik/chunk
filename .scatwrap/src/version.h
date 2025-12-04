@@ -19,6 +19,8 @@ namespace&nbsp;chunk<br>
 <br>
 /*&nbsp;CHANGELIST<br>
 <br>
+0.4.0&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Symbolyc&nbsp;api&nbsp;removed.&nbsp;Create&nbsp;file&nbsp;command&nbsp;also&nbsp;create&nbsp;parent&nbsp;directories&nbsp;as&nbsp;needed.<br>
 0.3.0&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;program&nbsp;no&nbsp;longer&nbsp;writes&nbsp;the&nbsp;result&nbsp;of&nbsp;each&nbsp;command&nbsp;to&nbsp;disk,&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;but&nbsp;first&nbsp;compiles&nbsp;a&nbsp;new&nbsp;file&nbsp;in&nbsp;its&nbsp;memory&nbsp;and&nbsp;<br>
