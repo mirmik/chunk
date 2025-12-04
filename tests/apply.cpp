@@ -382,6 +382,39 @@ TEST_CASE("apply_chunk_main: delete-file then create-file")
     CHECK(lines[1] == "NEW2");
 }
 
+TEST_CASE("apply_chunk_main: create-file creates missing directories")
+{
+    fs::path tmp = fs::temp_directory_path() / "chunk_test_create_dirs";
+    fs::remove_all(tmp);
+    fs::create_directories(tmp);
+
+    fs::path nested = tmp / "deep/nested/file.txt";
+    REQUIRE(!fs::exists(nested.parent_path()));
+
+    fs::path patch = tmp / "patch.txt";
+    {
+        std::ofstream out(patch);
+        out << "operations:\n"
+               "  - op: create_file\n"
+               "    path: \"" << yaml_path(nested)
+            << "\"\n"
+               "    payload: |\n"
+               "      alpha\n"
+               "      beta\n";
+    }
+
+    int r = run_apply(patch);
+    CHECK(r == 0);
+
+    CHECK(fs::is_directory(nested.parent_path()));
+    REQUIRE(fs::exists(nested));
+
+    auto lines = read_lines(nested);
+    REQUIRE(lines.size() == 2);
+    CHECK(lines[0] == "alpha");
+    CHECK(lines[1] == "beta");
+}
+
 TEST_CASE("apply_chunk_main: marker ignores C++ comments when language is set")
 {
 	fs::path tmp = fs::temp_directory_path() / "chunk_test_marker_cpp_comments";

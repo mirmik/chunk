@@ -1,9 +1,26 @@
 #include "file_io.h"
 
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 
+namespace
+{
+    void ensure_parent_dir(const std::filesystem::path &p)
+    {
+        auto dir = p.parent_path();
+        if (dir.empty())
+            return;
+
+        std::error_code ec;
+        std::filesystem::create_directories(dir, ec);
+        if (ec)
+            throw std::runtime_error("cannot create directory '"
+                                     + dir.string()
+                                     + "': " + ec.message());
+    }
+}
 
 std::vector<std::string> read_file_lines(const std::filesystem::path &p)
 {
@@ -22,6 +39,8 @@ std::vector<std::string> read_file_lines(const std::filesystem::path &p)
 void write_file_lines(const std::filesystem::path &p,
                       const std::vector<std::string> &lines)
 {
+    ensure_parent_dir(p);
+
     std::ofstream out(p, std::ios::trunc);
     if (!out)
         throw std::runtime_error("cannot write file: " + p.string());
@@ -51,6 +70,8 @@ std::string read_file_bytes(const std::filesystem::path &p)
 
 void write_file_bytes(const std::filesystem::path &p, const std::string &data)
 {
+    ensure_parent_dir(p);
+
     std::ofstream out(p, std::ios::binary | std::ios::trunc);
     if (!out)
         throw std::runtime_error("cannot write file: " + p.string());

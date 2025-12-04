@@ -8,9 +8,27 @@
 <!-- BEGIN SCAT CODE -->
 #include&nbsp;&quot;file_io.h&quot;<br>
 <br>
+#include&nbsp;&lt;filesystem&gt;<br>
 #include&nbsp;&lt;fstream&gt;<br>
-#include&nbsp;&lt;stdexcept&gt;<br>
 #include&nbsp;&lt;sstream&gt;<br>
+#include&nbsp;&lt;stdexcept&gt;<br>
+<br>
+namespace<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;ensure_parent_dir(const&nbsp;std::filesystem::path&nbsp;&amp;p)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;dir&nbsp;=&nbsp;p.parent_path();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(dir.empty())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::error_code&nbsp;ec;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std::filesystem::create_directories(dir,&nbsp;ec);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ec)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;cannot&nbsp;create&nbsp;directory&nbsp;'&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;dir.string()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;&quot;':&nbsp;&quot;&nbsp;+&nbsp;ec.message());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
 <br>
 std::vector&lt;std::string&gt;&nbsp;read_file_lines(const&nbsp;std::filesystem::path&nbsp;&amp;p)<br>
 {<br>
@@ -29,6 +47,8 @@ std::vector&lt;std::string&gt;&nbsp;read_file_lines(const&nbsp;std::filesystem::
 void&nbsp;write_file_lines(const&nbsp;std::filesystem::path&nbsp;&amp;p,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;std::vector&lt;std::string&gt;&nbsp;&amp;lines)<br>
 {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ensure_parent_dir(p);<br>
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(p,&nbsp;std::ios::trunc);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!out)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;cannot&nbsp;write&nbsp;file:&nbsp;&quot;&nbsp;+&nbsp;p.string());<br>
@@ -58,6 +78,8 @@ std::string&nbsp;read_file_bytes(const&nbsp;std::filesystem::path&nbsp;&amp;p)<b
 <br>
 void&nbsp;write_file_bytes(const&nbsp;std::filesystem::path&nbsp;&amp;p,&nbsp;const&nbsp;std::string&nbsp;&amp;data)<br>
 {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ensure_parent_dir(p);<br>
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;std::ofstream&nbsp;out(p,&nbsp;std::ios::binary&nbsp;|&nbsp;std::ios::trunc);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!out)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw&nbsp;std::runtime_error(&quot;cannot&nbsp;write&nbsp;file:&nbsp;&quot;&nbsp;+&nbsp;p.string());<br>
